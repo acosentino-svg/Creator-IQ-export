@@ -67,6 +67,37 @@ CSM/support contact can tell you directly which endpoint backs "Active
 Members" and its exact filter for your account — that's a one-line question
 for them and avoids any guesswork.
 
+### Known-working configuration (CRM API v1 "Get all Publishers")
+
+For this account, the CreatorIQ API docs portal (`apidocs.creatoriq.com` →
+CRM API → V1 → Publisher → **Get all Publishers**) confirmed the following,
+which the flags further down are already set up for:
+
+- **Endpoint**: `GET https://apis.creatoriq.com/crm/v1/api/publishers`
+- **Auth**: an `x-api-key: <your key>` header (*not* `Authorization: Bearer`)
+  → use `--auth-style apikey-header --header-name x-api-key`
+- **Pagination**: `page` (1-indexed page number) + `size` (rows per page,
+  default 20, **max 1000**) → use `--pagination-style page --page-param page
+  --limit-param size --page-size 1000`
+- **Response shape**: the array of records is under `"PublisherCollection"`,
+  and the running total is under `"total"` → use `--data-path
+  PublisherCollection --total-path total`
+- **Filtering**: a `filter` query param shaped like `Column=Value` (multiple
+  values comma-separated = OR, multiple columns semicolon-separated = AND),
+  e.g. `filter=Status=Active`. Run `probe` with no filter first to see real
+  field values for `Status` / `StatusCategory` / `PublisherStatus` on your
+  account's records, since the docs' example response has these as `null`
+  placeholders — then set `--params '{"filter": "Status=Active"}'`
+  (substituting whichever field/value your account actually uses for
+  "active") once you've confirmed it matches the ~69k count the report UI
+  shows.
+- **`fields` param** (optional but recommended): a comma-separated list of
+  field names (e.g. `fields=Id,PublisherName,Status`) to only return the
+  columns you actually need — the full Publisher object is large (dozens of
+  fields, several of which are just links to sub-resources), so trimming it
+  down speeds up a 69k-row pull significantly. Pass it via `--params`, e.g.
+  `--params '{"fields": "Id,PublisherName,Status,Email,Country"}'`.
+
 ### Sanity-check with `probe` before pulling everything
 
 Once you have a candidate endpoint + params, run `probe` — it fetches **one
