@@ -40,12 +40,34 @@ import argparse
 import csv
 import json
 import os
+import re
 import sys
 import time
 import urllib.error
 import urllib.parse
 import urllib.request
 from collections import Counter, OrderedDict
+
+TAG_ENTRY_RE = re.compile(r'"([^"]*)"')
+
+
+def tag_list(raw_tags_value):
+    """
+    The CreatorIQ `Tags` field serializes a publisher's tags as a
+    comma-separated list of double-quoted entries, e.g.:
+        "Home Type|House","Niche|Home & Garden","Crm Adriana"
+    Standalone tags (no `Category|Value` pipe) are just the tag name.
+    Extract the quoted entries as a plain list of tag strings.
+    """
+    if not raw_tags_value:
+        return []
+    return TAG_ENTRY_RE.findall(raw_tags_value)
+
+
+def has_tag(raw_tags_value, tag_name):
+    """Case-insensitive exact match against one of the quoted tag entries."""
+    target = tag_name.strip().lower()
+    return any(t.strip().lower() == target for t in tag_list(raw_tags_value))
 
 
 def log(*args):
@@ -238,28 +260,50 @@ def cmd_export(args):
     filters = parse_filters(args.filter)
     fields = args.fields.split(",") if args.fields else None
 
+    # The API's `filter=Field=Value` only does an exact whole-field-value
+    # match, which is useless against `Tags` (a serialized list of many
+    # quoted tag entries per record). `--require-tag` instead does a
+    # client-side "is this exact tag present in the list" check after
+    # fetching, so make sure the tag field is fetched even if the caller's
+    # --fields projection didn't ask for it (and drop it again on write if
+    # it wasn't originally requested).
+    tag_field_was_requested = fields is None or args.tag_field in fields
+    if args.require_tag and fields is not None and args.tag_field not in fields:
+        fields = fields + [args.tag_field]
+
     size = args.max_size
     total, first_records = client.fetch_page(1, size, filters=filters, fields=fields)
     if total is None:
         raise SystemExit("Could not resolve total from response; check --total-path")
     pages = (total + size - 1) // size
-    log(f"Filter: {filters or 'none'}")
-    log(f"Matching total: {total} across {pages} pages of size {size}")
+    log(f"Server-side filter: {filters or 'none'}")
+    if args.require_tag:
+        log(f"Client-side tag filter (field={args.tag_field!r}): "
+            f"require any of {args.require_tag!r}")
+    log(f"Server-side matching total: {total} across {pages} pages of size {size}")
 
     os.makedirs(os.path.dirname(os.path.abspath(args.out)) or ".", exist_ok=True)
 
     writer = None
     csv_file = open(args.out, "w", newline="", encoding="utf-8")
     written = 0
+    scanned = 0
 
     def write_records(records):
-        nonlocal writer, written
+        nonlocal writer, written, scanned
         for item in records:
             row = unwrap_record(item)
             if not isinstance(row, dict):
                 continue
+            scanned += 1
+            if args.require_tag:
+                raw_tags = row.get(args.tag_field)
+                if not any(has_tag(raw_tags, t) for t in args.require_tag):
+                    continue
             if writer is None:
                 fieldnames = fields if fields else list(row.keys())
+                if args.require_tag and not tag_field_was_requested:
+                    fieldnames = [f for f in fieldnames if f != args.tag_field]
                 writer = csv.DictWriter(csv_file, fieldnames=fieldnames, extrasaction="ignore")
                 writer.writeheader()
             writer.writerow(row)
@@ -273,13 +317,13 @@ def cmd_export(args):
             write_records(records)
             if page % args.log_every == 0 or page == pages:
                 elapsed = time.time() - t0
-                rate = written / elapsed if elapsed > 0 else 0
-                log(f"  page {page}/{pages} | rows written: {written}/{total} "
-                    f"| elapsed {elapsed:.0f}s | {rate:.0f} rows/s")
+                rate = scanned / elapsed if elapsed > 0 else 0
+                log(f"  page {page}/{pages} | scanned {scanned}/{total} | "
+                    f"rows written: {written} | elapsed {elapsed:.0f}s | {rate:.0f} rows/s")
     finally:
         csv_file.close()
 
-    log(f"\nDone. Wrote {written} rows to {args.out}")
+    log(f"\nDone. Scanned {scanned} records, wrote {written} matching rows to {args.out}")
 
 
 def add_common_args(p):
@@ -309,8 +353,13 @@ def main():
 
     p_export = sub.add_parser("export", help="Full paginated fetch (optionally filtered) to CSV")
     add_common_args(p_export)
-    p_export.add_argument("--filter", action="append", default=[], help="field=value; repeatable for AND filters")
+    p_export.add_argument("--filter", action="append", default=[], help="field=value; repeatable for AND filters (server-side exact match)")
     p_export.add_argument("--fields", default=None, help="Comma-separated list of fields to request/write (server-side projection if supported)")
+    p_export.add_argument("--require-tag", action="append", default=[],
+                           help="Require this exact tag to be present in the tag-field's serialized list "
+                                "(client-side, case-insensitive; repeatable for OR). Use for APIs where the "
+                                "server-side filter only supports exact whole-field match, not tag containment.")
+    p_export.add_argument("--tag-field", default="Tags", help="Field holding the serialized tag list checked by --require-tag")
     p_export.add_argument("--out", required=True, help="Output CSV path")
     p_export.add_argument("--log-every", type=int, default=25)
     p_export.set_defaults(func=cmd_export)
