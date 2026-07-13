@@ -74,10 +74,40 @@ The tool respects the API's rate limit (observed `x-ratelimit-limit: 5`) via
 a client-side `--min-interval` throttle plus exponential-backoff retries on
 HTTP 429/5xx responses.
 
+## Filtering by tag
+
+The API's server-side `filter=Field=Value` only does an exact **whole
+field value** match. That's useless against `Tags`, which is a serialized,
+comma-separated list of quoted tag entries per record (e.g.
+`"Home Type|House","Niche|Home & Garden","Crm Adriana"`) — no `LIKE` /
+`CONTAINS` operator is supported by the API (confirmed by testing several
+operator syntaxes; all either no-op or 400).
+
+So tag containment is filtered **client-side** while streaming pages to
+CSV, via `--require-tag` (case-insensitive exact match against one entry in
+the tag list, repeatable for OR):
+
+```bash
+python3 src/creatoriq_export.py export \
+  --endpoint https://apis.creatoriq.com/crm/v1/api/publishers \
+  --auth-header x-api-key --api-key-env CREATORIQ_API_KEY \
+  --data-path PublisherCollection --total-path total \
+  --filter Status=Active \
+  --require-tag "Crm Adriana" \
+  --fields Id,NetworkPublisherId,PublisherId,PublisherName,Status,StatusCategory,...,Tags,TagNames,... \
+  --max-size 1000 --min-interval 0.25 \
+  --out output/creatoriq_active_members_crm_adriana.csv
+```
+
 ## Output
 
-[`output/creatoriq_active_members.csv`](output/creatoriq_active_members.csv)
-— 42,990 rows, one per active publisher/member, 34 columns.
+- [`output/creatoriq_active_members.csv`](output/creatoriq_active_members.csv)
+  — all 42,990 `Status=Active` publishers/members, 34 columns.
+- [`output/creatoriq_active_members_crm_adriana.csv`](output/creatoriq_active_members_crm_adriana.csv)
+  — the 11,662 `Status=Active` publishers that also carry the exact tag
+  `Crm Adriana` (case-insensitive; covers the `Crm Adriana` / `CRM Adriana`
+  casing variants observed in the live data), scanned out of all 42,990
+  active records.
 
 ## Tool reference
 
