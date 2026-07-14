@@ -52,6 +52,10 @@ def main():
     ap.add_argument("--posts-jsonl", required=True)
     ap.add_argument("--creators-csv", required=True, help="output/creatoriq_active_members_crm_adriana.csv")
     ap.add_argument("--out-csv", required=True)
+    ap.add_argument("--verified-ids-file", default=None,
+                     help="Optional: text file of creator ids for which --posts-jsonl has *complete* "
+                          "coverage (came from a full unfiltered scan). Creators not in this set get "
+                          "DataStatus=Pending instead of a confirmed zero-post count.")
     args = ap.parse_args()
 
     creators = []
@@ -77,34 +81,41 @@ def main():
     n_with_posts = sum(1 for v in posts_by_creator.values() if v)
     print(f"Creators with >=1 distinct post: {n_with_posts}")
 
+    verified_ids = load_creator_ids(args.verified_ids_file) if args.verified_ids_file else None
+
     out_fields = [
         "Id", "PublisherId", "PublisherName", "Status",
         "LastPostDate", "TimeSinceLastPost_Days",
         "PostsCount_Sep2025_Jan2026", "PostsCount_Jan2026_Today",
-        "TotalDistinctPostsTracked",
+        "TotalDistinctPostsTracked", "DataStatus",
     ]
+    n_pending = 0
     with open(args.out_csv, "w", newline="") as out_f:
         w = csv.DictWriter(out_f, fieldnames=out_fields)
         w.writeheader()
         for c in creators:
             cid = c["Id"]
+            is_verified = verified_ids is None or cid in verified_ids
             post_dates = list(posts_by_creator.get(cid, {}).values())
             last_post = max(post_dates) if post_dates else None
             w1_count = sum(1 for d in post_dates if in_window(d, WINDOW_1))
             w2_count = sum(1 for d in post_dates if in_window(d, WINDOW_2))
             days_since = (TODAY - last_post.date()).days if last_post else ""
+            if not is_verified:
+                n_pending += 1
             w.writerow({
                 "Id": cid,
                 "PublisherId": c.get("PublisherId"),
                 "PublisherName": c.get("PublisherName"),
                 "Status": c.get("Status"),
-                "LastPostDate": last_post.strftime("%Y-%m-%d") if last_post else "",
-                "TimeSinceLastPost_Days": days_since,
-                "PostsCount_Sep2025_Jan2026": w1_count,
-                "PostsCount_Jan2026_Today": w2_count,
-                "TotalDistinctPostsTracked": len(post_dates),
+                "LastPostDate": last_post.strftime("%Y-%m-%d") if last_post else ("" if is_verified else "Pending"),
+                "TimeSinceLastPost_Days": days_since if is_verified else "",
+                "PostsCount_Sep2025_Jan2026": w1_count if is_verified else "",
+                "PostsCount_Jan2026_Today": w2_count if is_verified else "",
+                "TotalDistinctPostsTracked": len(post_dates) if is_verified else "",
+                "DataStatus": "Verified" if is_verified else "Pending",
             })
-    print(f"Wrote {args.out_csv}")
+    print(f"Wrote {args.out_csv} ({n_pending} rows marked Pending)")
 
 
 if __name__ == "__main__":
