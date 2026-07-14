@@ -1,0 +1,34 @@
+---
+description: When to use Glean — after workspace search fails, for Wayfair-internal context
+alwaysApply: true
+---
+
+# When to Use Glean (MCP)
+
+## Order of operations
+
+1. **Search the workspace first** — use local tools (Read, Grep, Glob, SemanticSearch, open files) to find scripts, SQL, notes, and configs in this project.
+2. **If the answer is not in the workspace** — or the workspace only has fragments and you need authoritative internal context — **use Glean** (`glean_default` MCP tools).
+
+Do not skip workspace search when the user’s need could be satisfied from files already in the repo.
+
+## Prefer Glean after a workspace miss when the topic is Wayfair-internal
+
+Especially use Glean when the request involves internal context such as:
+
+- **Data & analytics** — table locations, dataset ownership, metric definitions, grain, lineage hints
+- **Pricing / profit / finance** — calculation methods, policy, PBSI/MRPI-type workflows, approved definitions
+- **Scripts & pipelines** — where similar logic lives in **other** repos, who maintains it, design docs
+- **Operational workflows** — n8n, ETL, QA processes, handoffs between teams
+- **People & org** — who owns a system, SMEs, stakeholders (use `employee_search` / expert tools per existing Glean rules)
+- **Policies & specs** — wikis, Confluence, RFCs, Slack context indexed by Glean
+
+For **purely local** coding tasks (refactor this file, fix this bug) where nothing internal is missing, Glean is optional.
+
+## Tool choice
+
+Follow the existing **glean-tool-selection** rule and MCP instructions: e.g. `employee_search` for people, `search` / `read_document` for docs, `code_search` for internal repos, `meeting_lookup` / `gmail_search` when the user asks about meetings or email.
+
+## Honesty
+
+If Glean returns nothing useful, say so and suggest narrower queries or the right team/channel — do not invent internal facts.

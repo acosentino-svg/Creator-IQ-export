@@ -1,0 +1,52 @@
+---
+description: n8n workflow access via MCP and REST API — always update workflows in n8n, not local JSON files
+alwaysApply: true
+---
+
+# n8n Access
+
+An MCP server is available for n8n. **Always modify workflows directly in n8n** — never edit a local `.json` export and assume that updates the live workflow.
+
+## n8n API MCP Server
+
+A custom Python bridge (`n8n_mcp_server.py`) that wraps the n8n REST API. Call its tools via `CallMcpTool` using the n8n-api MCP server (Cursor auto-generates the server name based on your workspace — look for the one containing `n8n-api`).
+
+### Available tools
+
+| Tool | Purpose |
+|------|---------|
+| `list_workflows` | List all workflows (id, name, active, updatedAt). Optional `active` filter. |
+| `get_workflow` | Fetch the full definition of a workflow by ID (nodes, connections, settings). |
+| `update_workflow` | **Overwrite** a workflow. Requires `id` and full `workflow` object (`name`, `nodes`, `connections`, `settings`). |
+| `create_workflow` | Create a new workflow from a full definition. |
+| `activate_workflow` | Activate a workflow by ID. |
+| `deactivate_workflow` | Deactivate a workflow by ID. |
+| `list_executions` | List recent executions. Optional filters: `workflowId`, `status`, `limit`. |
+| `get_execution` | Get details of a specific execution by ID. |
+| `retry_execution` | Retry a failed execution. |
+| `stop_execution` | Stop a running execution. |
+| `list_credentials` | List available n8n credentials (id, name, type). |
+
+### Updating a workflow
+
+1. **Always read the tool schema first** — check the MCP tool descriptors for parameter details before calling.
+2. `update_workflow` replaces the entire workflow. Always `get_workflow` first, modify in memory, then push back.
+3. For large workflows the JSON payload may be too big for an inline `CallMcpTool` call. In that case, write a short Python script that uses the n8n REST API directly:
+   - Base URL: read `N8N_HOST` from `.cursor/mcp.json` → `mcpServers.n8n-api.env.N8N_HOST`
+   - API key: read `N8N_API_KEY` from the same location
+   - Endpoint: `PUT /api/v1/workflows/{id}` with header `X-N8N-API-KEY`
+   - SSL: disable hostname verification (`ssl.CERT_NONE`) — the internal host uses a non-public cert
+   - Delete the script after a successful push.
+
+### Confirm before destructive actions
+
+Before running `update_workflow`, `activate_workflow`, or `deactivate_workflow`, tell the user what will change and get confirmation — same pattern as the BigQuery safety rules.
+
+## Key rule: update in n8n, not local files
+
+Local `.json` workflow exports in the workspace are **snapshots for reference only**. They are not synced to n8n automatically. When the user asks to change a workflow:
+
+1. Use the n8n API tools to fetch the live workflow (`get_workflow`).
+2. Make changes to that live definition.
+3. Push the updated definition back (`update_workflow` or direct REST call).
+4. Optionally update the local `.json` file to keep it in sync, but this is secondary.

@@ -1,0 +1,36 @@
+---
+description: User context; Git/GitHub answers MUST be plain-English and beginner-friendly
+alwaysApply: true
+---
+
+# Agent Memory
+
+## User
+- Name: Joshua Hill
+- Role: Pricing Analyst
+- Team: Wayfair US Profit Management/Pricing
+
+## Projects & Context
+- 
+
+## Preferences
+
+### Git and GitHub (required — do not skip)
+
+Joshua does **not** have prior comfort with Git or GitHub. **Whenever** the topic involves repos, branches, pull requests, merges, pushes, Cursor’s Source Control panel, or GitHub’s website, you **must**:
+
+1. **Use plain English first** — short sentences. Assume zero prior vocabulary unless Joshua has already used the term in this chat.
+2. **Define words** the first time you use them in that answer (e.g. “**branch** = a named copy of the project you can change without touching the shared copy yet”).
+3. **Avoid jargon** like “rebase,” “index,” “HEAD,” “remote,” “force-with-lease,” “sparse cone,” etc. **unless** you explain them in the same breath or offer a simpler alternative (“update your copy from the team’s shared version on GitHub”).
+4. **Name the actual UI** when it helps: which menu, which sidebar icon, which button label in Cursor or GitHub (e.g. “green **Merge pull request** button”).
+5. **Say what will happen** before steps: what changes on their computer, what changes on GitHub, and what could go wrong.
+6. **Separate “what happened” from “what you did”** when things look wrong (e.g. someone else’s merge vs their click).
+
+If a shorter technical answer would save words but skip explanations, **choose the longer, clearer answer** for this user.
+
+### General
+
+- Match the same plain style for other tools when Joshua is learning them; don’t assume DevOps background.
+
+## Common Resources
+- 

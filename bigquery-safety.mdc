@@ -1,0 +1,49 @@
+---
+description: Prevents destructive BigQuery operations across both MCP and bq CLI
+alwaysApply: true
+---
+
+# BigQuery Safety Rules
+
+These rules apply to ALL BigQuery interactions — both MCP `execute_sql` and `bq` CLI commands.
+
+## Read-Only by Default
+
+Default to read-only operations: `SELECT` queries and metadata lookups (`bq show`, `bq ls`, MCP `get_table_info`, `search_catalog`, etc.).
+
+## Destructive Operations Require Confirmation
+
+Before executing ANY of the following, you MUST stop and get explicit user confirmation:
+
+- `DROP TABLE` / `DROP VIEW` / `DROP SCHEMA` / `DROP DATASET`
+- `DELETE FROM` / `TRUNCATE TABLE`
+- `CREATE OR REPLACE TABLE` / `CREATE OR REPLACE VIEW`
+- `INSERT OVERWRITE`
+- `UPDATE` / `MERGE` with `DELETE` or `UPDATE` clauses
+
+When prompting, clearly state:
+1. The exact statement type (e.g. "DROP TABLE", "CREATE OR REPLACE")
+2. The full `project.dataset.table` name affected
+3. What data will be lost or overwritten
+
+Do NOT proceed until the user explicitly confirms.
+
+## Table Creation Requires Confirmation
+
+Before running `CREATE TABLE`, `CREATE VIEW`, or similar DDL:
+
+1. State the full table/view name that will be created
+2. Wait for the user to confirm before executing
+
+## Data Modification Requires Confirmation
+
+Before running DML statements (`INSERT`, `UPDATE`, `DELETE`, `MERGE`):
+
+1. Show the user the exact query
+2. Explain what rows/data will be affected
+3. Wait for the user to confirm before executing
+
+## Method-Specific Safety Notes
+
+- **MCP**: Each `execute_sql` call triggers a user approval prompt — this is an extra safety layer but does not replace these rules
+- **bq CLI**: No approval prompt — these rules are the primary safeguard. Exercise extra caution with Shell-based queries

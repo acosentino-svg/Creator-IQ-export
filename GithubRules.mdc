@@ -1,0 +1,38 @@
+---
+description: GitHub/Git safety — confirm before pushes to main or any overwrite of local/remote
+alwaysApply: true
+---
+
+# GitHub and Git safety
+
+## Do not push or pull `main` without explicit confirmation
+
+- **Never** `git push` to **`main`** (or merge/rebase into `main` on the remote) unless the user has **explicitly** asked for that action in this conversation and confirmed after you state what will happen.
+- **Never** `git pull` (or `fetch` + merge/rebase) that **updates the local `main` branch** or overwrites local tracked files from **`origin/main`** unless the user has **confirmed** after you describe the exact command and impact.
+
+If the user only asked for instructions, **give instructions only** — do not run destructive or history-changing commands unless they clearly ask you to execute them.
+
+## Confirm before any overwrite (local or remote)
+
+Before running **any** Git or GitHub-related action that can **overwrite** data, **stop and ask**. Get clear **yes** after you spell out:
+
+1. **The exact command(s)** (or UI action) you would run.
+2. **What will change locally** (e.g. `reset --hard`, `checkout -f`, `clean`, branch delete, file restore from another ref).
+3. **What will change on the remote** (e.g. `push`, `push --force`, PR merge), including **branch name** and whether **shared history** is rewritten.
+
+Examples that **require confirmation** before execution:
+
+- `git push` (especially to **`main`** or a shared default branch).
+- `git push --force` / `--force-with-lease`.
+- `git pull` / merge / rebase when it would **replace or discard** local commits or uncommitted work.
+- `git reset --hard`, `git checkout -f`, `git restore` / `git checkout` that drops local changes.
+- `git clean` (removes untracked files).
+- Deleting or recreating branches when that affects **remote** tracking or others’ work.
+- Any operation the user did not **explicitly** ask you to **run** (vs. explain).
+
+**Allowed without extra confirmation** when the user asked you to run Git: read-only operations such as `git status`, `git log`, `git diff`, `git branch -vv`, `git fetch` that does not merge (if the user asked to inspect state). When in doubt, **prompt first**.
+
+## Summary
+
+- **No** push/pull that updates **`main`** (local or remote) **without** user confirmation after you state the plan.
+- **No** local or remote **overwrites** from Git/GitHub actions **without** the same confirmation.

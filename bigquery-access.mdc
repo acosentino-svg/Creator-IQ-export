@@ -1,0 +1,66 @@
+---
+description: BigQuery access via MCP server and bq CLI — when to use each
+alwaysApply: true
+---
+
+# BigQuery Access
+
+Two methods are available. Use the right one for the task.
+
+## Method 1: MCP Server (Toolbox BigQuery)
+
+Use the `bigquery` MCP server tools via `CallMcpTool` for:
+
+- **Discovery & exploration**: `search_catalog` performs semantic search across projects to find tables by meaning (e.g. "order product metrics"), not just exact name
+- **Schema inspection**: `get_table_info` returns full schema, partitioning, clustering, row count, and metadata as structured JSON
+- **Browsing datasets**: `list_dataset_ids` and `list_table_ids` for navigating project structure
+- **Small-to-moderate queries**: `execute_sql` for SELECT queries returning ~50 rows or fewer
+- **Advanced analytics**: `forecast`, `analyze_contribution`, and `ask_data_insights` provide built-in ML/analytics without writing SQL
+
+MCP limitations: output truncates on large result sets; cannot run multi-statement scripts (DECLARE, CREATE TEMP TABLE, IF/ELSE); temp tables don't persist across calls.
+
+## Method 2: bq CLI (Shell)
+
+ADC is pre-authenticated. Use `bq` commands via the Shell tool for:
+
+- **Running .sql script files**: `bq query --use_legacy_sql=false < script.sql`
+- **Multi-statement scripts**: supports DECLARE, CREATE TEMP TABLE, IF/ELSE, multiple SELECTs
+- **Large result sets**: pipe to file with `--format=csv`, or use `--max_rows`
+- **Saving output to file**: `bq query --use_legacy_sql=false --format=csv "SELECT ..." > output.csv`
+
+```bash
+bq show --schema --format=prettyjson project:dataset.table
+bq query --use_legacy_sql=false "SELECT * FROM \`project.dataset.table\` LIMIT 10"
+bq ls project:dataset
+``` 
+
+## Decision Guide
+
+1. **Exploring unfamiliar data?** → MCP (`search_catalog`, `get_table_info`)
+2. **Quick query, small results?** → MCP (`execute_sql`)
+3. **Running a finalized .sql script?** → bq CLI
+4. **Need full, untrimmed output?** → bq CLI (pipe to file)
+5. **Multi-statement SQL with temp tables?** → bq CLI
+6. **Forecasting or contribution analysis?** → MCP (`forecast`, `analyze_contribution`)
+7. **Writing a .sql file to run or keep?** → Save to `Working_Queries/` (see below)
+
+## Where to Save Query Files
+
+**Required:** When you write a `.sql` file to get information (for bq CLI, documentation, or reuse), and the user has not specified a file path, **always** save it under the workspace folder:
+
+```
+Working_Queries/
+```
+
+(path at the root of the Cursor workspace, sibling to `.cursor/` — not inside `.cursor/`.)
+
+### Filename convention (required)
+
+Name every new `.sql` file saved here with a **timestamp prefix** in local time, **24-hour clock**, then an underscore, then a descriptive slug:
+
+- Format: `YYYYMMDD_HHmm_descriptive_name.sql`
+- Example: `20260326_1131_qa_ftr_handler_by_brand.sql`
+
+Use the **current** date and time when creating the file (not a placeholder). If the editor or shell provides a shortcut to insert time, use that so the prefix matches “now.”
+
+Do **not** save ad-hoc queries to `.cursor/` root or the workspace root (use `Working_Queries/` with this naming pattern instead).
