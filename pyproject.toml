@@ -1,0 +1,39 @@
+[project]
+name = "creatoriq-activation-dashboard"
+version = "0.1.0"
+description = "Creator activation dashboard powered by the CreatorIQ API (Streamlit)."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+dependencies = [
+    "streamlit>=1.38,<2.0",
+    "pandas>=2.1,<3.0",
+    # Pinned <2.3 to avoid a spurious NumPy DeprecationWarning surfaced by
+    # pandas' Timedelta constructor on newer NumPy 2.3+ builds.
+    "numpy>=1.26,<2.3",
+    "requests>=2.31,<3.0",
+    "pydantic>=2.6,<3.0",
+    "PyYAML>=6.0,<7.0",
+    "python-dotenv>=1.0,<2.0",
+    "plotly>=5.20,<6.0",
+    "SQLAlchemy>=2.0,<3.0",
+    "tenacity>=8.2,<9.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0,<9.0",
+    "responses>=0.25,<1.0",
+    "ruff>=0.5,<1.0",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.ruff]
+line-length = 110
+target-version = "py310"

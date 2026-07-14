@@ -1,0 +1,57 @@
+# Maps CreatorIQ's raw JSON fields (dotted paths) onto the normalized columns
+# the dashboard actually uses. If your account's API returns different key
+# names/casing, change the *values* here -- never the keys on the left, and
+# no Python code needs to change.
+#
+# Dotted paths support nested objects, e.g. "Publisher.Id" reads
+# record["Publisher"]["Id"]. Use "PaidMediaStats.PaidClicks" style paths for
+# nested metric blocks as documented by CreatorIQ / its BI connectors.
+
+creators:
+  creator_id: Id
+  name: Name
+  email: EmailAddress
+  status: Status
+  tier: Group
+  joined_date: DateAdded
+  primary_platform: PrimaryNetwork
+
+campaigns:
+  campaign_id: Id
+  campaign_name: Name
+  status: CampaignStatus
+  start_date: StartDate
+  end_date: EndDate
+
+posts:
+  post_id: Id
+  creator_id: Publisher.Id
+  campaign_id: CampaignId
+  campaign_name: CampaignName
+  platform: Network
+  post_type: PostType
+  posted_at: PostDate
+  views: Views_next
+  likes: Likes
+  comments: Comments
+  shares: TotalShares
+  engagement: Engagement
+  link_clicks: LinkClicks
+
+links:
+  event_id: Id
+  creator_id: Publisher.Id
+  link_id: LinkId
+  link_label: LinkName
+  destination_url: DestinationUrl
+  clicked_at: ClickDate
+  campaign_id: CampaignId
+
+email_events:
+  event_id: Id
+  creator_id: Publisher.Id
+  message_id: MessageId
+  subject: Subject
+  sent_at: SentDate
+  opened_at: OpenedDate
+  clicked_at: ClickedDate

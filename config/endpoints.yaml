@@ -1,0 +1,61 @@
+# CreatorIQ REST endpoint configuration.
+#
+# IMPORTANT: CreatorIQ's public API reference (https://apidocs.creatoriq.com) is
+# gated behind a login tied to your org's contract, and exact resource names /
+# paths can differ by account and API version. The paths below are sensible
+# defaults based on CreatorIQ's publicly described data model (Publishers,
+# Campaigns, Social Posts, Links, Communications/Messages). Confirm each path
+# and pagination style against YOUR account's Postman collection / API docs
+# (Account > API settings in CreatorIQ, or ask your CreatorIQ CSM), then edit
+# this file -- no Python changes should be required.
+
+pagination:
+  # "page" -> ?page=1&page_size=100 ; "offset" -> ?offset=0&limit=100 ; "cursor" -> ?cursor=<next_cursor>
+  style: page
+  page_param: page
+  page_size_param: page_size
+  page_size: 100
+  offset_param: offset
+  limit_param: limit
+  cursor_param: cursor
+  # Dotted path (within the JSON response) to the list of records.
+  results_path: data
+  # Dotted path to the next-page cursor/token (only used when style == cursor).
+  next_cursor_path: meta.next_cursor
+  # Dotted path to total pages / hasMore flag (used for style == page or offset).
+  has_more_path: meta.has_more
+  total_pages_path: meta.total_pages
+
+resources:
+  creators:
+    description: "Creators / influencers enrolled in your program (CreatorIQ 'Publishers')."
+    path: /publishers
+    method: GET
+
+  campaigns:
+    description: "Campaigns / activations creators are briefed on."
+    path: /campaigns
+    method: GET
+
+  posts:
+    description: "Social content (posts, reels, stories, videos) published by creators."
+    path: /social/posts
+    method: GET
+    params:
+      # Pull incrementally on refresh; {since} is substituted with the ISO
+      # timestamp of the last successful sync.
+      updated_since: "{since}"
+
+  links:
+    description: "Trackable / affiliate links assigned to creators and their click events."
+    path: /links/clicks
+    method: GET
+    params:
+      updated_since: "{since}"
+
+  email_events:
+    description: "Outbound creator communications (email sends) and open/click receipts."
+    path: /communications/messages
+    method: GET
+    params:
+      updated_since: "{since}"
