@@ -1,0 +1,11 @@
+.env
+__pycache__/
+*.pyc
+.venv/
+
+# Export artifacts -- these contain real member PII, never commit them.
+*.jsonl
+*.jsonl.checkpoint.json
+probe_response.json
+*_export.csv
+/exports/
