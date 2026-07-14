@@ -1,0 +1,10 @@
+---
+description: "Example project rule for Creator-IQ-export"
+globs:
+alwaysApply: true
+---
+
+- This is an example rule. Edit or delete this file, and add more `.mdc`
+  files in this folder to give the AI assistant project-specific instructions.
+- Keep instructions short and specific (e.g. coding conventions, folder
+  structure, testing requirements).
