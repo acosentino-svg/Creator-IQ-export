@@ -40,3 +40,23 @@ alerts:
   # Post a weekly digest (needs-attention creators + spikes) to Slack if
   # SLACK_WEBHOOK_URL is configured.
   weekly_digest_enabled: true
+
+live_sync:
+  # Safety limits for pulling from the real CreatorIQ API (see
+  # src/creatoriq_dashboard/etl.py). Tune these up once you've confirmed a
+  # small sync works end-to-end -- CreatorIQ accounts can have hundreds of
+  # campaigns and each one requires its own API calls (roster + posts).
+  #
+  # Only sync campaigns matching these statuses (set to [] to sync all).
+  campaign_status_filter: ["Active"]
+  # Cap how many campaigns get synced per run (null = no cap). Start small
+  # (e.g. 5-10) the first time you point this at a real account.
+  max_campaigns: 10
+  # Whether to resolve each creator's NetworkPublisherId via an extra
+  # /publishers?filter= lookup when it wasn't already available from a post
+  # (needed to fetch that creator's email/messages). Costs one extra API
+  # call per creator who hasn't posted yet.
+  resolve_missing_network_ids: true
+  # Cap on total per-creator email/message lookups per run (each is 1-2 API
+  # calls: optional ID resolution + the messages fetch). null = no cap.
+  max_email_lookups: 300

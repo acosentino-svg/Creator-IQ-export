@@ -27,6 +27,17 @@ if email_engagement.empty:
     st.info("No email engagement data available yet.")
     st.stop()
 
+if not config.is_demo and email_engagement["opens_total"].sum() == 0:
+    st.warning(
+        "**Every creator shows 0 opens.** CreatorIQ's `/publisher/{id}/messages` endpoint exposes "
+        "an `IsRead` flag on in-platform Message Center notifications — but on accounts where "
+        "creators mostly read your outreach as an actual email (not by logging into the CreatorIQ "
+        "portal), `IsRead` can stay `False` even for creators who are clearly active. Don't treat "
+        "this page as ground truth in that case. For reliable open-tracking, sync real open-pixel "
+        "data from your ESP (Mailchimp/Klaviyo/HubSpot/Iterable/etc.) into the `email_events` table "
+        "instead — see the README's 'About who has/hasn't opened an email' section."
+    )
+
 merged = email_engagement.merge(scored, on="creator_id", how="left")
 
 recent_window = config.settings.get("email_engagement", "recent_open_window_days", default=30)

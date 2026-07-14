@@ -14,6 +14,7 @@ from sqlalchemy import create_engine, text
 from sqlalchemy.engine import Engine
 
 TABLES = ("creators", "campaigns", "posts", "links", "email_events")
+LINK_SNAPSHOT_TABLE = "link_click_snapshots"
 
 
 def get_engine(db_path: Path) -> Engine:
@@ -22,6 +23,12 @@ def get_engine(db_path: Path) -> Engine:
 
 
 def write_table(engine: Engine, table_name: str, df: pd.DataFrame, if_exists: str = "replace") -> None:
+    if df.empty and len(df.columns) == 0:
+        # A DataFrame with zero rows AND zero columns (e.g. pd.DataFrame([]))
+        # can't be turned into a CREATE TABLE statement -- and there's
+        # nothing useful to persist anyway. read_table() already returns an
+        # empty frame for a missing table, so just skip the write.
+        return
     df.to_sql(table_name, engine, if_exists=if_exists, index=False)
 
 
@@ -61,6 +68,54 @@ def record_sync(engine: Engine, resource_name: str, synced_at: datetime | None =
             ),
             {"r": resource_name, "t": synced_at.isoformat()},
         )
+
+
+def append_link_click_snapshot(engine: Engine, posts_df: pd.DataFrame, snapshot_at: datetime) -> None:
+    """CreatorIQ exposes link clicks as a cumulative-to-date counter per
+    post, not discrete click events. Append the current counter values as a
+    dated snapshot; `derive_link_click_deltas` below turns consecutive
+    snapshots into day-over-day deltas the rest of the app can treat as
+    "link click activity" the same way it treats discrete post events.
+    """
+    if posts_df.empty or "link_clicks" not in posts_df.columns:
+        return
+    snapshot = posts_df[["post_id", "creator_id", "campaign_id", "link_clicks"]].copy()
+    snapshot["link_clicks"] = pd.to_numeric(snapshot["link_clicks"], errors="coerce").fillna(0)
+    snapshot["snapshot_at"] = snapshot_at.isoformat()
+    with engine.begin() as conn:
+        conn.execute(
+            text(
+                f"CREATE TABLE IF NOT EXISTS {LINK_SNAPSHOT_TABLE} ("
+                "post_id TEXT, creator_id TEXT, campaign_id TEXT, link_clicks REAL, snapshot_at TEXT)"
+            )
+        )
+    snapshot.to_sql(LINK_SNAPSHOT_TABLE, engine, if_exists="append", index=False)
+
+
+def derive_link_click_deltas(engine: Engine) -> pd.DataFrame:
+    """Turn accumulated link_click_snapshots into "links" event rows: one
+    row per (post, snapshot) where the cumulative click counter increased,
+    with `clicks` holding the size of that increase. Shaped to match the
+    `links` table schema the rest of the app already expects.
+    """
+    snapshots = read_table(engine, LINK_SNAPSHOT_TABLE)
+    if snapshots.empty:
+        return pd.DataFrame(columns=["event_id", "creator_id", "campaign_id", "link_id", "clicked_at", "clicks"])
+
+    snapshots["snapshot_at"] = pd.to_datetime(snapshots["snapshot_at"], utc=True, errors="coerce")
+    snapshots = snapshots.sort_values(["post_id", "snapshot_at"])
+    snapshots["previous_clicks"] = snapshots.groupby("post_id")["link_clicks"].shift(1)
+    snapshots["delta"] = snapshots["link_clicks"] - snapshots["previous_clicks"]
+
+    increased = snapshots[snapshots["delta"] > 0].copy()
+    if increased.empty:
+        return pd.DataFrame(columns=["event_id", "creator_id", "campaign_id", "link_id", "clicked_at", "clicks"])
+
+    increased["event_id"] = (
+        increased["post_id"].astype(str) + "_" + increased["snapshot_at"].astype(str)
+    ).map(lambda s: f"linkdelta_{s}")
+    increased = increased.rename(columns={"post_id": "link_id", "snapshot_at": "clicked_at", "delta": "clicks"})
+    return increased[["event_id", "creator_id", "campaign_id", "link_id", "clicked_at", "clicks"]].reset_index(drop=True)
 
 
 def get_last_synced_at(engine: Engine, resource_name: str) -> str | None:

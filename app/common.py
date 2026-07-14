@@ -79,7 +79,12 @@ def compute_dashboard_bundle(_config_mode: str):
     needs_attention = build_needs_attention(scored, email_engagement)
 
     posts_timeline = build_daily_activity(inputs.posts, "posted_at", "Posts")
-    links_timeline = build_daily_activity(inputs.links, "clicked_at", "Link Clicks")
+    # In live mode, `links` rows are day-over-day deltas of a cumulative
+    # click counter (see storage.derive_link_click_deltas) with the delta
+    # size in `clicks`; in demo mode `links` rows are discrete synthetic
+    # click events with no `clicks` column, so this falls back to counting
+    # rows. Same function call works for both.
+    links_timeline = build_daily_activity(inputs.links, "clicked_at", "Link Clicks", value_col="clicks")
     timeline = combine_activity_timelines(posts_timeline, links_timeline)
     spike_cfg = config.settings.get("spike_detection", default={}) or {}
     spikes = detect_spikes(

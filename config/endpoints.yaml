@@ -1,61 +1,80 @@
 # CreatorIQ REST endpoint configuration.
 #
-# IMPORTANT: CreatorIQ's public API reference (https://apidocs.creatoriq.com) is
-# gated behind a login tied to your org's contract, and exact resource names /
-# paths can differ by account and API version. The paths below are sensible
-# defaults based on CreatorIQ's publicly described data model (Publishers,
-# Campaigns, Social Posts, Links, Communications/Messages). Confirm each path
-# and pagination style against YOUR account's Postman collection / API docs
-# (Account > API settings in CreatorIQ, or ask your CreatorIQ CSM), then edit
-# this file -- no Python changes should be required.
+# Verified live against a real CreatorIQ account (2026-07). CreatorIQ's own
+# API reference (https://apidocs.creatoriq.com) is gated behind an account
+# login, and its resources are genuinely inconsistent in shape (some list
+# endpoints return a JSON array, others return an object keyed by string
+# indices; pagination metadata lives in different places depending on the
+# resource). The paths/keys below match what a live account actually
+# returned -- if your account differs, this is the file to edit (the client
+# in src/creatoriq_dashboard/api_client.py reads these, no Python changes
+# needed).
+#
+# Set CREATORIQ_BASE_URL=https://api.creatoriq.com/api in .env (note the
+# /api suffix -- that's where this account's real endpoints live).
 
 pagination:
-  # "page" -> ?page=1&page_size=100 ; "offset" -> ?offset=0&limit=100 ; "cursor" -> ?cursor=<next_cursor>
+  # Used by the three "flat, top-level list" resources below (publishers,
+  # campaigns, publisher_messages): a {count, total, page, "<Key>": [...]}
+  # envelope, paginated by incrementing ?page= until a short/empty page.
+  # NOTE: the page-size query param is confirmed to be `size` on this
+  # account (not the more common `page_size`/`limit`/`per_page` -- all of
+  # which are silently ignored and fall back to a default page size of 20).
   style: page
   page_param: page
-  page_size_param: page_size
+  page_size_param: size
   page_size: 100
-  offset_param: offset
-  limit_param: limit
-  cursor_param: cursor
-  # Dotted path (within the JSON response) to the list of records.
-  results_path: data
-  # Dotted path to the next-page cursor/token (only used when style == cursor).
-  next_cursor_path: meta.next_cursor
-  # Dotted path to total pages / hasMore flag (used for style == page or offset).
-  has_more_path: meta.has_more
-  total_pages_path: meta.total_pages
+  total_pages_path: total_pages # present on /campaigns; absent (silently ignored) elsewhere -- generic stop-when-short-page logic covers those
 
 resources:
-  creators:
-    description: "Creators / influencers enrolled in your program (CreatorIQ 'Publishers')."
+  # --- Flat, top-level list resources (generic page-until-short pagination) ---
+
+  publishers:
+    description: "Search/list creators in CreatorIQ's Publisher CRM (your roster + prospects)."
     path: /publishers
     method: GET
+    results_path: PublisherCollection
+    item_unwrap_key: Publisher # each item is {"type":"Publisher","href":"...","Publisher": {...fields}}
 
   campaigns:
     description: "Campaigns / activations creators are briefed on."
     path: /campaigns
     method: GET
+    results_path: CampaignCollection
+    item_unwrap_key: Campaign
 
-  posts:
-    description: "Social content (posts, reels, stories, videos) published by creators."
-    path: /social/posts
+  publisher_messages:
+    description: "CreatorIQ in-platform Message Center thread for one creator (per NetworkPublisherId)."
+    path: /publisher/{network_publisher_id}/messages
     method: GET
-    params:
-      # Pull incrementally on refresh; {since} is substituted with the ISO
-      # timestamp of the last successful sync.
-      updated_since: "{since}"
+    results_path: MessagesCollection
+    item_unwrap_key: Message
 
-  links:
-    description: "Trackable / affiliate links assigned to creators and their click events."
-    path: /links/clicks
-    method: GET
-    params:
-      updated_since: "{since}"
+  # --- Nested-pagination resource: pagination metadata lives *inside* the
+  # response wrapper instead of at the top level. ---
 
-  email_events:
-    description: "Outbound creator communications (email sends) and open/click receipts."
-    path: /communications/messages
+  campaign_activity:
+    description: "Social posts + their metrics for one campaign (per CampaignId). This is the 'posts' source of truth."
+    path: /campaign/{campaign_id}/activity
     method: GET
-    params:
-      updated_since: "{since}"
+    wrapper_key: CampaignActivity
+    items_key: items
+    pagination_key: pagination
+    page_param: page
+    page_size_param: size
+    page_size: 100
+
+  # --- Single-fetch resources: no real pagination (either the endpoint
+  # ignores ?page= and always returns everything, or it's a single object). ---
+
+  campaign_publishers:
+    description: "Roster of creators briefed/accepted/applied to one campaign, with per-creator campaign status."
+    path: /campaign/{campaign_id}/publishers
+    method: GET
+    results_path: CampaignPublisher # object keyed by string indices ("0","1",...), not a JSON array
+
+  publisher_summary:
+    description: "Single creator's full CRM profile, including email address and contact/demographic fields."
+    path: /publisher/{network_publisher_id}/summary
+    method: GET
+    result_key: Summary

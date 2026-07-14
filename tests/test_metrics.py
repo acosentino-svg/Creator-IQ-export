@@ -84,6 +84,30 @@ def inputs() -> ActivationInputs:
     return ActivationInputs(creators=creators, posts=posts, links=links, email_events=email_events)
 
 
+def test_compute_last_activity_handles_completely_empty_links_and_missing_tier():
+    """Regression test: on a real CreatorIQ account, `links` can come back
+    completely empty (no LinkClicks data at all) and creators may have no
+    `tier` column -- neither should crash last-activity computation.
+    """
+    creators = pd.DataFrame(
+        {
+            "creator_id": ["c1"],
+            "name": ["No Tier Creator"],
+            "status": ["Accepted"],
+            "joined_date": [days_ago(10)],
+        }
+    )
+    posts = pd.DataFrame({"post_id": ["p1"], "creator_id": ["c1"], "posted_at": [days_ago(3)]})
+    links = pd.DataFrame(columns=["event_id", "creator_id", "clicked_at"])
+    email_events = pd.DataFrame(columns=["event_id", "creator_id", "sent_at", "opened_at"])
+
+    inputs = ActivationInputs(creators=creators, posts=posts, links=links, email_events=email_events)
+    last_activity = compute_last_activity(inputs)
+
+    assert last_activity.loc[0, "tier"] == "Unknown"
+    assert last_activity.loc[0, "days_since_last_active"] == 3
+
+
 def test_compute_last_activity(inputs: ActivationInputs):
     last_activity = compute_last_activity(inputs)
     assert set(last_activity["creator_id"]) == {"c1", "c2", "c3", "c4"}
@@ -128,6 +152,25 @@ def test_compute_email_engagement(inputs: ActivationInputs, settings: Settings):
     assert by_id.loc["c1", "open_rate"] == 1.0
     assert by_id.loc["c2", "opens_total"] == 0
     assert bool(by_id.loc["c3", "is_cold"]) is True  # sent 50 days ago, never opened
+
+
+def test_compute_email_engagement_when_nobody_has_ever_opened(settings: Settings):
+    """Regression test: on a real CreatorIQ account, the IsRead-derived
+    `opened_at` can be None for every single message (see the caveat in
+    config/field_mappings.yaml) -- this must degrade gracefully, not raise a
+    tz-naive/tz-aware subtraction error.
+    """
+    email_events = pd.DataFrame(
+        {
+            "creator_id": ["c1", "c1", "c2"],
+            "sent_at": [days_ago(10), days_ago(3), days_ago(5)],
+            "opened_at": [None, None, None],
+        }
+    )
+    engagement = compute_email_engagement(email_events, settings)
+    assert (engagement["opens_total"] == 0).all()
+    assert engagement["is_cold"].any()
+    assert engagement["days_since_last_open"].isna().all()
 
 
 def test_compute_email_engagement_empty(settings: Settings):

@@ -1,57 +1,73 @@
-# Maps CreatorIQ's raw JSON fields (dotted paths) onto the normalized columns
-# the dashboard actually uses. If your account's API returns different key
-# names/casing, change the *values* here -- never the keys on the left, and
-# no Python code needs to change.
+# Maps CreatorIQ's raw JSON fields (dotted paths, applied after any
+# item_unwrap_key in config/endpoints.yaml has already been applied) onto
+# the normalized columns the dashboard uses.
 #
-# Dotted paths support nested objects, e.g. "Publisher.Id" reads
-# record["Publisher"]["Id"]. Use "PaidMediaStats.PaidClicks" style paths for
-# nested metric blocks as documented by CreatorIQ / its BI connectors.
+# Verified live against a real CreatorIQ account (2026-07). Two important,
+# empirically-confirmed limitations of this account's API (yours may differ
+# -- adjust here if so):
+#
+# 1. There is no literal "when was this actually posted" field on a campaign
+#    activity item. `DateSubmitted` (when the post was captured into
+#    CreatorIQ's tracking) is the closest available proxy and is what
+#    `posted_at` maps to below.
+# 2. There is no dedicated "trackable link click event" resource -- link
+#    clicks are a cumulative counter (`LinkClicks`) on each post, refreshed
+#    over time. `src/creatoriq_dashboard/etl.py` snapshots that counter on
+#    every sync and derives day-over-day deltas for the "Link Clicks"
+#    activity timeline -- see `links` note below.
 
 creators:
-  creator_id: Id
-  name: Name
-  email: EmailAddress
-  status: Status
-  tier: Group
-  joined_date: DateAdded
-  primary_platform: PrimaryNetwork
+  # Sourced from campaign_publishers (config/endpoints.yaml) records.
+  creator_id: PublisherId
+  name: PublisherName
+  status: Status # per-campaign status (Accepted/Applied/Pending/...); etl.py keeps the most recent across campaigns
+  joined_date: DatePublisherAdded
 
 campaigns:
-  campaign_id: Id
-  campaign_name: Name
+  campaign_id: CampaignId
+  campaign_name: CampaignName
   status: CampaignStatus
   start_date: StartDate
   end_date: EndDate
 
 posts:
+  # Sourced from campaign_activity (config/endpoints.yaml) items.
   post_id: Id
-  creator_id: Publisher.Id
+  creator_id: PublisherId
+  network_publisher_id: NetworkPublisherId # used to resolve email/messages without an extra lookup call
   campaign_id: CampaignId
   campaign_name: CampaignName
-  platform: Network
+  platform: SocialNetwork
   post_type: PostType
-  posted_at: PostDate
+  posted_at: DateSubmitted
   views: Views_next
   likes: Likes
   comments: Comments
   shares: TotalShares
   engagement: Engagement
-  link_clicks: LinkClicks
+  link_clicks: LinkClicks # cumulative-to-date; see note above -- etl.py derives deltas for the links timeline
 
-links:
-  event_id: Id
-  creator_id: Publisher.Id
-  link_id: LinkId
-  link_label: LinkName
-  destination_url: DestinationUrl
-  clicked_at: ClickDate
-  campaign_id: CampaignId
+# There is no raw "links" API resource to map -- see the note above.
+# etl.py builds `links` rows itself (creator_id, clicked_at=snapshot date,
+# clicks=delta since the previous sync) from repeated `posts.link_clicks`
+# snapshots, so no field_mappings entry is needed here.
 
 email_events:
+  # Sourced from publisher_messages (config/endpoints.yaml) records. Note:
+  # `creator_id` isn't on the raw Message record itself (it's implicit from
+  # which publisher's message thread you fetched) so etl.py attaches it
+  # directly rather than via a dotted-path mapping here.
   event_id: Id
-  creator_id: Publisher.Id
-  message_id: MessageId
   subject: Subject
-  sent_at: SentDate
-  opened_at: OpenedDate
-  clicked_at: ClickedDate
+  sent_at: Date
+  # IMPORTANT CAVEAT (confirmed empirically on a live account): `IsRead`
+  # reflects whether the message was marked read in CreatorIQ's in-platform
+  # Message Center -- it stayed False even for creators who were clearly
+  # actively posting, i.e. it does NOT reliably reflect real email-open
+  # tracking (creators who engage via their actual inbox rather than the
+  # CreatorIQ portal never flip it). Treat `opened_at` sourced from this
+  # field as a weak/optional signal, not ground truth. If your ESP (e.g.
+  # Mailchimp/Klaviyo/HubSpot/Iterable) has real open-pixel tracking,
+  # syncing that into the same `email_events` shape will give much more
+  # trustworthy results -- see README.md.
+  is_read: IsRead

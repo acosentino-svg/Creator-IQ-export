@@ -47,21 +47,32 @@ behavior, including a few deliberate activity spikes.
 
 ## Connecting your real CreatorIQ data
 
+The API client, endpoint paths, and field mappings shipped in this repo have
+been **verified against a live CreatorIQ account** (not just guessed from
+public docs) — see `config/endpoints.yaml` and `config/field_mappings.yaml`
+for the confirmed schema and the quirks discovered along the way (results
+sometimes come back as a JSON array and sometimes as an object keyed by
+string indices; pagination metadata lives in different places per
+resource; the page-size query param is `size`, not the more common
+`page_size`/`limit`; etc.). Your account should mostly work out of the box,
+but CreatorIQ accounts do vary — if something doesn't match, this is the
+YAML to edit, not the Python.
+
 1. **Get API access.** Ask your CreatorIQ CSM / account admin for an API key
-   and the base URL for your instance (CreatorIQ's API reference lives at
-   https://apidocs.creatoriq.com but is gated behind your account's login —
-   ask CreatorIQ support or your CSM if you don't have a login yet).
-2. **Copy `.env.example` to `.env`** and fill in `CREATORIQ_BASE_URL`,
-   `CREATORIQ_API_KEY`, and `CREATORIQ_ORG_ID` (if your account requires it).
-3. **Confirm the endpoint paths and field names** in
-   `config/endpoints.yaml` and `config/field_mappings.yaml` against your
-   account's actual API docs / Postman collection. CreatorIQ's exact
-   resource paths and JSON field casing can differ by account and API
-   version, so this repo ships sensible *defaults* (based on CreatorIQ's
-   publicly documented data model: Publishers, Campaigns, Social Posts,
-   Links, Communications) rather than hard-coded assumptions — you edit YAML,
-   not Python, to align them.
-4. Set `CREATORIQ_DASHBOARD_MODE=live` in `.env`.
+   (CreatorIQ's interactive API reference lives at
+   https://apidocs.creatoriq.com but is gated behind your account's login).
+2. **Copy `.env.example` to `.env`** and set `CREATORIQ_API_KEY`. The default
+   `CREATORIQ_BASE_URL` (`https://api.creatoriq.com/api` — note the `/api`
+   suffix) and `CREATORIQ_ORG_ID` (usually not needed) already match what a
+   live account returned.
+3. Set `CREATORIQ_DASHBOARD_MODE=live` in `.env`.
+4. **Start small.** `config/settings.yaml`'s `live_sync` section caps how
+   much a sync pulls (`max_campaigns: 10`, `max_email_lookups: 300` by
+   default) — CreatorIQ's data model is campaign-centric (there's no single
+   "give me all my creators/posts" endpoint; you have to fan out over every
+   campaign's roster + activity), so a full sync across hundreds of
+   campaigns is a lot of API calls. Confirm a small sync works, then raise
+   the caps.
 5. Pull data into the local cache:
 
    ```bash
@@ -70,26 +81,46 @@ behavior, including a few deliberate activity spikes.
 
 6. Put that command on a schedule (cron, GitHub Actions, Airflow, etc.) — see
    [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md#scheduling-refreshes) for a
-   ready-to-use GitHub Actions example.
+   ready-to-use GitHub Actions example. **Link-click spikes specifically
+   need at least two scheduled syncs** before they show anything (see below).
 7. `streamlit run app/streamlit_app.py` again — you're now looking at real
    data, served instantly from the local SQLite cache instead of hitting the
    CreatorIQ API on every page view/filter change.
 
-### About "who has/hasn't opened an email"
+### Two confirmed data-quality caveats (the dashboard surfaces both in-app)
 
-CreatorIQ's core product is influencer *campaign* data (posts, engagement,
-links) — email open/click tracking is typically a separate **Communications
-/ Message Center** feature for creator outreach. If your account exposes
-that data via the API, point `config/endpoints.yaml`'s `email_events`
-resource at it and map its fields in `config/field_mappings.yaml`. If it
-doesn't (or you send creator emails through a separate ESP like Mailchimp,
-Klaviyo, HubSpot, or Iterable), the cleanest path is:
+**Link clicks are a cumulative counter, not an event log — and may not be
+populated at all.** CreatorIQ's `/campaign/{id}/activity` endpoint reports a
+`LinkClicks` field per post, but it's a running total-to-date, not a
+timestamped click event. `etl.py` snapshots that counter on every sync and
+derives day-over-day deltas for the "Link Clicks" activity timeline — which
+means **the first sync always shows zero link-click activity**; you need at
+least two scheduled syncs before deltas exist. Separately, on the account
+this was tested against, `LinkClicks` came back `null` for every single
+post — some CreatorIQ accounts don't populate it at all (e.g. if link
+tracking actually runs through a separate affiliate platform like Impact,
+CJ, or Rakuten instead of CreatorIQ's own trackable links). The **Activity &
+Spikes** page tells you which of these two situations you're in. If your
+real link-click data lives elsewhere, pull it from there and land it in the
+`links` table (same `creator_id`/`clicked_at`/`clicks` shape) — everything
+downstream already expects that.
 
-- Export/sync opens from that ESP into the same `email_events` shape
-  (`creator_id`, `message_id`, `sent_at`, `opened_at`, `clicked_at`), matched
-  to CreatorIQ creators by email address, and land it in the same
-  `email_events` table (`scripts/refresh_data.py` is a good place to add a
-  second sync step).
+**Email "opens" via CreatorIQ's API may not be trustworthy.** CreatorIQ's
+`/publisher/{id}/messages` endpoint returns an `IsRead` flag on in-platform
+Message Center notifications, which this dashboard maps to `opened_at` as a
+best-effort signal. On the account this was tested against, `IsRead` stayed
+`False` for every message, including ones sent to creators who were clearly
+actively posting — meaning creators were reading the actual email rather
+than logging into the CreatorIQ portal to view it there, so the in-platform
+"read" flag never got set. The **Email Engagement** page warns you if every
+creator shows 0 opens. If that happens on your account too, the reliable fix
+is the same either way:
+
+- Export/sync opens from your real ESP (Mailchimp, Klaviyo, HubSpot,
+  Iterable, etc.) into the same `email_events` shape (`creator_id`,
+  `message_id`, `sent_at`, `opened_at`, `clicked_at`), matched to CreatorIQ
+  creators by email address (`scripts/refresh_data.py` is a good place to
+  add that as a second sync step).
 - Everything downstream (the Email Engagement page, the cold-list export,
   the composite activation score) already expects exactly that shape, so no
   dashboard code changes are needed either way.

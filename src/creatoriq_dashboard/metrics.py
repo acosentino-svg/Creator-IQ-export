@@ -27,15 +27,26 @@ def _to_datetime_utc(series: pd.Series) -> pd.Series:
 # ---------------------------------------------------------------------------
 
 
-def build_daily_activity(df: pd.DataFrame, date_col: str, label: str) -> pd.DataFrame:
-    """Collapse a raw event/post table into a daily count series.
+def build_daily_activity(df: pd.DataFrame, date_col: str, label: str, value_col: str | None = None) -> pd.DataFrame:
+    """Collapse a raw event/post table into a daily series.
+
+    By default counts rows per day (one row = one discrete event, e.g. a
+    post). Pass `value_col` to sum a numeric column per day instead -- used
+    for link-click volume, where CreatorIQ only exposes a cumulative
+    counter and `etl.py` derives day-over-day deltas (one row per
+    observed increase, with the increase size in `value_col`) rather than
+    discrete per-click events.
 
     Returns columns: date, activity_type, count
     """
     if df.empty or date_col not in df.columns:
         return pd.DataFrame(columns=["date", "activity_type", "count"])
     dates = _to_datetime_utc(df[date_col]).dt.date
-    counts = dates.value_counts().sort_index()
+    if value_col and value_col in df.columns:
+        values = pd.to_numeric(df[value_col], errors="coerce").fillna(0)
+        counts = values.groupby(dates).sum().sort_index()
+    else:
+        counts = dates.value_counts().sort_index()
     out = counts.rename_axis("date").reset_index(name="count")
     out["activity_type"] = label
     return out[["date", "activity_type", "count"]]
@@ -105,7 +116,21 @@ def compute_last_activity(inputs: ActivationInputs) -> pd.DataFrame:
     """Per creator: last post date, last link-click date, last email open
     date, and the max of all three ("last active at").
     """
-    creators = inputs.creators[["creator_id", "name", "tier", "status", "joined_date"]].copy()
+    creators = inputs.creators.copy()
+    # `tier` in particular is a demo-mode-only convenience column -- real
+    # CreatorIQ accounts may not have an equivalent concept (or use a
+    # different field, e.g. a custom CRM tag) via this API. Don't assume
+    # every expected column exists; the dashboard should degrade gracefully
+    # rather than crash on a live account with a slightly different schema.
+    for expected_col, default in (
+        ("name", None),
+        ("tier", "Unknown"),
+        ("status", None),
+        ("joined_date", pd.NaT),
+    ):
+        if expected_col not in creators.columns:
+            creators[expected_col] = default
+    creators = creators[["creator_id", "name", "tier", "status", "joined_date"]]
 
     def last_by(df: pd.DataFrame, date_col: str, out_col: str) -> pd.DataFrame:
         if df.empty or date_col not in df.columns or "creator_id" not in df.columns:
@@ -137,10 +162,14 @@ def compute_last_activity(inputs: ActivationInputs) -> pd.DataFrame:
     for col in ("last_post_at", "last_link_click_at", "last_email_open_at"):
         if col not in merged.columns:
             merged[col] = pd.NaT
+        # Merging in an empty extra frame (e.g. no link clicks at all yet)
+        # can leave this column as all-NaN float64 instead of datetime64,
+        # which breaks a later max(axis=1) across mixed dtypes. Force it.
+        merged[col] = pd.to_datetime(merged[col], utc=True, errors="coerce")
     for col in ("post_count_all_time", "link_click_count_all_time"):
         if col not in merged.columns:
             merged[col] = 0
-        merged[col] = merged[col].fillna(0).astype(int)
+        merged[col] = pd.to_numeric(merged[col], errors="coerce").fillna(0).astype(int)
 
     merged["last_active_at"] = merged[["last_post_at", "last_link_click_at"]].max(axis=1)
     merged["days_since_last_active"] = (UTC_NOW() - merged["last_active_at"]).dt.days
@@ -317,6 +346,13 @@ def compute_email_engagement(email_events: pd.DataFrame, settings: Settings) -> 
         )
 
     per_creator_df = events.groupby("creator_id").apply(per_creator, include_groups=False).reset_index()
+    # When no creator in the batch has ever opened anything (a real
+    # possibility -- see the IsRead caveat in config/field_mappings.yaml),
+    # every `last_open_at` is a plain tz-naive pd.NaT, which can leave the
+    # whole column as tz-naive/object dtype instead of tz-aware datetime64,
+    # breaking subtraction against a tz-aware "now". Force both columns.
+    per_creator_df["last_sent_at"] = pd.to_datetime(per_creator_df["last_sent_at"], utc=True, errors="coerce")
+    per_creator_df["last_open_at"] = pd.to_datetime(per_creator_df["last_open_at"], utc=True, errors="coerce")
     per_creator_df["days_since_last_open"] = (UTC_NOW() - per_creator_df["last_open_at"]).dt.days
     per_creator_df["opened_recently"] = per_creator_df["days_since_last_open"].fillna(9999) <= recent_window
     per_creator_df["is_cold"] = (
@@ -340,7 +376,7 @@ def build_needs_attention(
     """
     df = scored.merge(email_engagement, on="creator_id", how="left")
     needs_attention = df[df["activation_segment"].isin(["At Risk", "Dormant", "Never Activated"])].copy()
-    needs_attention["is_cold"] = needs_attention["is_cold"].fillna(True)
+    needs_attention["is_cold"] = needs_attention["is_cold"].astype("boolean").fillna(True)
 
     def reason(row) -> str:
         reasons = [row["activation_segment"]]

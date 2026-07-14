@@ -1,38 +1,45 @@
 # Architecture
 
 ```
-                 ┌────────────────────┐
-                 │   CreatorIQ API    │
-                 └─────────┬──────────┘
-                            │ paginated REST calls
-                            │ (config/endpoints.yaml)
-                 ┌─────────▼──────────┐
-                 │  api_client.py     │  auth, pagination, retry/backoff
-                 └─────────┬──────────┘
-                            │ raw JSON records
-                 ┌─────────▼──────────┐
-                 │  normalize.py      │  dotted-path field mapping
-                 │  (config/field_mappings.yaml)
-                 └─────────┬──────────┘
-                            │ normalized DataFrames
-                 ┌─────────▼──────────┐
-                 │  etl.py            │  incremental sync + upsert
-                 └─────────┬──────────┘
-                            │
-                 ┌─────────▼──────────┐
-                 │ storage.py (SQLite)│  data/warehouse.db
-                 └─────────┬──────────┘
-                            │ read by Streamlit (cached, TTL)
-                 ┌─────────▼──────────┐
-                 │  metrics.py        │  activation score, spikes, cohorts,
-                 │  (pure functions,  │  email engagement — all pure pandas,
-                 │   unit tested)     │  independently testable
-                 └─────────┬──────────┘
-                            │
-                 ┌─────────▼──────────┐
-                 │  app/ (Streamlit)  │  Overview / Spikes / Email / Explorer /
-                 │                    │  Needs Attention / Data & Settings
-                 └────────────────────┘
+        ┌───────────────────────────────────────────────────────┐
+        │                     CreatorIQ API                     │
+        │  /campaigns  /campaign/{id}/publishers                │
+        │  /campaign/{id}/activity  /publisher/{id}/messages    │
+        │  /publisher/{id}/summary  /publishers?filter=Id=...   │
+        └───────────────────────┬─────────────────────────────-─┘
+                                 │ per-campaign fan-out
+                                 │ (config/endpoints.yaml)
+                     ┌───────────▼────────────┐
+                     │  api_client.py         │  auth, pagination (3 different
+                     │                        │  styles!), retry/backoff
+                     └───────────┬────────────┘
+                                 │ raw JSON records
+                     ┌───────────▼────────────┐
+                     │  normalize.py          │  dotted-path field mapping
+                     │  (config/field_mappings.yaml)
+                     └───────────┬────────────┘
+                                 │ normalized DataFrames
+                     ┌───────────▼────────────┐
+                     │  etl.py                │  campaign fan-out, roster
+                     │                        │  dedup, link-click snapshots,
+                     │                        │  bounded email lookups
+                     └───────────┬────────────┘
+                                 │
+                     ┌───────────▼────────────┐
+                     │ storage.py (SQLite)    │  data/warehouse.db
+                     └───────────┬────────────┘
+                                 │ read by Streamlit (cached, TTL)
+                     ┌───────────▼────────────┐
+                     │  metrics.py            │  activation score, spikes,
+                     │  (pure functions,      │  cohorts, email engagement —
+                     │   unit tested)         │  all pure pandas
+                     └───────────┬────────────┘
+                                 │
+                     ┌───────────▼────────────┐
+                     │  app/ (Streamlit)      │  Overview / Spikes / Email /
+                     │                        │  Explorer / Needs Attention /
+                     │                        │  Data & Settings
+                     └────────────────────────┘
 ```
 
 `scripts/refresh_data.py` (the ETL trigger) and the Streamlit app are
@@ -46,37 +53,74 @@ directly — it only reads the local SQLite cache. This means:
 - If CreatorIQ is down or your key expires, the dashboard keeps showing the
   last good sync instead of breaking for end users.
 
-## Why a config-driven CreatorIQ client instead of hard-coded endpoints
+## CreatorIQ's real data model (verified against a live account)
 
-CreatorIQ's API reference (https://apidocs.creatoriq.com) requires an
-account login to view, and exact resource paths / JSON field names can vary
-by account and API version. Hard-coding them would mean every user of this
-repo has to fork-and-edit Python to match their account. Instead:
+This is genuinely messier than a typical REST API, which is exactly why the
+paths/shapes live in `config/endpoints.yaml` rather than being hard-coded:
 
-- `config/endpoints.yaml` defines resource paths, HTTP method, and
-  pagination style (page / offset / cursor — CreatorIQ's docs don't publicly
-  specify which one your account uses, so all three are supported).
-- `config/field_mappings.yaml` maps normalized column names (`creator_id`,
-  `posted_at`, `opened_at`, ...) to the raw JSON paths CreatorIQ actually
-  returns (e.g. `Publisher.Id`, `PostDate`).
-- `src/creatoriq_dashboard/api_client.py` and `normalize.py` are generic —
-  they read those YAML files rather than assuming a schema.
+- **There's no flat "give me all creators" or "give me all posts"
+  endpoint.** Everything except the creator-search index (`/publishers`,
+  which returns the *entire* cross-brand discovery database, not your
+  roster) is scoped to a campaign: `/campaign/{id}/publishers` for the
+  roster, `/campaign/{id}/activity` for posts. `etl.py` fans out over every
+  (status-filtered, capped) campaign and dedupes creators across them.
+- **Three different pagination styles, in the same API:**
+  - `/publishers`, `/campaigns`, `/publisher/{id}/messages`: a top-level
+    `{count, total, page, "<Key>": [...]}` envelope. The page-size query
+    param is `size` (confirmed) — `page_size`/`limit`/`per_page` are all
+    silently ignored and fall back to a default of 20/page.
+  - `/campaign/{id}/activity`: pagination metadata lives *inside* the
+    response wrapper (`{"CampaignActivity": {"items": [...], "pagination":
+    {"total_pages": N}}}`), not at the top level.
+  - `/campaign/{id}/publishers`: ignores `?page=` entirely and always
+    returns everything in one call.
+- **Two different "list of records" shapes:** most collections are a plain
+  JSON array, but `CampaignPublisher` comes back as an object keyed by
+  string indices (`{"0": {...}, "1": {...}}`). `api_client.py`'s
+  `coerce_to_record_list()` normalizes both.
+- **Two different creator ID spaces**: campaign-scoped endpoints use an
+  internal numeric `PublisherId`; per-creator endpoints
+  (`/publisher/{id}/summary`, `/publisher/{id}/messages`) need the longer
+  `NetworkPublisherId` instead. A post's own record conveniently includes
+  both; for creators who haven't posted, `etl.py` resolves it via
+  `/publishers?filter=Id={id}` (one extra API call, bounded by
+  `live_sync.max_email_lookups` in `config/settings.yaml`).
 
-To align this with your real account: sign in at apidocs.creatoriq.com (or
-ask your CreatorIQ CSM for your account's Postman collection), hit each
-resource once, and update the YAML to match the response you actually get.
-No Python changes required for a schema/path difference.
+`config/field_mappings.yaml` documents two further, empirically-confirmed
+data-quality caveats specific to this account (no literal "post date" field,
+just `DateSubmitted`; and `LinkClicks` is a cumulative counter, not an event
+log) — read the comments there, and the README's "Two confirmed
+data-quality caveats" section, before trusting either metric blindly on your
+own account.
 
-## Incremental sync
+To (re-)verify any of this against your own account: hit each endpoint once
+with `curl -H "Authorization: Bearer $CREATORIQ_API_KEY"
+https://api.creatoriq.com/api/<path>` and compare the shape to what's in
+`config/endpoints.yaml`. No Python changes are needed for a schema/path
+difference — only the YAML.
 
-`posts`, `links`, and `email_events` are pulled incrementally: `etl.py`
-records the timestamp of the last successful sync per resource
-(`sync_state` table) and passes it as an `updated_since` param on the next
-run (see `config/endpoints.yaml`'s `{since}` placeholder). `creators` and
-`campaigns` are pulled in full each run since program rosters are small
-relative to activity/event volume — change this in `etl.py`'s
-`INCREMENTAL_RESOURCES` set if your creator roster is large enough to
-warrant incremental pulls too.
+## Link-click deltas (snapshot-based, not event-based)
+
+CreatorIQ's `LinkClicks` field on a post is a running total, not a
+timestamped click log. `storage.append_link_click_snapshot()` records that
+counter (plus `creator_id`/`campaign_id`) on every sync into an append-only
+`link_click_snapshots` table; `storage.derive_link_click_deltas()` then
+diffs consecutive snapshots per post and turns any *increase* into a
+`links` row (`clicked_at` = the snapshot's timestamp, `clicks` = the size of
+the increase). Practically: **the first sync ever run always produces zero
+link-click rows** (nothing to diff against yet) — this is expected, not a
+bug, and the Activity & Spikes page says so explicitly in live mode.
+
+## Sync scope and safety limits
+
+Because a full sync fans out over every campaign (roster + posts) and then
+over every unique creator (email/messages), `config/settings.yaml`'s
+`live_sync` section caps the blast radius: `max_campaigns`,
+`campaign_status_filter`, and `max_email_lookups`. Each sync currently
+re-fetches roster/posts in full for the campaigns in scope rather than
+pulling incrementally — fine for the "cap at N campaigns" default, but worth
+revisiting (e.g. skip campaigns whose `LastModified`/status hasn't changed
+since the last sync) if you raise the caps enough that a full run gets slow.
 
 ## Scheduling refreshes
 

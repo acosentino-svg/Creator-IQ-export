@@ -24,6 +24,33 @@ st.caption("Posts and link-clicks are tracked as separate activity types so a sp
 bundle = get_bundle()
 timeline = bundle["spikes"]
 
+if not config.is_demo:
+    inputs = bundle["inputs"]
+    if inputs.links.empty:
+        posts_have_link_clicks = (
+            not inputs.posts.empty
+            and "link_clicks" in inputs.posts.columns
+            and inputs.posts["link_clicks"].notna().any()
+        )
+        if posts_have_link_clicks:
+            st.info(
+                "No link-click **spikes** detected yet — link clicks are derived from day-over-day "
+                "snapshots of CreatorIQ's cumulative click counter, so this needs at least two "
+                "`scripts/refresh_data.py` runs (e.g. two days of a scheduled sync) before a "
+                "timeline shows up."
+            )
+        else:
+            st.warning(
+                "**No link-click data came back from CreatorIQ for this account.** "
+                "Some CreatorIQ accounts don't populate the `LinkClicks` metric via the API at all "
+                "(e.g. if link tracking runs through a separate affiliate platform like Impact, CJ, "
+                "or Rakuten instead of CreatorIQ's own trackable links). If link-click activation "
+                "matters to your program, pull that data from wherever it actually lives and land "
+                "it in the `links` table (see the README's 'Connecting your real CreatorIQ data' "
+                "section) — everything downstream (this page, the activation score) already "
+                "expects that shape."
+            )
+
 if timeline.empty:
     st.info("No activity data available yet.")
     st.stop()
