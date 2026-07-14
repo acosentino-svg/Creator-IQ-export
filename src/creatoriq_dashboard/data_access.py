@@ -11,6 +11,26 @@ from .demo_data import generate_demo_data
 from .metrics import ActivationInputs
 from .storage import get_engine, get_last_synced_at, read_table
 
+# Minimal column shape for each table when the live SQLite cache doesn't
+# exist yet (e.g. live mode selected but `scripts/refresh_data.py` hasn't
+# been run once). Without this, a table read as a bare `pd.DataFrame()`
+# (zero columns) breaks every downstream merge/groupby that expects
+# `creator_id` etc. to exist, even on an empty dataset.
+_EMPTY_TABLE_COLUMNS: dict[str, list[str]] = {
+    "creators": ["creator_id", "name", "handle", "email", "status", "tier", "tags", "joined_date"],
+    "campaigns": ["campaign_id", "campaign_name", "status", "start_date", "end_date"],
+    "posts": ["post_id", "creator_id", "campaign_id", "campaign_name", "platform", "post_type", "posted_at"],
+    "links": ["link_id", "creator_id", "label", "destination_url", "created_at", "campaign_id"],
+    "email_events": ["event_id", "creator_id", "message_id", "subject", "sent_at", "opened_at", "clicked_at"],
+}
+
+
+def _read_table_with_shape(engine, table_name: str) -> pd.DataFrame:
+    df = read_table(engine, table_name)
+    if df.empty and df.columns.empty and table_name in _EMPTY_TABLE_COLUMNS:
+        return pd.DataFrame(columns=_EMPTY_TABLE_COLUMNS[table_name])
+    return df
+
 
 def load_inputs(config: AppConfig) -> tuple[ActivationInputs, dict[str, str | None]]:
     """Returns (ActivationInputs, sync_status). sync_status maps resource
@@ -31,10 +51,10 @@ def load_inputs(config: AppConfig) -> tuple[ActivationInputs, dict[str, str | No
         )
 
     engine = get_engine(config.db_path)
-    creators = read_table(engine, "creators")
-    posts = read_table(engine, "posts")
-    links = read_table(engine, "links")
-    email_events = read_table(engine, "email_events")
+    creators = _read_table_with_shape(engine, "creators")
+    posts = _read_table_with_shape(engine, "posts")
+    links = _read_table_with_shape(engine, "links")
+    email_events = _read_table_with_shape(engine, "email_events")
 
     for date_col, df in (("joined_date", creators),):
         if not df.empty and date_col in df.columns:

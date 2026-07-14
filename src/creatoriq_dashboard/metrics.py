@@ -1,10 +1,10 @@
-"""Business logic for the activation dashboard: activity timelines, spike
-detection, activation scoring/segmentation, and email engagement.
+"""Business logic for the activation dashboard: creator summaries,
+activation-state classification, momentum/spike scoring, went-dark
+follow-up recommendations, and email engagement cross-segments.
 
 Every function here takes plain pandas DataFrames in the normalized schema
-(see README / config/field_mappings.yaml) and settings loaded from
-config/settings.yaml, so this module can be unit tested without any network
-or database access.
+(see README) and returns plain DataFrames/dicts, so this module can be unit
+tested without any network, database, or Streamlit dependency.
 """
 from __future__ import annotations
 
@@ -13,29 +13,73 @@ from dataclasses import dataclass
 import numpy as np
 import pandas as pd
 
-from .config import Settings
-
 UTC_NOW = lambda: pd.Timestamp.now(tz="UTC")  # noqa: E731
 
+DATE_RANGE_PRESETS = ["Last 7 days", "Last 30 days", "Last 60 days", "Last 90 days", "This Month", "Custom"]
 
-def _to_datetime_utc(series: pd.Series) -> pd.Series:
+
+def _to_datetime_utc(series: pd.Series | None) -> pd.Series:
+    if series is None:
+        return pd.Series(dtype="datetime64[ns, UTC]")
     return pd.to_datetime(series, utc=True, errors="coerce")
 
 
+@dataclass
+class RawData:
+    creators: pd.DataFrame
+    posts: pd.DataFrame
+    links: pd.DataFrame
+    email_events: pd.DataFrame
+
+
+# Backwards-compatible alias (older code/tests may still import this name).
+ActivationInputs = RawData
+
+
 # ---------------------------------------------------------------------------
-# Activity timelines + spike detection
+# Date range helper (drives the global sidebar selector)
+# ---------------------------------------------------------------------------
+
+
+def resolve_date_range(
+    preset: str,
+    custom_start: pd.Timestamp | None = None,
+    custom_end: pd.Timestamp | None = None,
+) -> tuple[pd.Timestamp, pd.Timestamp]:
+    """Turn a preset label (or "Custom" + explicit dates) into a concrete
+    (start, end) UTC timestamp pair, inclusive of "today".
+    """
+    now = UTC_NOW()
+    end = now
+    if preset == "Last 7 days":
+        start = now - pd.Timedelta(days=7)
+    elif preset == "Last 30 days":
+        start = now - pd.Timedelta(days=30)
+    elif preset == "Last 60 days":
+        start = now - pd.Timedelta(days=60)
+    elif preset == "Last 90 days":
+        start = now - pd.Timedelta(days=90)
+    elif preset == "This Month":
+        start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+    elif preset == "Custom":
+        start = pd.Timestamp(custom_start, tz="UTC") if custom_start is not None else now - pd.Timedelta(days=30)
+        end = pd.Timestamp(custom_end, tz="UTC") if custom_end is not None else now
+    else:
+        start = now - pd.Timedelta(days=30)
+    return start, end
+
+
+# ---------------------------------------------------------------------------
+# Activity timelines (program-wide trend chart + spike detection)
 # ---------------------------------------------------------------------------
 
 
 def build_daily_activity(df: pd.DataFrame, date_col: str, label: str, value_col: str | None = None) -> pd.DataFrame:
     """Collapse a raw event/post table into a daily series.
 
-    By default counts rows per day (one row = one discrete event, e.g. a
-    post). Pass `value_col` to sum a numeric column per day instead -- used
-    for link-click volume, where CreatorIQ only exposes a cumulative
-    counter and `etl.py` derives day-over-day deltas (one row per
-    observed increase, with the increase size in `value_col`) rather than
-    discrete per-click events.
+    By default counts rows per day (one row = one discrete event). Pass
+    `value_col` to sum a numeric column per day instead (used when a signal
+    is a delta/volume rather than a discrete per-row event).
 
     Returns columns: date, activity_type, count
     """
@@ -100,292 +144,366 @@ def detect_spikes(
 
 
 # ---------------------------------------------------------------------------
-# Per-creator last-activity + activation segmentation
+# Activity events (unified posts + links, used for gap/momentum analysis)
 # ---------------------------------------------------------------------------
 
 
-@dataclass
-class ActivationInputs:
-    creators: pd.DataFrame
-    posts: pd.DataFrame
-    links: pd.DataFrame
-    email_events: pd.DataFrame
-
-
-def compute_last_activity(inputs: ActivationInputs) -> pd.DataFrame:
-    """Per creator: last post date, last link-click date, last email open
-    date, and the max of all three ("last active at").
+def build_activity_events(posts: pd.DataFrame, links: pd.DataFrame) -> pd.DataFrame:
+    """One row per creator activity (a post or a link creation):
+    creator_id, event_type ("post"/"link"), event_date.
     """
-    creators = inputs.creators.copy()
-    # `tier` in particular is a demo-mode-only convenience column -- real
-    # CreatorIQ accounts may not have an equivalent concept (or use a
-    # different field, e.g. a custom CRM tag) via this API. Don't assume
-    # every expected column exists; the dashboard should degrade gracefully
-    # rather than crash on a live account with a slightly different schema.
-    for expected_col, default in (
-        ("name", None),
-        ("tier", "Unknown"),
-        ("status", None),
-        ("joined_date", pd.NaT),
-    ):
-        if expected_col not in creators.columns:
-            creators[expected_col] = default
-    creators = creators[["creator_id", "name", "tier", "status", "joined_date"]]
+    frames = []
+    if not posts.empty and "posted_at" in posts.columns:
+        p = posts[["creator_id", "posted_at"]].rename(columns={"posted_at": "event_date"}).copy()
+        p["event_type"] = "post"
+        frames.append(p)
+    if not links.empty and "created_at" in links.columns:
+        l = links[["creator_id", "created_at"]].rename(columns={"created_at": "event_date"}).copy()  # noqa: E741
+        l["event_type"] = "link"
+        frames.append(l)
+    if not frames:
+        return pd.DataFrame(columns=["creator_id", "event_type", "event_date"])
+    events = pd.concat(frames, ignore_index=True)
+    events["event_date"] = _to_datetime_utc(events["event_date"])
+    return events.dropna(subset=["event_date"]).sort_values(["creator_id", "event_date"]).reset_index(drop=True)
 
-    def last_by(df: pd.DataFrame, date_col: str, out_col: str) -> pd.DataFrame:
-        if df.empty or date_col not in df.columns or "creator_id" not in df.columns:
+
+def _compute_gap_stats(events: pd.DataFrame) -> pd.DataFrame:
+    """Per creator: the longest gap (in days) between two consecutive
+    activities, and how many activities they have in total. Used to tell
+    "Consistently Active" (never had a long lapse) apart from "Reactivated"
+    (had a long lapse, but is active again now).
+    """
+    if events.empty:
+        return pd.DataFrame(columns=["creator_id", "max_gap_days", "activity_event_count"])
+
+    rows = []
+    for creator_id, group in events.groupby("creator_id"):
+        dates = group["event_date"].sort_values()
+        if len(dates) <= 1:
+            max_gap = 0.0
+        else:
+            diffs = dates.diff().dropna().dt.total_seconds() / 86400.0
+            max_gap = float(diffs.max()) if not diffs.empty else 0.0
+        rows.append({"creator_id": creator_id, "max_gap_days": max_gap, "activity_event_count": len(dates)})
+    return pd.DataFrame(rows)
+
+
+# ---------------------------------------------------------------------------
+# Creator summary (the backbone of the Creator Activity + Creator Profile pages)
+# ---------------------------------------------------------------------------
+
+
+def build_creator_summary(raw: RawData, range_start: pd.Timestamp, range_end: pd.Timestamp) -> pd.DataFrame:
+    """One row per creator with every field the Creator Activity page needs:
+    identity, tags/status, first/last post & link dates, lifetime counts,
+    in-range counts, and email send/open/click recency.
+    """
+    creators = raw.creators.copy()
+    posts = raw.posts.copy()
+    links = raw.links.copy()
+    emails = raw.email_events.copy()
+
+    if "joined_date" not in creators.columns:
+        creators["joined_date"] = pd.NaT
+    creators["joined_date"] = pd.to_datetime(creators["joined_date"], utc=True, errors="coerce")
+
+    if not posts.empty:
+        posts["posted_at"] = _to_datetime_utc(posts["posted_at"])
+    if not links.empty:
+        links["created_at"] = _to_datetime_utc(links["created_at"])
+    if not emails.empty:
+        emails["sent_at"] = _to_datetime_utc(emails.get("sent_at"))
+        emails["opened_at"] = _to_datetime_utc(emails.get("opened_at"))
+        emails["clicked_at"] = _to_datetime_utc(emails.get("clicked_at"))
+
+    def first_last_count(df: pd.DataFrame, date_col: str, prefix: str) -> pd.DataFrame:
+        cols = ["creator_id", f"first_{prefix}", f"last_{prefix}", f"lifetime_{prefix}_count"]
+        if df.empty or date_col not in df.columns:
+            return pd.DataFrame(columns=cols)
+        out = df.groupby("creator_id")[date_col].agg(["min", "max", "count"]).reset_index()
+        out.columns = cols
+        return out
+
+    def count_in_range(df: pd.DataFrame, date_col: str, out_col: str) -> pd.DataFrame:
+        if df.empty or date_col not in df.columns:
             return pd.DataFrame(columns=["creator_id", out_col])
-        d = df.copy()
-        d[date_col] = _to_datetime_utc(d[date_col])
-        agg = d.groupby("creator_id")[date_col].max().reset_index()
-        return agg.rename(columns={date_col: out_col})
+        mask = (df[date_col] >= range_start) & (df[date_col] <= range_end)
+        return df.loc[mask].groupby("creator_id").size().rename(out_col).reset_index()
 
-    last_post = last_by(inputs.posts, "posted_at", "last_post_at")
-    last_link = last_by(inputs.links, "clicked_at", "last_link_click_at")
-    last_open = last_by(inputs.email_events.dropna(subset=["opened_at"]) if not inputs.email_events.empty else inputs.email_events, "opened_at", "last_email_open_at")
+    post_agg = first_last_count(posts, "posted_at", "post")
+    link_agg = first_last_count(links, "created_at", "link")
+    posts_in_range = count_in_range(posts, "posted_at", "posts_in_range")
+    links_in_range = count_in_range(links, "created_at", "links_in_range")
 
-    post_counts = (
-        inputs.posts.groupby("creator_id").size().rename("post_count_all_time").reset_index()
-        if not inputs.posts.empty
-        else pd.DataFrame(columns=["creator_id", "post_count_all_time"])
-    )
-    link_counts = (
-        inputs.links.groupby("creator_id").size().rename("link_click_count_all_time").reset_index()
-        if not inputs.links.empty
-        else pd.DataFrame(columns=["creator_id", "link_click_count_all_time"])
-    )
+    if not emails.empty:
+        email_agg = (
+            emails.groupby("creator_id")
+            .agg(
+                last_email_sent=("sent_at", "max"),
+                last_email_opened=("opened_at", "max"),
+                last_email_clicked=("clicked_at", "max"),
+                emails_sent_total=("sent_at", "count"),
+            )
+            .reset_index()
+        )
+    else:
+        email_agg = pd.DataFrame(
+            columns=["creator_id", "last_email_sent", "last_email_opened", "last_email_clicked", "emails_sent_total"]
+        )
 
-    merged = creators
-    for extra in (last_post, last_link, last_open, post_counts, link_counts):
-        merged = merged.merge(extra, on="creator_id", how="left")
+    summary = creators.copy()
+    for extra in (post_agg, link_agg, posts_in_range, links_in_range, email_agg):
+        summary = summary.merge(extra, on="creator_id", how="left")
 
-    for col in ("last_post_at", "last_link_click_at", "last_email_open_at"):
-        if col not in merged.columns:
-            merged[col] = pd.NaT
-        # Merging in an empty extra frame (e.g. no link clicks at all yet)
-        # can leave this column as all-NaN float64 instead of datetime64,
-        # which breaks a later max(axis=1) across mixed dtypes. Force it.
-        merged[col] = pd.to_datetime(merged[col], utc=True, errors="coerce")
-    for col in ("post_count_all_time", "link_click_count_all_time"):
-        if col not in merged.columns:
-            merged[col] = 0
-        merged[col] = pd.to_numeric(merged[col], errors="coerce").fillna(0).astype(int)
+    date_cols = [
+        "first_post",
+        "last_post",
+        "first_link",
+        "last_link",
+        "last_email_sent",
+        "last_email_opened",
+        "last_email_clicked",
+    ]
+    for col in date_cols:
+        if col not in summary.columns:
+            summary[col] = pd.NaT
+        # Merging in an empty extra frame can leave an all-NaN column as
+        # float64/object instead of datetime64 -- force it so later max()/
+        # subtraction across columns doesn't hit a dtype mismatch.
+        summary[col] = pd.to_datetime(summary[col], utc=True, errors="coerce")
 
-    merged["last_active_at"] = merged[["last_post_at", "last_link_click_at"]].max(axis=1)
-    merged["days_since_last_active"] = (UTC_NOW() - merged["last_active_at"]).dt.days
-    merged["days_since_last_email_open"] = (UTC_NOW() - merged["last_email_open_at"]).dt.days
-    return merged
+    count_cols = ["lifetime_post_count", "lifetime_link_count", "posts_in_range", "links_in_range", "emails_sent_total"]
+    for col in count_cols:
+        if col not in summary.columns:
+            summary[col] = 0
+        summary[col] = pd.to_numeric(summary[col], errors="coerce").fillna(0).astype(int)
+
+    now = UTC_NOW()
+    summary["days_since_last_post"] = (now - summary["last_post"]).dt.days
+    summary["days_since_last_link"] = (now - summary["last_link"]).dt.days
+    summary["days_since_last_email_open"] = (now - summary["last_email_opened"]).dt.days
+    summary["days_since_last_email_click"] = (now - summary["last_email_clicked"]).dt.days
+
+    summary["last_activity_at"] = summary[["last_post", "last_link"]].max(axis=1)
+    summary["first_activity_at"] = summary[["first_post", "first_link"]].min(axis=1)
+    summary["days_since_last_activity"] = (now - summary["last_activity_at"]).dt.days
+
+    return summary
 
 
-def segment_creators(last_activity: pd.DataFrame, settings: Settings) -> pd.DataFrame:
-    active_window = settings.get("activation", "active_window_days", default=14)
-    at_risk_window = settings.get("activation", "at_risk_window_days", default=30)
-    dormant_window = settings.get("activation", "dormant_window_days", default=60)
+# ---------------------------------------------------------------------------
+# Activation-state classification (drives the Overview KPI cards)
+# ---------------------------------------------------------------------------
 
-    df = last_activity.copy()
 
-    def classify(row) -> str:
-        days = row["days_since_last_active"]
-        if pd.isna(row["last_active_at"]):
+def classify_creators(
+    summary: pd.DataFrame,
+    activity_events: pd.DataFrame,
+    active_days: int,
+    went_dark_days: int,
+    range_start: pd.Timestamp,
+    range_end: pd.Timestamp,
+    consistently_active_min_events: int = 3,
+) -> pd.DataFrame:
+    """Adds `activation_state` (one of: Never Activated, Active, Inactive,
+    Went Dark) plus three boolean flags that can co-occur with "Active":
+    `is_newly_activated`, `is_reactivated`, `is_consistently_active`.
+    """
+    df = summary.copy()
+
+    def primary_state(row) -> str:
+        if pd.isna(row["last_activity_at"]):
             return "Never Activated"
-        if days <= active_window:
+        days = row["days_since_last_activity"]
+        if days <= active_days:
             return "Active"
-        if days <= at_risk_window:
-            return "Cooling Off"
-        if days <= dormant_window:
-            return "At Risk"
-        return "Dormant"
+        if days <= went_dark_days:
+            return "Inactive"
+        return "Went Dark"
 
-    df["activation_segment"] = df.apply(classify, axis=1)
+    df["activation_state"] = df.apply(primary_state, axis=1)
+
+    gap_stats = _compute_gap_stats(activity_events)
+    df = df.merge(gap_stats, on="creator_id", how="left")
+    df["max_gap_days"] = df["max_gap_days"].fillna(0.0)
+    df["activity_event_count"] = df["activity_event_count"].fillna(0).astype(int)
+
+    is_active = df["activation_state"] == "Active"
+    df["is_newly_activated"] = (
+        is_active
+        & df["first_activity_at"].notna()
+        & (df["first_activity_at"] >= range_start)
+        & (df["first_activity_at"] <= range_end)
+    )
+    df["is_reactivated"] = is_active & (df["max_gap_days"] > went_dark_days) & ~df["is_newly_activated"]
+    df["is_consistently_active"] = (
+        is_active
+        & (df["max_gap_days"] <= went_dark_days)
+        & (df["activity_event_count"] >= consistently_active_min_events)
+        & ~df["is_newly_activated"]
+    )
+
     return df
 
 
+def compute_kpis(classified: pd.DataFrame, posts_in_range_total: int, links_in_range_total: int) -> dict:
+    counts = classified["activation_state"].value_counts()
+    return {
+        "total_creators": len(classified),
+        "active_creators": int(counts.get("Active", 0)),
+        "inactive_creators": int(counts.get("Inactive", 0)),
+        "never_activated_creators": int(counts.get("Never Activated", 0)),
+        "went_dark_creators": int(counts.get("Went Dark", 0)),
+        "newly_activated_creators": int(classified["is_newly_activated"].sum()) if not classified.empty else 0,
+        "reactivated_creators": int(classified["is_reactivated"].sum()) if not classified.empty else 0,
+        "consistently_active_creators": int(classified["is_consistently_active"].sum()) if not classified.empty else 0,
+        "total_posts_in_range": posts_in_range_total,
+        "total_links_in_range": links_in_range_total,
+    }
+
+
 # ---------------------------------------------------------------------------
-# Composite activation score (0-100)
+# New Activations page
 # ---------------------------------------------------------------------------
 
 
-def _minmax_scale(series: pd.Series) -> pd.Series:
-    if series.empty:
-        return series
-    lo, hi = series.min(), series.max()
-    if pd.isna(lo) or pd.isna(hi) or hi == lo:
-        return pd.Series(0.0, index=series.index)
-    return (series - lo) / (hi - lo)
+def compute_new_activations(summary: pd.DataFrame, range_start: pd.Timestamp, range_end: pd.Timestamp) -> dict:
+    df = summary.copy()
+    df["days_join_to_first_link"] = (df["first_link"] - df["joined_date"]).dt.days
+    df["days_join_to_first_post"] = (df["first_post"] - df["joined_date"]).dt.days
+    df["days_first_link_to_first_post"] = (df["first_post"] - df["first_link"]).dt.days
+
+    def in_range(col: str) -> pd.Series:
+        return df[col].notna() & (df[col] >= range_start) & (df[col] <= range_end)
+
+    first_time_posters = df[in_range("first_post")].copy()
+    first_time_linkers = df[in_range("first_link")].copy()
+    linked_no_post = df[df["first_link"].notna() & df["first_post"].isna()].copy()
+
+    return {
+        "first_time_posters": first_time_posters,
+        "first_time_linkers": first_time_linkers,
+        "linked_no_post": linked_no_post,
+        "all_with_day_calcs": df,
+    }
 
 
-def compute_activation_scores(
-    inputs: ActivationInputs,
-    last_activity: pd.DataFrame,
-    settings: Settings,
+# ---------------------------------------------------------------------------
+# Momentum page ("Spikes This Week")
+# ---------------------------------------------------------------------------
+
+
+def compute_momentum(
+    raw: RawData,
+    recent_days: int = 7,
+    baseline_days: int = 28,
+    min_count_for_spike: int = 2,
+    spike_percentage_threshold: float = 50.0,
 ) -> pd.DataFrame:
-    """Composite 0-100 activation score per creator:
-
-    - recency: how recently they last posted/link-clicked (decays with age)
-    - frequency: volume of qualifying actions in the trailing window
-    - diversity: did they engage across posts + links (vs. only one channel)
-    - trend: are they accelerating or decelerating vs. the prior period
+    """Per-creator table of creators whose recent posting/link-creation
+    volume is significantly above their own historical average.
     """
-    weights = settings.get("activation", "score_weights", default={}) or {}
-    w_recency = weights.get("recency", 0.4)
-    w_frequency = weights.get("frequency", 0.35)
-    w_diversity = weights.get("diversity", 0.15)
-    w_trend = weights.get("trend", 0.10)
-    freq_window = settings.get("activation", "frequency_window_days", default=30)
-
     now = UTC_NOW()
-    window_start = now - pd.Timedelta(days=freq_window)
-    prior_window_start = now - pd.Timedelta(days=2 * freq_window)
+    recent_start = now - pd.Timedelta(days=recent_days)
+    baseline_start = recent_start - pd.Timedelta(days=baseline_days)
 
-    def count_in_window(df: pd.DataFrame, date_col: str, start, end) -> pd.Series:
+    posts = raw.posts.copy()
+    links = raw.links.copy()
+    if not posts.empty:
+        posts["posted_at"] = _to_datetime_utc(posts["posted_at"])
+    if not links.empty:
+        links["created_at"] = _to_datetime_utc(links["created_at"])
+
+    def count_in_window(df: pd.DataFrame, date_col: str, start: pd.Timestamp, end: pd.Timestamp) -> pd.Series:
         if df.empty or date_col not in df.columns:
-            return pd.Series(dtype=int)
-        d = df.copy()
-        d[date_col] = _to_datetime_utc(d[date_col])
-        mask = (d[date_col] >= start) & (d[date_col] < end)
-        return d.loc[mask].groupby("creator_id").size()
+            return pd.Series(dtype=float)
+        mask = (df[date_col] >= start) & (df[date_col] < end)
+        return df.loc[mask].groupby("creator_id").size().astype(float)
 
-    posts_recent = count_in_window(inputs.posts, "posted_at", window_start, now)
-    links_recent = count_in_window(inputs.links, "clicked_at", window_start, now)
-    posts_prior = count_in_window(inputs.posts, "posted_at", prior_window_start, window_start)
-    links_prior = count_in_window(inputs.links, "clicked_at", prior_window_start, window_start)
+    recent_posts = count_in_window(posts, "posted_at", recent_start, now)
+    recent_links = count_in_window(links, "created_at", recent_start, now)
+    baseline_posts = count_in_window(posts, "posted_at", baseline_start, recent_start)
+    baseline_links = count_in_window(links, "created_at", baseline_start, recent_start)
 
-    df = last_activity.copy().set_index("creator_id")
-    df["posts_recent"] = posts_recent.reindex(df.index).fillna(0)
-    df["links_recent"] = links_recent.reindex(df.index).fillna(0)
-    df["posts_prior"] = posts_prior.reindex(df.index).fillna(0)
-    df["links_prior"] = links_prior.reindex(df.index).fillna(0)
+    all_ids = sorted(set(recent_posts.index) | set(recent_links.index) | set(baseline_posts.index) | set(baseline_links.index))
+    columns = [
+        "creator_id",
+        "posts_this_week",
+        "links_this_week",
+        "activity_score",
+        "historical_average",
+        "spike_pct",
+        "most_recent_activity",
+    ]
+    if not all_ids:
+        return pd.DataFrame(columns=columns)
 
-    # Recency: exponential decay, half-life = active_window_days.
-    half_life = settings.get("activation", "active_window_days", default=14) or 14
-    days_since = df["days_since_last_active"].fillna(9999)
-    recency_component = np.power(0.5, days_since / half_life)
+    result = pd.DataFrame({"creator_id": all_ids})
+    result["posts_this_week"] = result["creator_id"].map(recent_posts).fillna(0).astype(int)
+    result["links_this_week"] = result["creator_id"].map(recent_links).fillna(0).astype(int)
+    result["activity_score"] = result["posts_this_week"] + result["links_this_week"]
 
-    frequency_raw = df["posts_recent"] + df["links_recent"]
-    frequency_component = _minmax_scale(frequency_raw)
+    baseline_total = baseline_posts.reindex(all_ids).fillna(0) + baseline_links.reindex(all_ids).fillna(0)
+    baseline_avg = (baseline_total * (recent_days / baseline_days)).round(2)
+    result["historical_average"] = result["creator_id"].map(baseline_avg.to_dict()).fillna(0.0)
 
-    has_posts = df["posts_recent"] > 0
-    has_links = df["links_recent"] > 0
-    diversity_component = (has_posts.astype(int) + has_links.astype(int)) / 2.0
+    def spike_pct(row) -> float:
+        if row["historical_average"] <= 0:
+            return 100.0 if row["activity_score"] > 0 else 0.0
+        return round((row["activity_score"] - row["historical_average"]) / row["historical_average"] * 100, 1)
 
-    current_total = df["posts_recent"] + df["links_recent"]
-    prior_total = df["posts_prior"] + df["links_prior"]
-    trend_delta = current_total - prior_total
-    trend_component = _minmax_scale(trend_delta)
+    result["spike_pct"] = result.apply(spike_pct, axis=1)
 
-    score = (
-        w_recency * recency_component
-        + w_frequency * frequency_component
-        + w_diversity * diversity_component
-        + w_trend * trend_component
-    )
-    df["activation_score"] = (score * 100).round(1)
-
-    return df.reset_index()
-
-
-# ---------------------------------------------------------------------------
-# Email engagement
-# ---------------------------------------------------------------------------
-
-
-def compute_email_engagement(email_events: pd.DataFrame, settings: Settings) -> pd.DataFrame:
-    """Per creator: send/open counts, open rate, recency, and a `is_cold`
-    flag for creators who've gone quiet on email specifically (which may
-    warrant a different outreach channel, e.g. SMS/DM/manager call).
-    """
-    recent_window = settings.get("email_engagement", "recent_open_window_days", default=30)
-    cold_after_days = settings.get("email_engagement", "cold_after_days", default=45)
-    cold_after_n_sends = settings.get(
-        "email_engagement", "cold_after_consecutive_unopened_sends", default=3
+    last_post = posts.groupby("creator_id")["posted_at"].max() if not posts.empty else pd.Series(dtype="datetime64[ns, UTC]")
+    last_link = links.groupby("creator_id")["created_at"].max() if not links.empty else pd.Series(dtype="datetime64[ns, UTC]")
+    combined_last = pd.concat([last_post.rename("a"), last_link.rename("b")], axis=1).max(axis=1)
+    result["most_recent_activity"] = pd.to_datetime(
+        result["creator_id"].map(combined_last.to_dict()), utc=True, errors="coerce"
     )
 
-    if email_events.empty:
-        return pd.DataFrame(
-            columns=[
-                "creator_id",
-                "sends_total",
-                "opens_total",
-                "open_rate",
-                "last_sent_at",
-                "last_open_at",
-                "days_since_last_open",
-                "consecutive_unopened_sends",
-                "opened_recently",
-                "is_cold",
-            ]
-        )
-
-    events = email_events.copy()
-    events["sent_at"] = _to_datetime_utc(events["sent_at"])
-    events["opened_at"] = _to_datetime_utc(events.get("opened_at"))
-
-    def per_creator(group: pd.DataFrame) -> pd.Series:
-        group = group.sort_values("sent_at")
-        sends_total = len(group)
-        opens_total = int(group["opened_at"].notna().sum())
-        last_sent_at = group["sent_at"].max()
-        last_open_at = group["opened_at"].max() if opens_total else pd.NaT
-
-        consecutive_unopened = 0
-        for opened in reversed(group["opened_at"].tolist()):
-            if pd.isna(opened):
-                consecutive_unopened += 1
-            else:
-                break
-
-        return pd.Series(
-            {
-                "sends_total": sends_total,
-                "opens_total": opens_total,
-                "open_rate": round(opens_total / sends_total, 3) if sends_total else 0.0,
-                "last_sent_at": last_sent_at,
-                "last_open_at": last_open_at,
-                "consecutive_unopened_sends": consecutive_unopened,
-            }
-        )
-
-    per_creator_df = events.groupby("creator_id").apply(per_creator, include_groups=False).reset_index()
-    # When no creator in the batch has ever opened anything (a real
-    # possibility -- see the IsRead caveat in config/field_mappings.yaml),
-    # every `last_open_at` is a plain tz-naive pd.NaT, which can leave the
-    # whole column as tz-naive/object dtype instead of tz-aware datetime64,
-    # breaking subtraction against a tz-aware "now". Force both columns.
-    per_creator_df["last_sent_at"] = pd.to_datetime(per_creator_df["last_sent_at"], utc=True, errors="coerce")
-    per_creator_df["last_open_at"] = pd.to_datetime(per_creator_df["last_open_at"], utc=True, errors="coerce")
-    per_creator_df["days_since_last_open"] = (UTC_NOW() - per_creator_df["last_open_at"]).dt.days
-    per_creator_df["opened_recently"] = per_creator_df["days_since_last_open"].fillna(9999) <= recent_window
-    per_creator_df["is_cold"] = (
-        per_creator_df["days_since_last_open"].fillna(9999) > cold_after_days
-    ) | (per_creator_df["consecutive_unopened_sends"] >= cold_after_n_sends)
-
-    return per_creator_df
+    result = result[result["activity_score"] >= min_count_for_spike]
+    result = result[result["spike_pct"] >= spike_percentage_threshold]
+    return result.sort_values("spike_pct", ascending=False).reset_index(drop=True)
 
 
 # ---------------------------------------------------------------------------
-# Needs-attention export (for outreach / Slack digest)
+# Went Dark page
 # ---------------------------------------------------------------------------
 
 
-def build_needs_attention(
-    scored: pd.DataFrame,
-    email_engagement: pd.DataFrame,
-) -> pd.DataFrame:
-    """Merge activation segments + email coldness into one prioritized list
-    that Community/Creator Managers can action (export to CSV / Slack).
-    """
-    df = scored.merge(email_engagement, on="creator_id", how="left")
-    needs_attention = df[df["activation_segment"].isin(["At Risk", "Dormant", "Never Activated"])].copy()
-    needs_attention["is_cold"] = needs_attention["is_cold"].astype("boolean").fillna(True)
+def compute_went_dark(classified: pd.DataFrame) -> pd.DataFrame:
+    df = classified[classified["activation_state"] == "Went Dark"].copy()
+    if df.empty:
+        df["recommended_action"] = []
+        return df
 
-    def reason(row) -> str:
-        reasons = [row["activation_segment"]]
-        if row.get("is_cold"):
-            reasons.append("Email cold")
-        return " + ".join(reasons)
+    def recommend(row) -> str:
+        click_days = row.get("days_since_last_email_click")
+        open_days = row.get("days_since_last_email_open")
+        if pd.notna(click_days) and click_days <= 30:
+            return "Clicked an email recently -- try a personal outreach call, they're still paying attention."
+        if pd.notna(open_days) and open_days <= 45:
+            return "Opens emails but hasn't acted -- send a stronger CTA or a limited-time incentive."
+        if pd.isna(row["last_email_opened"]):
+            return "Not opening email at all -- try SMS/DM or a different outreach channel entirely."
+        return "Gone quiet everywhere -- send a re-engagement email or reassess fit for the program."
 
-    needs_attention["reason"] = needs_attention.apply(reason, axis=1)
-    sort_cols = [c for c in ["activation_score"] if c in needs_attention.columns]
-    if sort_cols:
-        needs_attention = needs_attention.sort_values(sort_cols)
-    return needs_attention
+    df["recommended_action"] = df.apply(recommend, axis=1)
+    return df.sort_values("days_since_last_activity", ascending=False)
+
+
+# ---------------------------------------------------------------------------
+# Email Engagement page
+# ---------------------------------------------------------------------------
+
+
+def compute_email_segments(summary: pd.DataFrame) -> dict[str, pd.DataFrame]:
+    clicked_no_link = summary[summary["last_email_clicked"].notna() & summary["first_link"].isna()]
+    linked_no_post = summary[summary["first_link"].notna() & summary["first_post"].isna()]
+    never_opened = summary[summary["last_email_opened"].isna() & (summary["emails_sent_total"] > 0)]
+    return {
+        "clicked_no_link": clicked_no_link,
+        "linked_no_post": linked_no_post,
+        "never_opened": never_opened,
+    }

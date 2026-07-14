@@ -36,11 +36,18 @@
                      └───────────┬────────────┘
                                  │
                      ┌───────────▼────────────┐
-                     │  app/ (Streamlit)      │  Overview / Spikes / Email /
-                     │                        │  Explorer / Needs Attention /
-                     │                        │  Data & Settings
+                     │  app/ (Streamlit)      │  Overview / Creator Activity /
+                     │                        │  New Activations / Momentum /
+                     │                        │  Went Dark / Email Engagement /
+                     │                        │  Creator Profile / Settings
                      └────────────────────────┘
 ```
+
+In **mock/demo mode** (the default), `src/creatoriq_dashboard/demo_data.py`
+generates the `creators`/`posts`/`links`/`email_events` tables directly and
+the CreatorIQ API boxes above are simply unused — `data_access.load_inputs()`
+is the one place that decides which path to take, so no page or metrics code
+needs to know or care which mode is active.
 
 `scripts/refresh_data.py` (the ETL trigger) and the Streamlit app are
 deliberately **separate processes**. The app never calls the CreatorIQ API
@@ -109,7 +116,7 @@ diffs consecutive snapshots per post and turns any *increase* into a
 `links` row (`clicked_at` = the snapshot's timestamp, `clicks` = the size of
 the increase). Practically: **the first sync ever run always produces zero
 link-click rows** (nothing to diff against yet) — this is expected, not a
-bug, and the Activity & Spikes page says so explicitly in live mode.
+bug, and the Momentum page says so explicitly in live mode.
 
 ## Sync scope and safety limits
 

@@ -51,6 +51,18 @@ posts:
 # etl.py builds `links` rows itself (creator_id, clicked_at=snapshot date,
 # clicks=delta since the previous sync) from repeated `posts.link_clicks`
 # snapshots, so no field_mappings entry is needed here.
+#
+# NOTE on a semantic mismatch worth resolving before wiring up real data:
+# the mock/demo dashboard's `links` table represents link *creation* events
+# (a creator made a trackable link -- `created_at`), matching the "Total
+# links created" / "New Activations" pages in the current UI spec. The live
+# pipeline's `links` table (above) represents click-count *deltas* instead,
+# because that's the only link-related signal this account's API exposes
+# (see the LinkClicks caveat above). If your account has a genuine
+# "trackable link creation" resource, point a new `links` endpoint at it and
+# map `created_at` directly instead of using the snapshot-delta approach --
+# check with CreatorIQ support / your account's API docs for a "Links" or
+# "TrackableLinks" resource before assuming it doesn't exist.
 
 email_events:
   # Sourced from publisher_messages (config/endpoints.yaml) records. Note:

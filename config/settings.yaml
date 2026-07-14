@@ -1,40 +1,40 @@
 # Tunable business rules for the activation dashboard.
-# Edit these to match how your creator program defines "active" / "at risk" / "dormant".
+#
+# `activation.active_days` and `activation.went_dark_days` are also exposed
+# as live controls in the app's sidebar (see app/common.py) so a program
+# manager can adjust them without touching a config file -- these YAML
+# values are just the defaults used the first time the app loads.
 
 activation:
-  # A creator counts as "active" if they had a qualifying action (post, link click
-  # event, or accepted deliverable) within this many days.
-  active_window_days: 14
-  # "At risk": no qualifying action for at least this many days, but not yet dormant.
-  at_risk_window_days: 30
-  # "Dormant": no qualifying action for at least this many days.
-  dormant_window_days: 60
-  # Weights for the composite 0-100 activation score. Must sum to 1.0.
-  score_weights:
-    recency: 0.4
-    frequency: 0.35
-    diversity: 0.15
-    trend: 0.10
-  # Trailing window (days) used for the "frequency" component of the score.
-  frequency_window_days: 30
+  # A creator counts as "Active" if they posted or created a trackable link
+  # within this many days.
+  active_days: 30
+  # A creator who previously had activity but has been quiet for at least
+  # this many days is flagged "Went Dark".
+  went_dark_days: 60
+  # Rolling window (days) used to decide whether a creator's *first-ever*
+  # post/link falls inside the selected date range for "Newly Activated".
+  # (The date range itself is chosen live in the sidebar; this is just a
+  # fallback for pages that don't use the global date range.)
+  default_lookback_days: 30
+
+momentum:
+  # "This week" window used on the Momentum page.
+  recent_window_days: 7
+  # Trailing baseline window (days) used to compute each creator's normal
+  # activity level for comparison.
+  baseline_window_days: 28
+  # Minimum absolute count required before a creator/day can be flagged as
+  # a spike (avoids flagging "2 vs 0" as a huge spike for quiet creators).
+  min_count_for_spike: 3
+  # Spike percentage threshold (vs. historical average) to be listed on the
+  # Momentum page.
+  spike_percentage_threshold: 75
 
 email_engagement:
-  # A creator's email engagement is "healthy" if they opened at least one email
-  # in the trailing window below.
+  # A creator's email engagement is "healthy" if they opened at least one
+  # email in the trailing window below.
   recent_open_window_days: 30
-  # Flag creators as "cold" (needing a different outreach channel) if they haven't
-  # opened in this many days, or across this many consecutive sends.
-  cold_after_days: 45
-  cold_after_consecutive_unopened_sends: 3
-
-spike_detection:
-  # Rolling baseline window (days) used to compute the mean/std for z-score spikes.
-  baseline_window_days: 28
-  # Minimum absolute count required before a day can be flagged as a spike
-  # (avoids flagging "2 vs 0" as a huge spike for tiny programs/cohorts).
-  min_count_for_spike: 3
-  # z-score threshold above which a day is flagged as a spike.
-  z_score_threshold: 2.0
 
 alerts:
   # Post a weekly digest (needs-attention creators + spikes) to Slack if
@@ -43,9 +43,10 @@ alerts:
 
 live_sync:
   # Safety limits for pulling from the real CreatorIQ API (see
-  # src/creatoriq_dashboard/etl.py). Tune these up once you've confirmed a
-  # small sync works end-to-end -- CreatorIQ accounts can have hundreds of
-  # campaigns and each one requires its own API calls (roster + posts).
+  # src/creatoriq_dashboard/etl.py), used once CREATORIQ_DASHBOARD_MODE is
+  # switched from "demo" to "live". CreatorIQ accounts can have hundreds of
+  # campaigns and each one requires its own API calls (roster + posts), so
+  # start small.
   #
   # Only sync campaigns matching these statuses (set to [] to sync all).
   campaign_status_filter: ["Active"]

@@ -1,8 +1,9 @@
 # Creator Activation Dashboard (CreatorIQ + Streamlit)
 
-A self-serve dashboard for creator/influencer program managers to answer:
-**"who's active, who's posted, where are the spikes, and who's gone quiet on
-email?"** — built on top of the CreatorIQ API.
+A dashboard for creator/community management teams to understand creator
+engagement, see who needs outreach, and track activation over time — built
+with **Streamlit + Python**, structured to plug in the real CreatorIQ API
+later without touching page code.
 
 Built with **Streamlit** (not Google Looker Studio) — see
 [`docs/why-streamlit-not-looker-studio.md`](docs/why-streamlit-not-looker-studio.md)
@@ -11,28 +12,48 @@ how the pieces fit together.
 
 ## What you get
 
-- **Overview** — total creators, active rate, average activation score,
-  segment breakdown, and a combined posts/link-click timeline with spike
-  callouts.
-- **Activity & Spikes** — posts and trackable-link clicks tracked as
-  *separate* channels, with rolling z-score anomaly detection so a spike in
-  one doesn't mask a lull in the other.
-- **Email Engagement** — open rates, days-since-last-open distribution, and
-  a filterable/exportable list of creators who haven't opened an email
-  recently (the "email-cold" list).
-- **Creator Explorer** — sortable/filterable roster with a 0-100 composite
-  **activation score**, plus a per-creator drill-down timeline combining
-  posts, link clicks, and email opens.
-- **Needs Attention** — a prioritized, exportable outreach list combining
-  activation segment + email coldness, with an optional one-click Slack
-  digest.
-- **Data & Settings** — sync freshness, demo/live mode toggle instructions,
-  and every business-rule threshold (read live from `config/settings.yaml`).
+Every page shares one global sidebar: a **date range** selector (Last 7/30/60/90
+days, This Month, or Custom) and two live-adjustable thresholds — **days
+considered "Active"** and **days before "Went Dark"** — that every page and
+KPI below responds to instantly.
 
-Runs out of the box in **demo mode** with realistic synthetic data — no
-CreatorIQ credentials required to explore it.
+- **Dashboard Overview** — KPI cards (total / active / inactive / never
+  activated / newly activated / reactivated / went dark / consistently
+  active creators, plus posts and links created in the selected range),
+  an activation-state breakdown chart, and a program-wide activity trend
+  with spike callouts.
+- **Creator Activity** — a searchable, filterable, sortable, exportable
+  table with one row per creator: name, handle, email, publisher ID, tags,
+  status, first/last post & link dates, last email sent/opened/clicked,
+  every "days since" recency metric, lifetime + in-range counts. Select a
+  row to jump to that creator's full profile.
+- **New Activations** — creators who just published their first-ever post
+  or created their first-ever trackable link, creators who've linked but
+  never posted, and time-to-activation metrics (join → first link, join →
+  first post, first link → first post).
+- **Momentum** — "Spikes This Week": creators whose posting/link-creation
+  volume is significantly above their own historical average, with a
+  spike-percentage ranking.
+- **Went Dark** — previously-active creators who've gone quiet, each with a
+  rule-based **recommended follow-up action** based on their email
+  engagement history.
+- **Email Engagement** — send/open/click funnel, days-since-last-open
+  distribution, and three actionable cross-segments: clicked an email but
+  never created a link, created a link but never posted, and never opened
+  an email at all.
+- **Creator Profile** — full detail + a stacked activity timeline (posts,
+  links, email opens/clicks) for one creator, reachable by search or by
+  clicking through from any other page.
+- **Data & Settings** — current mode (mock vs. live), sync freshness, and
+  where every remaining config value lives.
 
-## Quickstart (demo mode, no API key needed)
+Runs out of the box in **mock-data mode** with a realistic synthetic creator
+population — no CreatorIQ credentials required to explore every page above,
+including examples of every activation state (there are always some Never
+Activated, Went Dark, Reactivated, Newly Activated, and Consistently Active
+creators in the generated data).
+
+## Quickstart (mock data, no API key needed)
 
 ```bash
 python3 -m venv .venv
@@ -41,30 +62,42 @@ pip install -r requirements.txt
 streamlit run app/streamlit_app.py
 ```
 
-Open the URL Streamlit prints (defaults to http://localhost:8501). You're now
-looking at ~180 synthetic creators with realistic posting/link-click/email
-behavior, including a few deliberate activity spikes.
+Open the URL Streamlit prints (defaults to http://localhost:8501).
 
-## Connecting your real CreatorIQ data
+## Designed to swap mock data for the real CreatorIQ API later
 
-The API client, endpoint paths, and field mappings shipped in this repo have
-been **verified against a live CreatorIQ account** (not just guessed from
-public docs) — see `config/endpoints.yaml` and `config/field_mappings.yaml`
-for the confirmed schema and the quirks discovered along the way (results
-sometimes come back as a JSON array and sometimes as an object keyed by
-string indices; pagination metadata lives in different places per
-resource; the page-size query param is `size`, not the more common
-`page_size`/`limit`; etc.). Your account should mostly work out of the box,
-but CreatorIQ accounts do vary — if something doesn't match, this is the
-YAML to edit, not the Python.
+Every page and every function in `src/creatoriq_dashboard/metrics.py` only
+ever consumes four plain, normalized tables — `creators`, `posts`, `links`,
+`email_events` — regardless of where they came from. There's exactly one
+switch point:
+
+- `src/creatoriq_dashboard/demo_data.py` generates those four tables as
+  realistic mock data (the current default, `CREATORIQ_DASHBOARD_MODE=demo`).
+- `src/creatoriq_dashboard/data_access.load_inputs()` is that switch point —
+  in `live` mode it returns the exact same table shapes, instead read from a
+  local SQLite cache populated by `scripts/refresh_data.py` against the real
+  CreatorIQ API.
+
+No dashboard/page code needs to change either way — only which data source
+`load_inputs()` reads from.
+
+### Connecting your real CreatorIQ data
+
+The CreatorIQ API client, endpoint paths, and field mappings for this are
+already built and **verified against a live CreatorIQ account** (not just
+guessed from public docs) — see `config/endpoints.yaml` and
+`config/field_mappings.yaml` for the confirmed schema and the quirks
+discovered along the way (results sometimes come back as a JSON array and
+sometimes as an object keyed by string indices; pagination metadata lives in
+different places per resource; the page-size query param is `size`, not the
+more common `page_size`/`limit`; etc.).
 
 1. **Get API access.** Ask your CreatorIQ CSM / account admin for an API key
    (CreatorIQ's interactive API reference lives at
    https://apidocs.creatoriq.com but is gated behind your account's login).
 2. **Copy `.env.example` to `.env`** and set `CREATORIQ_API_KEY`. The default
-   `CREATORIQ_BASE_URL` (`https://api.creatoriq.com/api` — note the `/api`
-   suffix) and `CREATORIQ_ORG_ID` (usually not needed) already match what a
-   live account returned.
+   `CREATORIQ_BASE_URL` (`https://api.creatoriq.com/api`) already matches
+   what a live account returned.
 3. Set `CREATORIQ_DASHBOARD_MODE=live` in `.env`.
 4. **Start small.** `config/settings.yaml`'s `live_sync` section caps how
    much a sync pulls (`max_campaigns: 10`, `max_email_lookups: 300` by
@@ -73,65 +106,53 @@ YAML to edit, not the Python.
    campaign's roster + activity), so a full sync across hundreds of
    campaigns is a lot of API calls. Confirm a small sync works, then raise
    the caps.
-5. Pull data into the local cache:
-
-   ```bash
-   python scripts/refresh_data.py
-   ```
-
+5. Pull data into the local cache: `python scripts/refresh_data.py`.
 6. Put that command on a schedule (cron, GitHub Actions, Airflow, etc.) — see
-   [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md#scheduling-refreshes) for a
-   ready-to-use GitHub Actions example. **Link-click spikes specifically
-   need at least two scheduled syncs** before they show anything (see below).
+   [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md#scheduling-refreshes).
 7. `streamlit run app/streamlit_app.py` again — you're now looking at real
-   data, served instantly from the local SQLite cache instead of hitting the
-   CreatorIQ API on every page view/filter change.
+   data.
 
-### Two confirmed data-quality caveats (the dashboard surfaces both in-app)
+**One semantic gap worth resolving as part of that work:** in mock mode,
+`links` represents link-*creation* events (matching "Total links created" /
+"New Activations" in the UI spec). CreatorIQ's own API, at least on the
+account this was verified against, doesn't expose a "trackable link
+creation" event at all — only a cumulative click counter per post — so the
+live pipeline currently derives `links` from click-count deltas instead
+(see the caveat below). Check whether your account has a genuine link-
+creation resource before assuming it doesn't; `config/field_mappings.yaml`
+has the full explanation and exactly where to point a real `links` endpoint
+if you find one.
+
+#### Two confirmed data-quality caveats on the live side
 
 **Link clicks are a cumulative counter, not an event log — and may not be
 populated at all.** CreatorIQ's `/campaign/{id}/activity` endpoint reports a
-`LinkClicks` field per post, but it's a running total-to-date, not a
-timestamped click event. `etl.py` snapshots that counter on every sync and
-derives day-over-day deltas for the "Link Clicks" activity timeline — which
-means **the first sync always shows zero link-click activity**; you need at
-least two scheduled syncs before deltas exist. Separately, on the account
-this was tested against, `LinkClicks` came back `null` for every single
-post — some CreatorIQ accounts don't populate it at all (e.g. if link
-tracking actually runs through a separate affiliate platform like Impact,
-CJ, or Rakuten instead of CreatorIQ's own trackable links). The **Activity &
-Spikes** page tells you which of these two situations you're in. If your
-real link-click data lives elsewhere, pull it from there and land it in the
-`links` table (same `creator_id`/`clicked_at`/`clicks` shape) — everything
-downstream already expects that.
+`LinkClicks` field per post as a running total-to-date, not a timestamped
+event. `etl.py` snapshots that counter on every sync and derives day-over-day
+deltas — meaning **the first live sync always shows zero link activity**;
+you need at least two scheduled syncs before deltas exist. Separately, on
+the account this was tested against, `LinkClicks` came back `null` for every
+post — some accounts don't populate it at all (link tracking may run
+through a separate affiliate platform like Impact, CJ, or Rakoten instead).
 
 **Email "opens" via CreatorIQ's API may not be trustworthy.** CreatorIQ's
 `/publisher/{id}/messages` endpoint returns an `IsRead` flag on in-platform
-Message Center notifications, which this dashboard maps to `opened_at` as a
-best-effort signal. On the account this was tested against, `IsRead` stayed
-`False` for every message, including ones sent to creators who were clearly
-actively posting — meaning creators were reading the actual email rather
-than logging into the CreatorIQ portal to view it there, so the in-platform
-"read" flag never got set. The **Email Engagement** page warns you if every
-creator shows 0 opens. If that happens on your account too, the reliable fix
-is the same either way:
-
-- Export/sync opens from your real ESP (Mailchimp, Klaviyo, HubSpot,
-  Iterable, etc.) into the same `email_events` shape (`creator_id`,
-  `message_id`, `sent_at`, `opened_at`, `clicked_at`), matched to CreatorIQ
-  creators by email address (`scripts/refresh_data.py` is a good place to
-  add that as a second sync step).
-- Everything downstream (the Email Engagement page, the cold-list export,
-  the composite activation score) already expects exactly that shape, so no
-  dashboard code changes are needed either way.
+Message Center notifications, which the live pipeline maps to `opened_at` as
+a best-effort signal. On the account this was tested against, `IsRead`
+stayed `False` for every message, including ones sent to creators who were
+clearly actively posting — meaning creators read the actual email rather
+than logging into the CreatorIQ portal, so the in-platform "read" flag never
+got set. If that happens on your account too, sync real open-pixel data from
+your ESP (Mailchimp, Klaviyo, HubSpot, Iterable, etc.) into the same
+`email_events` shape instead — no dashboard code changes needed either way.
 
 ## Tuning the business rules
 
-Every threshold that defines "active" / "at risk" / "dormant", the
-activation-score weights, spike sensitivity, and email-cold rules live in
-[`config/settings.yaml`](config/settings.yaml) — a config change, not a code
-change. The **Data & Settings** page in the app always shows the values
-currently in effect.
+**Date range, "Active" days, and "Went Dark" days are adjustable live in the
+sidebar** on every page — no restart needed. Their defaults, plus momentum
+sensitivity and (once you're on live mode) API sync limits, live in
+[`config/settings.yaml`](config/settings.yaml). The **Data & Settings** page
+always shows the values currently in effect.
 
 ## Running tests / linting
 
@@ -142,8 +163,8 @@ ruff check src/ app/ scripts/ tests/
 ```
 
 `tests/test_app_smoke.py` runs every Streamlit page headlessly (via
-`streamlit.testing.v1.AppTest`) in demo mode and fails the build if any page
-raises — a cheap regression guard for a fast-moving Streamlit app.
+`streamlit.testing.v1.AppTest`) and fails the build if any page raises — a
+cheap regression guard for a fast-moving Streamlit app.
 
 ## Deploying it for the team
 
@@ -160,33 +181,28 @@ raises — a cheap regression guard for a fast-moving Streamlit app.
 
 ```
 config/                  Business rules + CreatorIQ endpoint/field config (YAML, no code changes needed)
-src/creatoriq_dashboard/ API client, normalization, storage, ETL, and metrics (pure, unit-tested)
+src/creatoriq_dashboard/ Mock data generator, CreatorIQ API client, ETL, storage, and metrics (pure, unit-tested)
 app/                      Streamlit multipage app
 scripts/                  CLI entry points (refresh_data.py, seed_demo_data.py)
 tests/                    pytest unit tests + Streamlit AppTest smoke tests
 docs/                     Architecture + tool-choice rationale
 ```
 
-## What else to consider (the "anything else" list)
+## What else to consider
 
-Beyond what's built here, once this is live, the highest-leverage next steps
-for increasing activation are usually:
+Beyond what's built here, the highest-leverage next steps for increasing
+activation are usually:
 
-1. **Onboarding funnel**: track time from "joined program" to "first post" —
-   this dashboard's `Never Activated` segment is a start; add a cohort/funnel
-   view once you have enough new-creator volume to segment by join month.
-2. **Campaign-level activation rate**: % of briefed/invited creators who
-   actually posted per campaign — a very different (and often more
-   actionable) number than program-wide activation rate.
-3. **A/B testing outreach**: use the "Needs Attention" export as your
-   control/treatment list and measure lift in next-cycle activation from
-   different nudges (email subject lines, SMS, bonus incentives, 1:1 manager
-   outreach).
-4. **Alerting, not just reporting**: the Slack digest button on the Needs
-   Attention page is a start — wire `scripts/refresh_data.py` + a digest
-   script into your existing cron/Actions so the list lands in Slack weekly
-   without anyone opening the dashboard.
-5. **Compliance/deliverables tracking**: if creators have contracted
-   deliverable counts, layer "deliverables completed / deliverables owed" on
-   top of raw post counts — activation and contract compliance aren't
-   automatically the same thing.
+1. **Campaign-level activation rate**: % of briefed/invited creators who
+   actually posted per campaign — a different (and often more actionable)
+   number than program-wide activation rate.
+2. **A/B testing outreach**: use the Went Dark export as your control/
+   treatment list and measure lift in next-cycle activation from different
+   nudges (email subject lines, SMS, bonus incentives, 1:1 manager outreach).
+3. **Alerting, not just reporting**: wire `scripts/refresh_data.py` + a
+   digest script into your existing cron/Actions so the Went Dark / New
+   Activations lists land in Slack automatically, without anyone opening
+   the dashboard.
+4. **Compliance/deliverables tracking**: if creators have contracted
+   deliverable counts, layer "deliverables completed / owed" on top of raw
+   post counts — activation and contract compliance aren't the same thing.

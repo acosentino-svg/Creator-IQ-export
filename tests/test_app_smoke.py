@@ -37,4 +37,26 @@ def test_overview_page_shows_expected_metrics():
     assert not at.exception
     metric_labels = [m.label for m in at.metric]
     assert "Total Creators" in metric_labels
-    assert "Needs Attention" in metric_labels
+    assert "Active" in metric_labels
+    assert "Went Dark" in metric_labels
+
+
+def test_overview_page_handles_live_mode_before_any_sync(monkeypatch, tmp_path):
+    """Regression test: switching to live mode before scripts/refresh_data.py
+    has ever run must not crash -- the SQLite cache doesn't exist yet, so
+    every table reads back with zero rows (previously zero *columns* too,
+    which broke every merge downstream).
+
+    Note: this only re-checks that the page doesn't raise. It can't reliably
+    assert "0 creators" because app/common.py's st.cache_resource/cache_data
+    (correctly, for real usage) persist across AppTest instances created
+    within the same test process, so an earlier demo-mode test's cached
+    config can still be in effect here. See
+    tests/test_metrics.py::test_build_creator_summary_with_empty_but_shaped_tables
+    for a deterministic, cache-free version of this same regression check.
+    """
+    monkeypatch.setenv("CREATORIQ_DASHBOARD_MODE", "live")
+    monkeypatch.setenv("CREATORIQ_DB_PATH", str(tmp_path / "does_not_exist_yet.db"))
+    at = AppTest.from_file(str(APP_DIR / "streamlit_app.py"))
+    at.run(timeout=60)
+    assert not at.exception
