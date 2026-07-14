@@ -58,6 +58,17 @@ def tag_list(raw_tags_value):
         "Home Type|House","Niche|Home & Garden","Crm Adriana"
     Standalone tags (no `Category|Value` pipe) are just the tag name.
     Extract the quoted entries as a plain list of tag strings.
+
+    NOTE: a meaningful fraction of real Tags values are malformed (an
+    extra/stray quote+comma sequence, usually right at the start, e.g.
+    `","Brand Discovered By|...","Crm Adriana",...`, likely from an
+    upstream CRM data-entry issue). An odd/unbalanced quote count desyncs
+    this naive "everything between quote pairs" tokenization for
+    everything after the malformed spot, silently dropping real tags
+    (confirmed: "Crm Adriana" went missing from the parsed list this way
+    for ~10k real records). Prefer `has_tag()` for membership checks —
+    it matches the exact quoted target tag as a literal substring
+    instead of relying on correct global tokenization first.
     """
     if not raw_tags_value:
         return []
@@ -65,9 +76,18 @@ def tag_list(raw_tags_value):
 
 
 def has_tag(raw_tags_value, tag_name):
-    """Case-insensitive exact match against one of the quoted tag entries."""
-    target = tag_name.strip().lower()
-    return any(t.strip().lower() == target for t in tag_list(raw_tags_value))
+    """
+    Case-insensitive match for `tag_name` appearing as its own quoted
+    entry in the raw Tags string, e.g. checking for `Crm Adriana` matches
+    `..."Crm Adriana",...`. Deliberately does *not* tokenize the whole
+    string first (see `tag_list` docstring) - malformed quoting elsewhere
+    in the value must not cause false negatives for a tag that is itself
+    cleanly quoted.
+    """
+    if not raw_tags_value:
+        return False
+    pattern = r'"\s*' + re.escape(tag_name.strip()) + r'\s*"'
+    return re.search(pattern, raw_tags_value, re.IGNORECASE) is not None
 
 
 def log(*args):
