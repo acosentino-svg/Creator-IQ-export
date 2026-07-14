@@ -130,3 +130,82 @@ this key is scoped to. Practical options to get that report's data out:
    will very likely be authenticated with a live browser session
    cookie/JWT rather than an API key, so it'd work as a one-off pull but
    not as a long-lived automated integration.
+
+## Update: the async `Reports/*` view API (major breakthrough)
+
+The user found CreatorIQ API-docs entries for a whole family of endpoints
+at `GET /crm/v1/api/view?view=Reports/<Name>` (e.g. `Reports/Publishers`,
+`Reports/CreatorsReport`, `Reports/Campaigns/CampaignPublishers`,
+`Reports/Campaigns/CampaignPosts`, `Reports/DailyCampaignPosts`,
+`Reports/CreatorConnectCreators`, `Reports/CreatorPromoteReport`,
+`Reports/LinkedAccountsByNetwork/BrokenLinks`,
+`Reports/CreatorsPaymentCollectionStatusDetails`,
+`Reports/CreatorPaymentsReport`). These are real and accessible with
+`CREATORIQ_API_KEY` (unlike the separate LinkTracking/Payments/SafeIQ
+products, which are `403 Forbidden`).
+
+**How it works:** each GET is an async job. The first call returns
+`TaskStatus=CREATED`; the *same* request must be re-issued to poll status
+(`CREATED` → `PROCESSING` → `DONE`); once `DONE`, the actual result JSON
+is at `Result.Headers.Location` (a pre-signed S3 URL, valid ~24h).
+Processing time is **roughly constant (~45-90s) regardless of request
+size**, up to a few hundred thousand rows (`requestData[take]`) — but
+requests for very large `take` (1,000,000+) or, separately, requests with
+a large `requestData[skip]` **can hang indefinitely** (observed: a
+600k-row report timed out repeatedly for any request with `skip>=50000`,
+even with `take` as small as 1000 — a classic offset-pagination
+performance cliff on the backend, unrelated to result size). None of the
+guessed filter params (`creatorId`, `publisherId`, `from`, `dateFrom`,
+etc.) actually filter server-side for any of these views — pagination
+via `take`/`skip` only, filtering has to happen client-side after
+fetching.
+
+**What we found in each report:**
+
+- **`Reports/DailyCampaignPosts`** — the big win. A *daily-snapshot* fact
+  table: every post, once per day it was tracked (so one real post
+  appears as several rows). 3,067,480 rows total, paginates reliably in
+  300k-row chunks (11 chunks, ~20 min total). Fields include `creatorid`,
+  `postid`, `postdate` (constant per post, i.e. the real post date —
+  reliable, unlike the stale `SocialAccounts.LastPostDate`), `campaign`,
+  `platform`, engagement metrics, and a `clicks` field that actually *is*
+  sometimes populated (confirmed non-null examples) — though this looks
+  like organic post-engagement clicks, not Wayfair/CJ affiliate
+  tracking-link clicks specifically. Fetched and filtered to the 11,662
+  Crm Adriana creators (1,125,355 matching rows; only 1,432 creators have
+  any tracked post) — used to build real Last Post Date / Time Since
+  Last Post / per-window post counts (see `output/crm_adriana_post_activity.csv`).
+- **`Reports/CreatorPaymentsReport`** — per (creator, campaign) payment
+  status with `RequirementsCompletedAt`, `FinalPayout`, `StatusOfPayment`
+  (`Paid` / `Ready to Pay` / null). This is the closest thing found to
+  "Last Transaction Date" / revenue, but it's flat campaign-gifting
+  payouts, not ongoing CJ affiliate commission revenue. **Full coverage
+  wasn't achievable**: 601,430 total rows, but every request with
+  `skip >= 50000` hung indefinitely (tested repeatedly, including with
+  `take` as small as 1000), so only the first ~50,000 rows (in whatever
+  default sort order the report uses) were retrievable. That covers only
+  **882 of 11,662 (7.6%)** of our tagged creators —
+  `output/crm_adriana_payments_PARTIAL.csv` (2,566 deduplicated rows) is
+  provided for reference only and should **not** be treated as complete
+  or representative; most creators' absence from it reflects the
+  pagination limitation, not an absence of payments.
+- **`Reports/CreatorsReport`**, **`Reports/Publishers`**,
+  **`Reports/Campaigns/CampaignPublishers`**,
+  **`Reports/Campaigns/CampaignPosts`** — creator/campaign profile and
+  audience-engagement data (social handles, follower counts, recruiting
+  status, contact email). No link-click or revenue columns.
+- **`Reports/CreatorPromoteReport`** — returned 0 rows for this account.
+- **`Reports/LinkedAccountsByNetwork/BrokenLinks`** — about *social
+  account* linking health (token broken/linked/unlinked), not affiliate
+  tracking links.
+- **`Reports/CreatorsPaymentCollectionStatusDetails`** — payment
+  *onboarding* status (whether a creator has a payable account set up),
+  not transaction history.
+
+**Net effect on the original ask:** Last Post Date / Time Since Last
+Post / post counts per date window are now solved with real data for the
+Crm Adriana creators. Last Transaction Date / revenue is only ~7.6%
+coverable due to a backend pagination limitation on
+`CreatorPaymentsReport`. Links Generated, Link Clicks (affiliate/CJ
+specific), and Last Email Opened/Clicked remain not found anywhere
+accessible.
