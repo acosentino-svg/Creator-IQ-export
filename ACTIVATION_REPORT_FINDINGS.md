@@ -96,3 +96,37 @@ Two ways to get the actual report:
 In the meantime, `output/creatoriq_active_members_crm_adriana.csv` (11,662
 rows, `Status=Active` + tag `Crm Adriana`) is available as the creator
 list to join against once one of the above is available.
+
+## Follow-up: is there a "run this saved report via API" endpoint?
+
+Also tested whether a report built in the CreatorIQ web UI (filters +
+column selection) could be fetched back out via the API — i.e. build it
+once in the app, then pull its data with `CREATORIQ_API_KEY`. Tried ~15
+more candidate resource names under `/crm/v1/api/...`
+(`report(s)`, `customReport(s)`, `savedReport(s)`, `reportBuilder`,
+`export(s)`, `activationReport(s)`, `insights`, `analytics`, `dashboard`,
+`metrics`, `publisherReport(s)`, `activation`, `activationMetrics`,
+`creatorReport`) — all return `404 Route not found`. Also checked the
+`Lists` resource (which *is* accessible) as a possible vehicle: a `List`
+is just a static, named group of publisher IDs with no metrics attached
+(confirmed by inspecting `GET /crm/v1/api/list/{id}`), so it can't carry
+report data either.
+
+**Conclusion:** there is no discoverable public-API equivalent of the
+in-app report builder/export reachable with `CREATORIQ_API_KEY`. The
+in-app report almost certainly runs through a separate, session
+(browser-login) authenticated internal API, not the public CRM REST API
+this key is scoped to. Practical options to get that report's data out:
+
+1. **Export it directly from the CreatorIQ UI** (build the report with
+   the desired filters/columns, then use its Export/Download-CSV action)
+   and hand us the file — this is the most reliable option since it's
+   the same pipe that already has access to link-tracking/payments/email
+   data.
+2. If the report page has no visible export button but loads data via
+   AJAX, the underlying request can be captured from the browser
+   (DevTools → Network tab → find the XHR/fetch call that returns the
+   report's JSON/CSV) and shared with us as a "Copy as cURL". Note this
+   will very likely be authenticated with a live browser session
+   cookie/JWT rather than an API key, so it'd work as a one-off pull but
+   not as a long-lived automated integration.
