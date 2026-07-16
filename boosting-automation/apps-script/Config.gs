@@ -50,6 +50,13 @@ const QUEUED_MARKER = 'Queued (auto)';
 const DRAFT_COLUMN_HEADER = 'Drafted Message (auto)';
 const SENT_CHECKBOX_HEADER = 'Sent?';
 
+// Column added to the New Boosted Creators sheet to mark a row as already
+// copied into the Gift Card Tracker, so it never gets copied there twice.
+// A row becomes eligible to promote the moment a human types something into
+// its Email Address cell - that's the one and only signal this script uses
+// to decide a creator is "confirmed."
+const PROMOTED_COLUMN_HEADER = 'Added to Tracker? (auto)';
+
 // Script Properties key for the Gemini API key. Set once via
 // Extensions > Apps Script > Project Settings > Script Properties,
 // or by running setGeminiApiKey_() from the script editor.

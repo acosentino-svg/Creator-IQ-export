@@ -114,6 +114,26 @@ function readBlockRows_(sheet, block) {
   return rows;
 }
 
+/**
+ * Reads a simple, single-header-row sheet (the message sheets, not the
+ * multi-block Gift Card Tracker) into an array of row objects keyed by
+ * normalized header name, each carrying its own _sheetRow.
+ */
+function readFlatSheetRows_(sheet, headerRowNum) {
+  const lastRow = sheet.getLastRow();
+  const lastCol = sheet.getLastColumn();
+  const startDataRow = headerRowNum + 1;
+  if (lastRow < startDataRow) return { headerIndex: buildHeaderIndex_(sheet.getRange(headerRowNum, 1, 1, lastCol).getValues()[0]), rows: [] };
+  const headerIndex = buildHeaderIndex_(sheet.getRange(headerRowNum, 1, 1, lastCol).getValues()[0]);
+  const values = sheet.getRange(startDataRow, 1, lastRow - startDataRow + 1, lastCol).getValues();
+  const rows = values.map((rowVals, i) => {
+    const obj = { _sheetRow: startDataRow + i };
+    Object.keys(headerIndex).forEach((key) => { obj[key] = rowVals[headerIndex[key]]; });
+    return obj;
+  });
+  return { headerIndex: headerIndex, rows: rows };
+}
+
 function ensureColumn_(sheet, headerRowNum, headerText) {
   const lastCol = sheet.getLastColumn();
   const headers = sheet.getRange(headerRowNum, 1, 1, lastCol).getValues()[0];

@@ -3,6 +3,21 @@
  * Menu + the five process steps from the walkthrough, translated into code.
  * Run these from the "Boosting Automation" menu that appears when the
  * spreadsheet opens (see onOpen below).
+ *
+ * How a brand-new creator's info flows through the sheets:
+ *   1. First time seen -> a row appears in the New Boosted Creators sheet
+ *      (Handle, Name if CreatorIQ has it, Pieces, Amount, blank Email, Links).
+ *      Nothing is written to the Gift Card Tracker yet.
+ *   2. More content from the same still-unconfirmed creator, before you have
+ *      an email -> that SAME row's pieces/amount/links get updated in place
+ *      (no duplicate row), and its draft message is cleared so it gets
+ *      redrafted with the new numbers.
+ *   3. You type their confirmed email into that row's Email Address cell.
+ *   4. Next sync (or the next automatic hourly run) notices the email,
+ *      copies that row into the Gift Card Tracker as a real, final row, and
+ *      marks it "Added to Tracker?" so it's never copied twice.
+ *   5. Any further content from that creator this month is now a normal
+ *      follow-up, updating their real tracker row directly.
  */
 
 function onOpen() {
@@ -11,6 +26,7 @@ function onOpen() {
     .addItem('1. Start new month (Step 0)', 'startNewMonth')
     .addSeparator()
     .addItem('2. Sync new content -> gift card tracker + message sheets (Steps 2 & 4)', 'syncBoostingTracker')
+    .addItem('2b. Promote confirmed emails to Gift Card Tracker', 'promoteConfirmedNewCreators_')
     .addSeparator()
     .addItem('3a. Draft messages: New Creators sheet', 'draftNewCreatorMessages')
     .addItem('3b. Draft messages: Follow-Up sheet', 'draftFollowUpMessages')
@@ -45,17 +61,19 @@ function runScheduledSync() {
   draftMessagesForSheet_(SHEET_NAMES.NEW_CREATORS_MSG, NEW_CREATOR_PROMPT);
   draftMessagesForSheet_(SHEET_NAMES.FOLLOWUP_MSG, FOLLOWUP_PROMPT);
 
-  if (!summary || (summary.queued === 0 && summary.dupesFixed === 0)) return;
+  if (!summary) return;
+  const nothingHappened = summary.queued === 0 && summary.dupesFixed === 0 && summary.promoted === 0;
+  if (nothingHappened) return;
 
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   const body =
     'Boosting Tracker sync just ran automatically:\n\n' +
-    '- ' + summary.newCreators + ' brand-new creator(s) queued (New Boosted Creators sheet)\n' +
+    '- ' + summary.newCreators + ' brand-new/updated creator row(s) in the New Boosted Creators sheet\n' +
     '- ' + summary.followUps + ' follow-up piece(s) queued (Follow-Up sheet)\n' +
+    '- ' + summary.promoted + ' creator(s) moved into the Gift Card Tracker (their email was confirmed)\n' +
     '- ' + summary.dupesFixed + ' dupe(s) auto-filled from the original entry (worth a quick Ctrl+F spot-check)\n\n' +
     'Messages have been drafted in both message sheets - review and send from CreatorIQ, ' +
-    'then check "Sent?" on each row. New creators are NOT yet in the Gift Card Tracker - add them ' +
-    'there yourself once you have their confirmed email.\n\n' +
+    'then check "Sent?" on each row.\n\n' +
     'Open the tracker: ' + ss.getUrl();
 
   MailApp.sendEmail(Session.getActiveUser().getEmail(), 'Boosting Tracker: new content ready to review', body);
@@ -100,17 +118,80 @@ function startNewMonth() {
 }
 
 /**
+ * Looks at the New Boosted Creators sheet for any row that now has an email
+ * address but hasn't been copied into the Gift Card Tracker yet, and copies
+ * it over as a real, final row there. This is the ONLY thing that ever adds
+ * a brand-new creator to the tracker - it happens because a human filled in
+ * an email, never just because new content showed up.
+ */
+function promoteConfirmedNewCreators_(showToast) {
+  if (showToast === undefined) showToast = true; // default true when run from the menu directly
+  const msgSheet = getSheet_(SHEET_NAMES.NEW_CREATORS_MSG);
+  ensureColumn_(msgSheet, HEADER_ROW.NEW_CREATORS_MSG, PROMOTED_COLUMN_HEADER);
+  const promotedKey = normalizeHeader_(PROMOTED_COLUMN_HEADER);
+  const read = readFlatSheetRows_(msgSheet, HEADER_ROW.NEW_CREATORS_MSG);
+
+  const toPromote = read.rows.filter((r) => String(r['email address'] || '').trim() !== '' && !r[promotedKey]);
+  if (!toPromote.length) {
+    if (showToast) toast_('No newly-confirmed emails to promote yet.');
+    return { promoted: 0 };
+  }
+
+  const giftSheet = getSheet_(SHEET_NAMES.GIFT_CARD_TRACKER);
+  const block = getCurrentMonthBlock_(giftSheet);
+  const nameKey = ('creator handle' in block.headerIndex) ? 'creator handle' : 'creator name';
+  const nameHeaderLabel = (nameKey === 'creator handle') ? 'Creator Handle' : 'Creator Name';
+  const newPiecesOffset = colIndex_(block.headerIndex, 'New Pieces of Content Used', true);
+  const firstNameOffset = colIndex_(block.headerIndex, 'First Name', false);
+  const lastNameOffset = colIndex_(block.headerIndex, 'Last Name', false);
+  const emailOffset = colIndex_(block.headerIndex, 'Email Address', false);
+
+  const blockRows = readBlockRows_(giftSheet, block);
+  const existingHandles = {};
+  let nextEmptyRow = HEADER_ROW.GIFT_CARD_TRACKER_FIELD_ROW + 1;
+  let foundGap = false;
+  blockRows.forEach((r) => {
+    const h = normalizeHandle_(r[nameKey]);
+    if (h) existingHandles[h] = true;
+    else if (!foundGap) { nextEmptyRow = r._sheetRow; foundGap = true; }
+  });
+  if (!foundGap) nextEmptyRow = (blockRows.length ? blockRows[blockRows.length - 1]._sheetRow : HEADER_ROW.GIFT_CARD_TRACKER_FIELD_ROW) + 1;
+
+  let promotedCount = 0;
+  toPromote.forEach((r) => {
+    const handleKey = normalizeHandle_(r['creator handle']);
+    if (existingHandles[handleKey]) {
+      // Already has a real row somehow (e.g. added by hand) - don't duplicate, just mark it done.
+      msgSheet.getRange(r._sheetRow, read.headerIndex[promotedKey] + 1).setValue(true);
+      return;
+    }
+    const targetRow = nextEmptyRow++;
+    setBlockCell_(giftSheet, block, targetRow, nameHeaderLabel, r['creator handle']);
+    if (firstNameOffset !== -1) giftSheet.getRange(targetRow, block.startCol + firstNameOffset + 1).setValue(r['first name'] || '');
+    if (lastNameOffset !== -1) giftSheet.getRange(targetRow, block.startCol + lastNameOffset + 1).setValue(r['last name'] || '');
+    giftSheet.getRange(targetRow, block.startCol + newPiecesOffset + 1).setValue(r['new pieces of content used']);
+    if (emailOffset !== -1) giftSheet.getRange(targetRow, block.startCol + emailOffset + 1).setValue(r['email address']);
+    existingHandles[handleKey] = true;
+    msgSheet.getRange(r._sheetRow, read.headerIndex[promotedKey] + 1).setValue(true);
+    promotedCount++;
+  });
+
+  if (showToast) {
+    toast_(promotedCount + ' creator(s) moved into the Gift Card Tracker (email now confirmed).');
+  }
+  return { promoted: promotedCount };
+}
+
+/**
  * Steps 2 & 4: scan the Boosting Tracker once, classify each unhandled row.
- *
- * IMPORTANT: the Monthly Gift Card Cost Tracker is treated as the FINAL,
- * confirmed record - the script never writes a brand-new creator into it.
- * Only creators who already have a real row there (added by a human once
- * their email was confirmed in an earlier sync this month) get their
- * "New Pieces of Content Used" incremented directly. Brand-new creators are
- * tracked only in memory for this run, so their message can be drafted with
- * the correct amount, without ever touching the tracker sheet itself.
+ * The Gift Card Tracker is the FINAL, confirmed record - the only way a
+ * creator ends up there is through promoteConfirmedNewCreators_ above, once
+ * a human has typed in their email. Everything about a brand-new,
+ * not-yet-confirmed creator lives in the New Boosted Creators sheet instead.
  */
 function syncBoostingTracker(silent) {
+  const promotion = promoteConfirmedNewCreators_(false);
+
   const trackerSheet = getSheet_(SHEET_NAMES.BOOSTING_TRACKER);
   const lastRow = trackerSheet.getLastRow();
   const lastCol = trackerSheet.getLastColumn();
@@ -140,11 +221,29 @@ function syncBoostingTracker(silent) {
   });
   if (!foundGap) nextEmptyRow = (blockRows.length ? blockRows[blockRows.length - 1]._sheetRow : HEADER_ROW.GIFT_CARD_TRACKER_FIELD_ROW) + 1;
 
-  const newRows = [];
+  // Creators already sitting in the New Boosted Creators sheet, still unconfirmed
+  // (no email yet, not promoted, and not already sent - if it was already sent, treat
+  // any further content as a fresh row rather than silently changing a sent message).
+  const newMsgSheet = getSheet_(SHEET_NAMES.NEW_CREATORS_MSG);
+  ensureColumn_(newMsgSheet, HEADER_ROW.NEW_CREATORS_MSG, DRAFT_COLUMN_HEADER);
+  ensureColumn_(newMsgSheet, HEADER_ROW.NEW_CREATORS_MSG, SENT_CHECKBOX_HEADER);
+  ensureColumn_(newMsgSheet, HEADER_ROW.NEW_CREATORS_MSG, PROMOTED_COLUMN_HEADER);
+  const promotedKey = normalizeHeader_(PROMOTED_COLUMN_HEADER);
+  const sentKey = normalizeHeader_(SENT_CHECKBOX_HEADER);
+  const draftKey = normalizeHeader_(DRAFT_COLUMN_HEADER);
+  const newMsgRead = readFlatSheetRows_(newMsgSheet, HEADER_ROW.NEW_CREATORS_MSG);
+  const pendingByHandle = {};
+  newMsgRead.rows.forEach((r) => {
+    const email = String(r['email address'] || '').trim();
+    if (email !== '' || r[promotedKey] || r[sentKey]) return;
+    const hk = normalizeHandle_(r['creator handle']);
+    if (hk) pendingByHandle[hk] = r;
+  });
+
   const followUpRows = [];
-  const piecesUpdates = []; // real, already-confirmed rows only: { row, value }
+  const piecesUpdates = []; // real, already-confirmed rows: { row, value }
   const trackerMarkerUpdates = []; // { row, value }
-  const virtualNewCreators = {}; // handleKey -> { handle, totalPieces, links: [], profile } - NOT written to the tracker
+  const virtualNewCreators = {}; // brand-new this run, not yet in the sheet at all
   let dupesFixed = 0, queued = 0;
 
   for (let i = 0; i < values.length; i++) {
@@ -184,6 +283,11 @@ function syncBoostingTracker(silent) {
         firstName: existing['first name'] || '', lastName: existing['last name'] || '',
         newPieces: 1, email: existing['email address'] || '', links: links,
       });
+    } else if (pendingByHandle[handleKey]) {
+      const p = pendingByHandle[handleKey];
+      p._pendingDelta = (p._pendingDelta || 0) + 1;
+      p._newLinks = p._newLinks || [];
+      p._newLinks.push(links);
     } else if (virtualNewCreators[handleKey]) {
       const v = virtualNewCreators[handleKey];
       v.totalPieces++;
@@ -218,47 +322,85 @@ function syncBoostingTracker(silent) {
     followUpRows.forEach((r) => { r.amount = amountByRow[r.blockRow]; });
   }
 
-  // Compute the right Gift Card Amount for brand-new creators by briefly borrowing a few
-  // already-provisioned (but unused) formula rows further down this same block - write the
-  // piece count, read back what the real formula computes this month, then clear it right
-  // away. The tracker itself never gains a row for an unconfirmed creator.
+  // Compute the correct Gift Card Amount for every pending update + brand-new creator by
+  // briefly borrowing not-yet-used formula rows further down this same block, in one batch.
+  const pendingList = Object.keys(pendingByHandle).map((k) => pendingByHandle[k]).filter((p) => p._pendingDelta);
   const virtualList = Object.keys(virtualNewCreators).map((k) => virtualNewCreators[k]);
-  if (virtualList.length) {
+  const scratchNeeded = pendingList.length + virtualList.length;
+  if (scratchNeeded) {
     const amountCol = block.startCol + amountOffset + 1;
     const piecesCol = block.startCol + newPiecesOffset + 1;
-    virtualList.forEach((v, idx) => { v._scratchRow = nextEmptyRow + idx; });
+    let scratchRow = nextEmptyRow;
+    pendingList.forEach((p) => {
+      p._scratchRow = scratchRow++;
+      p._newTotalPieces = (Number(p['new pieces of content used']) || 0) + p._pendingDelta;
+    });
+    virtualList.forEach((v) => { v._scratchRow = scratchRow++; });
+
+    pendingList.forEach((p) => { giftSheet.getRange(p._scratchRow, piecesCol).setValue(p._newTotalPieces); });
     virtualList.forEach((v) => { giftSheet.getRange(v._scratchRow, piecesCol).setValue(v.totalPieces); });
     SpreadsheetApp.flush();
-    const amounts = giftSheet.getRange(nextEmptyRow, amountCol, virtualList.length, 1).getValues();
-    virtualList.forEach((v, idx) => { v.amount = amounts[idx][0]; });
-    giftSheet.getRange(nextEmptyRow, piecesCol, virtualList.length, 1).clearContent();
+
+    const amounts = giftSheet.getRange(nextEmptyRow, amountCol, scratchNeeded, 1).getValues();
+    const amountByRow = {};
+    amounts.forEach((r, idx) => { amountByRow[nextEmptyRow + idx] = r[0]; });
+    pendingList.forEach((p) => { p._newAmount = amountByRow[p._scratchRow]; });
+    virtualList.forEach((v) => { v.amount = amountByRow[v._scratchRow]; });
+
+    giftSheet.getRange(nextEmptyRow, piecesCol, scratchNeeded, 1).clearContent();
   }
-  virtualList.forEach((v) => {
-    newRows.push({
-      handle: v.handle,
-      firstName: v.profile ? v.profile.firstName : '',
-      lastName: v.profile ? v.profile.lastName : '',
-      newPieces: v.totalPieces,
-      amount: v.amount,
-      email: '',
-      links: v.links.join(', '),
-    });
+
+  // Apply updates to already-pending rows in the New Boosted Creators sheet in place.
+  pendingList.forEach((p) => {
+    const piecesCol1 = newMsgRead.headerIndex['new pieces of content used'] + 1;
+    const amountCol1 = newMsgRead.headerIndex['gift card amount'] + 1;
+    const linksCol1 = newMsgRead.headerIndex['links'] + 1;
+    newMsgSheet.getRange(p._sheetRow, piecesCol1).setValue(p._newTotalPieces);
+    newMsgSheet.getRange(p._sheetRow, amountCol1).setValue(p._newAmount);
+    const combinedLinks = (String(p['links'] || '').trim() ? p['links'] + ', ' : '') + p._newLinks.join(', ');
+    newMsgSheet.getRange(p._sheetRow, linksCol1).setValue(combinedLinks);
+    newMsgSheet.getRange(p._sheetRow, newMsgRead.headerIndex[draftKey] + 1).clearContent(); // force a redraft with the new totals
   });
 
+  const newRows = virtualList.map((v) => ({
+    handle: v.handle,
+    firstName: v.profile ? v.profile.firstName : '',
+    lastName: v.profile ? v.profile.lastName : '',
+    newPieces: v.totalPieces,
+    amount: v.amount,
+    email: '',
+    links: v.links.join(', '),
+  }));
   appendToMessageSheet_(SHEET_NAMES.NEW_CREATORS_MSG, newRows);
   appendToMessageSheet_(SHEET_NAMES.FOLLOWUP_MSG, followUpRows);
 
+  const totalNewCreatorActivity = newRows.length + pendingList.length;
   if (!silent) {
     toast_(
-      'Queued ' + queued + ' row(s) [' + newRows.length + ' new creator, ' + followUpRows.length + ' follow-up], ' +
-      'auto-filled ' + dupesFixed + ' dupe(s). New creators were NOT added to the Gift Card Tracker - ' +
-      'add them yourself once you have a confirmed email. Now run step 3a/3b to draft messages.'
+      'Queued ' + queued + ' row(s) [' + totalNewCreatorActivity + ' new-creator update(s), ' + followUpRows.length + ' follow-up], ' +
+      'auto-filled ' + dupesFixed + ' dupe(s), promoted ' + promotion.promoted + ' confirmed creator(s) to the tracker. ' +
+      'Now run step 3a/3b to draft messages.'
     );
   }
 
-  return { queued: queued, newCreators: newRows.length, followUps: followUpRows.length, dupesFixed: dupesFixed };
+  return {
+    queued: queued, newCreators: totalNewCreatorActivity, followUps: followUpRows.length,
+    dupesFixed: dupesFixed, promoted: promotion.promoted,
+  };
 }
 
+function setBlockCell_(sheet, block, row, headerName, value) {
+  const offset = colIndex_(block.headerIndex, headerName, true);
+  sheet.getRange(row, block.startCol + offset + 1).setValue(value);
+}
+
+/**
+ * Fills a dupe row's link/SKU-type fields from the original (first) row that
+ * shares the same Unique Identifier, but ONLY into cells that are currently
+ * blank - never overwrites anything a human already entered. Leaves a note
+ * flagging it as auto-filled so Josh can still spot-check per the existing
+ * "Ctrl+F the identifier" safety habit described in the walkthrough.
+ */
 function fillDupeLinks_(sheet, headerIndex, values, i, sheetRow) {
   const uidIdx = headerIndex['unique identifier'];
   const uid = values[i][uidIdx];
@@ -352,6 +494,12 @@ function draftMessagesForSheet_(sheetName, template) {
   toast_('Drafted ' + drafted + ' message(s) in "' + sheetName + '".' + (skipped ? ' ' + skipped + ' skipped (missing name/pieces/amount/links).' : ''));
 }
 
+/**
+ * Optional: when Josh checks "Sent?" on a message row, flip the matching
+ * Boosting Tracker rows for that creator from QUEUED_MARKER to "Yes" so the
+ * tracker reflects that the creator was actually notified (not just queued).
+ * Wire this up as an installable "On edit" trigger if desired.
+ */
 function onEditMarkSent(e) {
   if (!e || !e.range) return;
   const sheet = e.range.getSheet();
@@ -385,6 +533,10 @@ function onEditMarkSent(e) {
   });
 }
 
+/**
+ * Step 5: end-of-month completeness check + clean export for the bulk gift
+ * card upload / campaign import.
+ */
 function exportEndOfMonth() {
   const giftSheet = getSheet_(SHEET_NAMES.GIFT_CARD_TRACKER);
   const block = getCurrentMonthBlock_(giftSheet);
