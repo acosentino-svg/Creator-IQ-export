@@ -13,6 +13,16 @@ const SHEET_NAMES = {
   EOM_EXPORT: 'EOM Export', // created automatically by exportEndOfMonth()
 };
 
+// "New Boosted Creators Automated Message" and "Follow-Up Boosted Creators
+// Automated Message" are SEPARATE Google Sheets files, not tabs inside the
+// Boosting Program Tracker. Paste each file's URL (or just the long ID from
+// the middle of the URL) here so the script knows where to reach them.
+// Leave blank and it'll assume they're tabs in this same file instead.
+const EXTERNAL_SHEET_IDS = {
+  NEW_CREATORS_MSG: 'https://docs.google.com/spreadsheets/d/1iYm99c9OaUf3uwSu6AsR2XTEGwBbGop7TU3s-LV_9UI/edit',
+  FOLLOWUP_MSG: 'https://docs.google.com/spreadsheets/d/14BNRzS0KkR7Wqx-5yg74QLrBjVSXPHA5gIk8fIvOttk/edit',
+};
+
 // Row (1-indexed) that holds the real column headers in each tab.
 const HEADER_ROW = {
   BOOSTING_TRACKER: 2, // row 1 is the "tag Adriana" instruction banner

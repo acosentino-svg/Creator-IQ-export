@@ -79,6 +79,22 @@ scopes for not much extra benefit), the starter kit solves the actual problem
   on the message sheet flips it to `Yes` for you automatically — that part's
   optional and off by default.
 
+## Important: three separate files, not one
+
+The walkthrough lists **Boosting Program Tracker**, **New Boosted Creators
+Automated Message**, and **Follow-Up Boosted Creators Automated Message** as
+separate items — they're actually three separate Google Sheets files, not
+tabs inside one spreadsheet. The script is attached to (bound to) the
+Tracker, so to reach the other two it needs to be told their exact address —
+that's what `EXTERNAL_SHEET_IDS` in `Config.gs` is for. Paste each file's URL
+in there once and the rest of the project doesn't need to know the
+difference between "a tab in this file" and "a tab in a different file."
+
+One consequence: because the script now reaches into other files by
+address, Google's permission screen asks for full "access your Google
+Sheets" rather than the narrower "just this one file" version — there isn't
+an official permission level that means "just these three specific files."
+
 ## Setup (Google Sheets → Apps Script, ~10 minutes)
 
 1. Open the **Boosting Program Tracker** spreadsheet.

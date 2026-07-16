@@ -5,10 +5,29 @@
  */
 
 function getSheet_(name) {
+  if (name === SHEET_NAMES.NEW_CREATORS_MSG && EXTERNAL_SHEET_IDS.NEW_CREATORS_MSG) {
+    return getExternalSheet_(EXTERNAL_SHEET_IDS.NEW_CREATORS_MSG);
+  }
+  if (name === SHEET_NAMES.FOLLOWUP_MSG && EXTERNAL_SHEET_IDS.FOLLOWUP_MSG) {
+    return getExternalSheet_(EXTERNAL_SHEET_IDS.FOLLOWUP_MSG);
+  }
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   const sheet = ss.getSheetByName(name);
-  if (!sheet) throw new Error('Tab not found: "' + name + '". Check SHEET_NAMES in Config.gs.');
+  if (!sheet) throw new Error('Tab not found: "' + name + '". Check SHEET_NAMES / EXTERNAL_SHEET_IDS in Config.gs.');
   return sheet;
+}
+
+/** Opens a different Google Sheets file by URL or bare ID and returns its first tab. */
+function getExternalSheet_(urlOrId) {
+  const id = extractSpreadsheetId_(urlOrId);
+  const ss = SpreadsheetApp.openById(id);
+  return ss.getSheetByName('Sheet1') || ss.getSheets()[0];
+}
+
+function extractSpreadsheetId_(urlOrId) {
+  const match = String(urlOrId).match(/[-\w]{25,}/);
+  if (!match) throw new Error('Could not find a spreadsheet ID inside "' + urlOrId + '". Paste the full URL or just the long ID from it.');
+  return match[0];
 }
 
 /** Trims + lowercases so header lookups survive stray spaces ("  Fav's List..."). */
