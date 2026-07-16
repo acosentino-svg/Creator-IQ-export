@@ -46,7 +46,7 @@ const DUPE_MARKERS = ['dupe'];
 const QUEUED_MARKER = 'Queued (auto)';
 
 // Column this script adds to the message sheets to hold the Gemini-drafted
-// text and to track whether Josh has actually sent it yet.
+// text and to track whether the send has actually happened yet.
 const DRAFT_COLUMN_HEADER = 'Drafted Message (auto)';
 const SENT_CHECKBOX_HEADER = 'Sent?';
 
@@ -73,7 +73,7 @@ Can you please confirm the email you would like the gift card to be addressed to
 {{LINKS}}
 
 Best,
-Josh`;
+Adriana`;
 
 const FOLLOWUP_PROMPT = `Hi {{FIRST_NAME}},
 
@@ -85,4 +85,4 @@ Can you send over the product links you featured in just this newest content whe
 {{LINKS}}
 
 Best,
-Josh`;
+Adriana`;
