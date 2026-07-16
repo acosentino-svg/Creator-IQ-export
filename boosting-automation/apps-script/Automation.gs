@@ -206,7 +206,7 @@ function syncBoostingTracker(silent) {
         lastName: profile ? profile.lastName : '',
         newPieces: 1,
         amount: newAmount,
-        email: profile ? profile.email : '',
+        email: '', // never pre-filled — see the note left on the gift card tracker cell; wait for their confirmed reply
         links: links,
       });
     }
@@ -233,8 +233,21 @@ function writeNewBlockRow_(sheet, block, targetRow, data) {
   setBlockCell_(sheet, block, targetRow, nameKey, data.handle);
   if ('first name' in block.headerIndex) setBlockCell_(sheet, block, targetRow, 'First Name', data.firstName || '');
   if ('last name' in block.headerIndex) setBlockCell_(sheet, block, targetRow, 'Last Name', data.lastName || '');
-  if (data.email && 'email address' in block.headerIndex) setBlockCell_(sheet, block, targetRow, 'Email Address', data.email);
   setBlockCell_(sheet, block, targetRow, 'New Pieces of Content Used', data.newPieces);
+
+  // IMPORTANT: never auto-fill Email Address itself. The creator confirms which
+  // email they want the gift card sent to in the outreach message — CreatorIQ's
+  // email on file (account/login email) is not guaranteed to be the same one.
+  // Leave a note as a hint only, so this column still accurately reflects
+  // "confirmed by the creator" and Step 5's missing-email check stays honest.
+  if (data.email && 'email address' in block.headerIndex) {
+    const offset = colIndex_(block.headerIndex, 'Email Address', true);
+    sheet.getRange(targetRow, block.startCol + offset + 1).setNote(
+      'CreatorIQ has "' + data.email + '" on file for this handle (their account/login email). ' +
+      'Do not treat this as final — the outreach message asks them to confirm which email they ' +
+      'want the gift card sent to. Only paste an email into this cell once they\'ve confirmed it.'
+    );
+  }
 }
 
 function setBlockCell_(sheet, block, row, headerName, value) {

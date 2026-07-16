@@ -57,9 +57,12 @@ function ciqFetch_(path, opts) {
 
 /**
  * Looks up a creator's profile by handle so we can pre-fill First/Last Name
- * and Email in the gift card tracker WITHOUT waiting for them to reply
- * (this is the single biggest win from having API access — it can shrink
- * Step 3 down to "just links", since email is often already on file).
+ * in the gift card tracker WITHOUT waiting for them to reply. The email this
+ * returns is deliberately NOT written into the tracker's Email Address column
+ * — it's their CreatorIQ account/login email, not necessarily the address
+ * they want a gift card sent to (the outreach message explicitly asks them
+ * to confirm that separately). Automation.gs leaves it as a cell note only,
+ * as a hint for whoever's filling in the confirmed address later.
  * Returns null (never throws) so a lookup miss/placeholder-endpoint never
  * blocks the sheet sync — the row just falls back to the old "ask them"
  * flow, same as before.
