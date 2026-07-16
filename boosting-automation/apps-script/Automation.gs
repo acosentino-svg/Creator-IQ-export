@@ -17,8 +17,55 @@ function onOpen() {
     .addSeparator()
     .addItem('4. End-of-month export + completeness check (Step 5)', 'exportEndOfMonth')
     .addSeparator()
+    .addItem('Run sync + draft now and email me a summary', 'runScheduledSync')
+    .addItem('Turn ON automatic hourly sync (replaces "checking daily")', 'enableAutoSync')
+    .addItem('Turn OFF automatic sync', 'disableAutoSync')
+    .addSeparator()
     .addItem('Setup: Set Gemini API key (optional, polish only)', 'setGeminiApiKey_')
+    .addItem('Setup: Set CreatorIQ API key', 'setCreatorIQApiKey_')
     .addToUi();
+}
+
+// ---------------------------------------------------------------------------
+// Replaces "I check that sheet daily": an hourly trigger runs the sync +
+// draft steps automatically and emails a short summary, so new content sits
+// pre-processed (queued in the gift card tracker + drafted messages ready)
+// whether or not Josh happens to open the sheet that day. He still reviews
+// and sends the drafts himself — nothing here sends anything to a creator.
+// ---------------------------------------------------------------------------
+const AUTO_SYNC_HANDLER = 'runScheduledSync';
+
+function enableAutoSync() {
+  disableAutoSync(); // avoid duplicate triggers if run twice
+  ScriptApp.newTrigger(AUTO_SYNC_HANDLER).timeBased().everyHours(1).create();
+  SpreadsheetApp.getUi().alert('Automatic hourly sync is ON. You\'ll get an email summary whenever there\'s something new to review.');
+}
+
+function disableAutoSync() {
+  ScriptApp.getProjectTriggers()
+    .filter((t) => t.getHandlerFunction() === AUTO_SYNC_HANDLER)
+    .forEach((t) => ScriptApp.deleteTrigger(t));
+}
+
+function runScheduledSync() {
+  const before = { newRows: 0, followUpRows: 0 };
+  const summary = syncBoostingTracker(true);
+  draftMessagesForSheet_(SHEET_NAMES.NEW_CREATORS_MSG, NEW_CREATOR_PROMPT);
+  draftMessagesForSheet_(SHEET_NAMES.FOLLOWUP_MSG, FOLLOWUP_PROMPT);
+
+  if (!summary || (summary.queued === 0 && summary.dupesFixed === 0)) return; // nothing new -> no email noise
+
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const body =
+    'Boosting Tracker sync just ran automatically:\n\n' +
+    '- ' + summary.newCreators + ' brand-new creator(s) queued (New Boosted Creators sheet)\n' +
+    '- ' + summary.followUps + ' follow-up piece(s) queued (Follow-Up sheet)\n' +
+    '- ' + summary.dupesFixed + ' dupe(s) auto-filled from the original entry (worth a quick Ctrl+F spot-check)\n\n' +
+    'Messages have been drafted in both message sheets — review and send from CreatorIQ, ' +
+    'then check "Sent?" on each row.\n\n' +
+    'Open the tracker: ' + ss.getUrl();
+
+  MailApp.sendEmail(Session.getActiveUser().getEmail(), 'Boosting Tracker: new content ready to review', body);
 }
 
 // ---------------------------------------------------------------------------
@@ -72,7 +119,7 @@ function startNewMonth() {
 // (b) route already-boosted-this-month creators to the Follow-Up sheet, or
 // (c) auto-fill dupes from the original entry and skip messaging entirely.
 // ---------------------------------------------------------------------------
-function syncBoostingTracker() {
+function syncBoostingTracker(silent) {
   const trackerSheet = getSheet_(SHEET_NAMES.BOOSTING_TRACKER);
   const lastRow = trackerSheet.getLastRow();
   const lastCol = trackerSheet.getLastColumn();
@@ -92,7 +139,7 @@ function syncBoostingTracker() {
 
   const newRows = [];
   const followUpRows = [];
-  let dupesFixed = 0, queued = 0, skippedIncomplete = 0;
+  let dupesFixed = 0, queued = 0;
 
   for (let i = 0; i < values.length; i++) {
     const row = values[i];
@@ -138,12 +185,30 @@ function syncBoostingTracker() {
         links: links,
       });
     } else {
+      // Try CreatorIQ first so a brand-new creator can skip straight to "confirmed" if
+      // their name/email are already on file — falls back to blank (old "ask them" flow)
+      // if the lookup fails or isn't configured yet. See CreatorIQ.gs.
+      const profile = ciqFindPublisherByHandle_(handle);
       const targetRow = findFirstEmptyRowInBlock_(giftSheet, block);
-      writeNewBlockRow_(giftSheet, block, targetRow, { handle: handle, newPieces: 1 });
+      writeNewBlockRow_(giftSheet, block, targetRow, {
+        handle: handle,
+        newPieces: 1,
+        firstName: profile ? profile.firstName : '',
+        lastName: profile ? profile.lastName : '',
+        email: profile ? profile.email : '',
+      });
       SpreadsheetApp.flush();
       const amountCol = block.startCol + colIndex_(block.headerIndex, 'Gift Card Amount', true) + 1;
       const newAmount = giftSheet.getRange(targetRow, amountCol).getValue();
-      newRows.push({ handle: handle, firstName: '', lastName: '', newPieces: 1, amount: newAmount, email: '', links: links });
+      newRows.push({
+        handle: handle,
+        firstName: profile ? profile.firstName : '',
+        lastName: profile ? profile.lastName : '',
+        newPieces: 1,
+        amount: newAmount,
+        email: profile ? profile.email : '',
+        links: links,
+      });
     }
 
     trackerSheet.getRange(sheetRow, headerIndex['creator notified'] + 1).setValue(QUEUED_MARKER);
@@ -153,10 +218,14 @@ function syncBoostingTracker() {
   appendToMessageSheet_(SHEET_NAMES.NEW_CREATORS_MSG, newRows);
   appendToMessageSheet_(SHEET_NAMES.FOLLOWUP_MSG, followUpRows);
 
-  toast_(
-    'Queued ' + queued + ' row(s) [' + newRows.length + ' new creator, ' + followUpRows.length + ' follow-up], ' +
-    'auto-filled ' + dupesFixed + ' dupe(s). Now run step 3a/3b to draft messages.'
-  );
+  if (!silent) {
+    toast_(
+      'Queued ' + queued + ' row(s) [' + newRows.length + ' new creator, ' + followUpRows.length + ' follow-up], ' +
+      'auto-filled ' + dupesFixed + ' dupe(s). Now run step 3a/3b to draft messages.'
+    );
+  }
+
+  return { queued: queued, newCreators: newRows.length, followUps: followUpRows.length, dupesFixed: dupesFixed };
 }
 
 function writeNewBlockRow_(sheet, block, targetRow, data) {
@@ -164,6 +233,7 @@ function writeNewBlockRow_(sheet, block, targetRow, data) {
   setBlockCell_(sheet, block, targetRow, nameKey, data.handle);
   if ('first name' in block.headerIndex) setBlockCell_(sheet, block, targetRow, 'First Name', data.firstName || '');
   if ('last name' in block.headerIndex) setBlockCell_(sheet, block, targetRow, 'Last Name', data.lastName || '');
+  if (data.email && 'email address' in block.headerIndex) setBlockCell_(sheet, block, targetRow, 'Email Address', data.email);
   setBlockCell_(sheet, block, targetRow, 'New Pieces of Content Used', data.newPieces);
 }
 
