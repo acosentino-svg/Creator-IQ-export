@@ -1,0 +1,127 @@
+/**
+ * Helpers.gs
+ * Generic utilities shared by Automation.gs: header lookup, month-block
+ * detection in the Monthly Gift Card Cost Tracker, and handle normalization.
+ */
+
+function getSheet_(name) {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const sheet = ss.getSheetByName(name);
+  if (!sheet) throw new Error('Tab not found: "' + name + '". Check SHEET_NAMES in Config.gs.');
+  return sheet;
+}
+
+/** Trims + lowercases so header lookups survive stray spaces ("  Fav's List..."). */
+function normalizeHeader_(h) {
+  return String(h || '').trim().toLowerCase();
+}
+
+function normalizeHandle_(h) {
+  return String(h || '').trim().toLowerCase().replace(/^@/, '');
+}
+
+/**
+ * Builds { headerName -> 0-based column offset } for a single header row.
+ * @param {Array} headerRowValues Row values (e.g. sheet.getRange(row,1,1,numCols).getValues()[0])
+ */
+function buildHeaderIndex_(headerRowValues) {
+  const index = {};
+  headerRowValues.forEach((h, i) => {
+    const key = normalizeHeader_(h);
+    if (key) index[key] = i;
+  });
+  return index;
+}
+
+function colIndex_(headerIndex, name, required) {
+  const key = normalizeHeader_(name);
+  if (!(key in headerIndex)) {
+    if (required) throw new Error('Expected column "' + name + '" not found. Headers seen: ' + Object.keys(headerIndex).join(', '));
+    return -1;
+  }
+  return headerIndex[key];
+}
+
+/**
+ * The Monthly Gift Card Cost Tracker lays months out side-by-side:
+ * row 1 has a label (e.g. "July") only in the first column of each block,
+ * row 2 has that block's real field headers. Block width = distance to the
+ * next labeled column (or sheet edge). The right-most labeled block is
+ * always the current month, since Step 0 appends new months to the right.
+ */
+function getMonthBlocks_(sheet) {
+  const lastCol = sheet.getLastColumn();
+  const labelRow = sheet.getRange(HEADER_ROW.GIFT_CARD_TRACKER_MONTH_LABEL_ROW, 1, 1, lastCol).getValues()[0];
+  const starts = [];
+  labelRow.forEach((v, i) => {
+    if (String(v || '').trim() !== '') starts.push(i); // 0-based col offset
+  });
+  if (starts.length === 0) throw new Error('No month labels found in row ' + HEADER_ROW.GIFT_CARD_TRACKER_MONTH_LABEL_ROW + ' of "' + SHEET_NAMES.GIFT_CARD_TRACKER + '".');
+
+  const fieldRow = sheet.getRange(HEADER_ROW.GIFT_CARD_TRACKER_FIELD_ROW, 1, 1, lastCol).getValues()[0];
+  return starts.map((startCol, i) => {
+    const endCol = i + 1 < starts.length ? starts[i + 1] - 1 : lastCol - 1; // 0-based, inclusive
+    const headers = fieldRow.slice(startCol, endCol + 1);
+    return {
+      label: String(labelRow[startCol]).trim(),
+      startCol: startCol, // 0-based
+      endCol: endCol, // 0-based inclusive
+      width: endCol - startCol + 1,
+      headerIndex: buildHeaderIndex_(headers),
+    };
+  });
+}
+
+function getCurrentMonthBlock_(sheet) {
+  const blocks = getMonthBlocks_(sheet);
+  return blocks[blocks.length - 1];
+}
+
+/** Reads the current month block as an array of row objects keyed by header name. */
+function readBlockRows_(sheet, block) {
+  const lastRow = sheet.getLastRow();
+  const startDataRow = HEADER_ROW.GIFT_CARD_TRACKER_FIELD_ROW + 1; // 1-based
+  if (lastRow < startDataRow) return [];
+  const range = sheet.getRange(startDataRow, block.startCol + 1, lastRow - startDataRow + 1, block.width);
+  const values = range.getValues();
+  const rows = [];
+  values.forEach((rowVals, i) => {
+    const obj = { _sheetRow: startDataRow + i, _range: range };
+    Object.keys(block.headerIndex).forEach((key) => {
+      obj[key] = rowVals[block.headerIndex[key]];
+    });
+    rows.push(obj);
+  });
+  return rows;
+}
+
+/** First empty row (by "creator handle"/"creator name" being blank) within a month block, or lastRow+1. */
+function findFirstEmptyRowInBlock_(sheet, block) {
+  const nameKey = ('creator handle' in block.headerIndex) ? 'creator handle' : 'creator name';
+  const rows = readBlockRows_(sheet, block);
+  for (const r of rows) {
+    if (String(r[nameKey] || '').trim() === '') return r._sheetRow;
+  }
+  return (rows.length ? rows[rows.length - 1]._sheetRow : HEADER_ROW.GIFT_CARD_TRACKER_FIELD_ROW) + 1;
+}
+
+function findRowByHandleInBlock_(sheet, block, handle) {
+  const nameKey = ('creator handle' in block.headerIndex) ? 'creator handle' : 'creator name';
+  const rows = readBlockRows_(sheet, block);
+  const target = normalizeHandle_(handle);
+  return rows.find((r) => normalizeHandle_(r[nameKey]) === target) || null;
+}
+
+function ensureColumn_(sheet, headerRowNum, headerText) {
+  const lastCol = sheet.getLastColumn();
+  const headers = sheet.getRange(headerRowNum, 1, 1, lastCol).getValues()[0];
+  const idx = headers.findIndex((h) => normalizeHeader_(h) === normalizeHeader_(headerText));
+  if (idx !== -1) return idx + 1; // 1-based
+  const newCol = lastCol + 1;
+  sheet.getRange(headerRowNum, newCol).setValue(headerText);
+  return newCol;
+}
+
+function toast_(msg) {
+  SpreadsheetApp.getActiveSpreadsheet().toast(msg, 'Boosting Automation');
+}
