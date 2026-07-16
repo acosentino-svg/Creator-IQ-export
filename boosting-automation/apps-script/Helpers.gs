@@ -114,23 +114,6 @@ function readBlockRows_(sheet, block) {
   return rows;
 }
 
-/** First empty row (by "creator handle"/"creator name" being blank) within a month block, or lastRow+1. */
-function findFirstEmptyRowInBlock_(sheet, block) {
-  const nameKey = ('creator handle' in block.headerIndex) ? 'creator handle' : 'creator name';
-  const rows = readBlockRows_(sheet, block);
-  for (const r of rows) {
-    if (String(r[nameKey] || '').trim() === '') return r._sheetRow;
-  }
-  return (rows.length ? rows[rows.length - 1]._sheetRow : HEADER_ROW.GIFT_CARD_TRACKER_FIELD_ROW) + 1;
-}
-
-function findRowByHandleInBlock_(sheet, block, handle) {
-  const nameKey = ('creator handle' in block.headerIndex) ? 'creator handle' : 'creator name';
-  const rows = readBlockRows_(sheet, block);
-  const target = normalizeHandle_(handle);
-  return rows.find((r) => normalizeHandle_(r[nameKey]) === target) || null;
-}
-
 function ensureColumn_(sheet, headerRowNum, headerText) {
   const lastCol = sheet.getLastColumn();
   const headers = sheet.getRange(headerRowNum, 1, 1, lastCol).getValues()[0];
