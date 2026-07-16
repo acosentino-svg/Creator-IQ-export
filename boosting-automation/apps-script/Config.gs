@@ -20,7 +20,7 @@ const SHEET_NAMES = {
 // Leave blank and it'll assume they're tabs in this same file instead.
 const EXTERNAL_SHEET_IDS = {
   NEW_CREATORS_MSG: 'https://docs.google.com/spreadsheets/d/1iYm99c9OaUf3uwSu6AsR2XTEGwBbGop7TU3s-LV_9UI/edit',
-  FOLLOWUP_MSG: 'https://docs.google.com/spreadsheets/d/14BNRzS0KkR7Wqx-5yg74QLrBjVSXPHA5gIk8fIvOttk/edit',
+  FOLLOWUP_MSG: 'https://docs.google.com/spreadsheets/d/1eWhsrdo5jxBTms70o5yuHpDV2rEgIvNowwO0T7Z6I7c/edit',
 };
 
 // Row (1-indexed) that holds the real column headers in each tab.
