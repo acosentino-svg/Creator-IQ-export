@@ -40,6 +40,7 @@ function onOpen() {
     .addItem('Setup: Set Gemini API key (optional, polish only)', 'setGeminiApiKey_')
     .addItem('Setup: Set CreatorIQ API key', 'setCreatorIQApiKey_')
     .addItem('Setup: Test CreatorIQ connection (diagnostic)', 'testCreatorIQConnection_')
+    .addItem('Setup: Test Names lookup (diagnostic)', 'testNameLookup_')
     .addToUi();
 }
 
@@ -400,6 +401,50 @@ function syncBoostingTracker(silent) {
     queued: queued, newCreators: totalNewCreatorActivity, followUps: followUpRows.length,
     dupesFixed: dupesFixed, promoted: promotion.promoted,
   };
+}
+
+/**
+ * Diagnostic only - since buildNameLookup_() fails silently by design (so a
+ * missing/misnamed Names tab never breaks the real sync), this writes out
+ * exactly what it found (or didn't find) into a "Names Lookup Debug" tab so
+ * we can see why names aren't matching, instead of guessing.
+ */
+function testNameLookup_() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const existing = ss.getSheetByName('Names Lookup Debug');
+  if (existing) ss.deleteSheet(existing);
+  const debugSheet = ss.insertSheet('Names Lookup Debug');
+
+  const rows = [['Check', 'Result']];
+  rows.push(['NAMES_LOOKUP_SHEET_NAME configured as', NAMES_LOOKUP_SHEET_NAME]);
+  rows.push(['EXTERNAL_SHEET_IDS.NEW_CREATORS_MSG set?', EXTERNAL_SHEET_IDS.NEW_CREATORS_MSG ? 'yes - looking in that external file' : 'no - looking in this active spreadsheet']);
+
+  let namesSheet = null;
+  try {
+    namesSheet = getNamesLookupSheet_();
+  } catch (e) {
+    rows.push(['Error while looking for the Names tab', String(e)]);
+  }
+
+  if (!namesSheet) {
+    rows.push(['Names tab found?', 'NO - no tab named "' + NAMES_LOOKUP_SHEET_NAME + '" was found. Check the exact tab name/spelling, and confirm it is a tab inside the SAME file as the New Boosted Creators sheet.']);
+  } else {
+    rows.push(['Names tab found?', 'YES']);
+    rows.push(['Names tab actual name', namesSheet.getName()]);
+    rows.push(['Names tab last row / last column', namesSheet.getLastRow() + ' / ' + namesSheet.getLastColumn()]);
+    const lastCol = namesSheet.getLastColumn();
+    const headerRow = lastCol > 0 ? namesSheet.getRange(1, 1, 1, lastCol).getValues()[0] : [];
+    rows.push(['Header row exactly as read', headerRow.join(' | ')]);
+  }
+
+  const lookup = buildNameLookup_();
+  const keys = Object.keys(lookup);
+  rows.push(['Total handles matched', keys.length]);
+  rows.push(['Sample matches (up to 5)', keys.slice(0, 5).map((k) => k + ' -> ' + lookup[k].firstName + ' ' + lookup[k].lastName).join('  |  ')]);
+
+  debugSheet.getRange(1, 1, rows.length, 2).setValues(rows);
+  debugSheet.autoResizeColumns(1, 2);
+  SpreadsheetApp.getUi().alert('Done. Check the "Names Lookup Debug" tab, then copy/paste its contents back to me.');
 }
 
 function setBlockCell_(sheet, block, row, headerName, value) {
