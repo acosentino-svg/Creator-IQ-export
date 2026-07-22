@@ -56,29 +56,28 @@ function testCreatorIQConnection_() {
   sheet.getRange(1, 1, 1, 3).setValues([['Test', 'HTTP Status', 'Response (first 500 chars)']]).setFontWeight('bold');
 
   const key = getCreatorIQApiKey_();
-  const baseUrls = [
-    'https://apis.creatoriq.com',
-    'https://api.creatoriq.com',
-    'https://app.creatoriq.com/api',
-  ];
-  const authStyles = [
-    { label: 'Bearer token', headers: { Authorization: 'Bearer ' + key } },
-    { label: 'X-API-Key header', headers: { 'X-API-Key': key } },
+  const base = 'https://apis.creatoriq.com'; // confirmed as the real domain by round 1 (structured JSON error, not a generic 404 page)
+
+  const tests = [
+    { label: 'Bare root, Bearer token', url: base + '/', headers: { Authorization: 'Bearer ' + key } },
+    { label: 'Bare root, no auth at all', url: base + '/', headers: {} },
+    { label: '/publishers?handle=test, NO auth at all', url: base + '/publishers?handle=test', headers: {} },
+    { label: '/v1/publishers?handle=test, Bearer token', url: base + '/v1/publishers?handle=test', headers: { Authorization: 'Bearer ' + key } },
+    { label: '/v2/publishers?handle=test, Bearer token', url: base + '/v2/publishers?handle=test', headers: { Authorization: 'Bearer ' + key } },
+    { label: '/publishers?handle=test, lowercase x-api-key', url: base + '/publishers?handle=test', headers: { 'x-api-key': key } },
+    { label: '/publishers?handle=test, key as query param', url: base + '/publishers?handle=test&api_key=' + encodeURIComponent(key), headers: {} },
+    { label: '/oauth/token (checking for a token-exchange endpoint)', url: base + '/oauth/token', headers: {} },
   ];
 
-  const rows = [];
-  baseUrls.forEach((base) => {
-    authStyles.forEach((auth) => {
-      const url = base + '/publishers?handle=test';
-      try {
-        const resp = UrlFetchApp.fetch(url, {
-          method: 'get', headers: auth.headers, muteHttpExceptions: true, followRedirects: true,
-        });
-        rows.push(['GET ' + url + ' (' + auth.label + ')', resp.getResponseCode(), resp.getContentText().substring(0, 500)]);
-      } catch (e) {
-        rows.push(['GET ' + url + ' (' + auth.label + ')', 'ERROR', String(e)]);
-      }
-    });
+  const rows = tests.map((t) => {
+    try {
+      const resp = UrlFetchApp.fetch(t.url, {
+        method: 'get', headers: t.headers, muteHttpExceptions: true, followRedirects: true,
+      });
+      return ['GET ' + t.url + ' (' + t.label + ')', resp.getResponseCode(), resp.getContentText().substring(0, 500)];
+    } catch (e) {
+      return ['GET ' + t.url + ' (' + t.label + ')', 'ERROR', String(e)];
+    }
   });
 
   sheet.getRange(2, 1, rows.length, 3).setValues(rows);
