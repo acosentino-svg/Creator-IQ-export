@@ -62,8 +62,8 @@ function disableAutoSync() {
 
 function runScheduledSync() {
   const summary = syncBoostingTracker(true);
-  draftMessagesForSheet_(SHEET_NAMES.NEW_CREATORS_MSG, NEW_CREATOR_PROMPT);
-  draftMessagesForSheet_(SHEET_NAMES.FOLLOWUP_MSG, FOLLOWUP_PROMPT);
+  draftNewCreatorMessages();
+  draftFollowUpMessages();
 
   if (!summary) return;
   const nothingHappened = summary.queued === 0 && summary.dupesFixed === 0 && summary.promoted === 0;
@@ -202,6 +202,7 @@ function syncBoostingTracker(silent) {
   const headers = trackerSheet.getRange(HEADER_ROW.BOOSTING_TRACKER, 1, 1, lastCol).getValues()[0];
   const headerIndex = buildHeaderIndex_(headers);
   ['creator name', 'content used', 'creator notified', 'unique identifier'].forEach((h) => colIndex_(headerIndex, h, true));
+  const platformIdx = colIndex_(headerIndex, 'platform(s) for usage', false);
 
   const firstDataRow = HEADER_ROW.BOOSTING_TRACKER + 1;
   const numRows = lastRow - HEADER_ROW.BOOSTING_TRACKER;
@@ -232,6 +233,7 @@ function syncBoostingTracker(silent) {
   ensureColumn_(newMsgSheet, HEADER_ROW.NEW_CREATORS_MSG, DRAFT_COLUMN_HEADER);
   ensureColumn_(newMsgSheet, HEADER_ROW.NEW_CREATORS_MSG, SENT_CHECKBOX_HEADER);
   ensureColumn_(newMsgSheet, HEADER_ROW.NEW_CREATORS_MSG, PROMOTED_COLUMN_HEADER);
+  ensureColumn_(newMsgSheet, HEADER_ROW.NEW_CREATORS_MSG, PLATFORM_COLUMN_HEADER);
   const promotedKey = normalizeHeader_(PROMOTED_COLUMN_HEADER);
   const sentKey = normalizeHeader_(SENT_CHECKBOX_HEADER);
   const draftKey = normalizeHeader_(DRAFT_COLUMN_HEADER);
@@ -273,6 +275,7 @@ function syncBoostingTracker(silent) {
 
     const handle = String(creatorName).trim();
     const handleKey = normalizeHandle_(handle);
+    const platform = platformIdx != null ? String(row[platformIdx] || '').trim() : '';
     const linksIdx = headerIndex['storefront links provided'];
     const favLinksIdx = headerIndex["fav's list + affiliate links provided"];
     const links = (linksIdx != null && row[linksIdx]) || (favLinksIdx != null && row[favLinksIdx]) || contentUsed;
@@ -286,20 +289,22 @@ function syncBoostingTracker(silent) {
       followUpRows.push({
         handle: handle, blockRow: existing._sheetRow,
         firstName: existing['first name'] || '', lastName: existing['last name'] || '',
-        newPieces: 1, email: existing['email address'] || '', links: links,
+        newPieces: 1, email: existing['email address'] || '', links: links, platform: platform,
       });
     } else if (pendingByHandle[handleKey]) {
       const p = pendingByHandle[handleKey];
       p._pendingDelta = (p._pendingDelta || 0) + 1;
       p._newLinks = p._newLinks || [];
       p._newLinks.push(links);
+      if (platform) p._platforms = (p._platforms || []).concat([platform]);
     } else if (virtualNewCreators[handleKey]) {
       const v = virtualNewCreators[handleKey];
       v.totalPieces++;
       v.links.push(links);
+      if (platform) v.platforms = (v.platforms || []).concat([platform]);
     } else {
       virtualNewCreators[handleKey] = {
-        handle: handle, totalPieces: 1, links: [links],
+        handle: handle, totalPieces: 1, links: [links], platforms: platform ? [platform] : [],
         profile: nameLookup[handleKey] || (CREATORIQ_LOOKUP_ENABLED ? ciqFindPublisherByHandle_(handle) : null),
       };
     }
@@ -360,10 +365,16 @@ function syncBoostingTracker(silent) {
     const piecesCol1 = newMsgRead.headerIndex['new pieces of content used'] + 1;
     const amountCol1 = newMsgRead.headerIndex['gift card amount'] + 1;
     const linksCol1 = newMsgRead.headerIndex['links'] + 1;
+    const platformKey = normalizeHeader_(PLATFORM_COLUMN_HEADER);
+    const platformCol1 = newMsgRead.headerIndex[platformKey] != null ? newMsgRead.headerIndex[platformKey] + 1 : null;
     newMsgSheet.getRange(p._sheetRow, piecesCol1).setValue(p._newTotalPieces);
     newMsgSheet.getRange(p._sheetRow, amountCol1).setValue(p._newAmount);
     const combinedLinks = (String(p['links'] || '').trim() ? p['links'] + ', ' : '') + p._newLinks.join(', ');
     newMsgSheet.getRange(p._sheetRow, linksCol1).setValue(combinedLinks);
+    if (platformCol1 && p._platforms && p._platforms.length) {
+      const existingPlatform = String(p[platformKey] || p['platform (auto)'] || '').trim();
+      newMsgSheet.getRange(p._sheetRow, platformCol1).setValue(mergePlatformLabels_(existingPlatform, p._platforms.join(', ')));
+    }
     newMsgSheet.getRange(p._sheetRow, newMsgRead.headerIndex[draftKey] + 1).clearContent(); // force a redraft with the new totals
 
     // Backfill name if it's still blank and the Names tab has since caught up.
@@ -386,6 +397,7 @@ function syncBoostingTracker(silent) {
     amount: v.amount,
     email: '',
     links: v.links.join(', '),
+    platform: (v.platforms || []).filter(Boolean).join(', '),
   }));
   appendToMessageSheet_(SHEET_NAMES.NEW_CREATORS_MSG, newRows);
   appendToMessageSheet_(SHEET_NAMES.FOLLOWUP_MSG, followUpRows);
@@ -463,11 +475,14 @@ function testDraftReadiness_() {
   const draftKey = normalizeHeader_(DRAFT_COLUMN_HEADER);
   const sentKey = normalizeHeader_(SENT_CHECKBOX_HEADER);
 
-  const out = [['Row', 'Creator Handle', 'First Name', 'Links found?', 'Pieces (used/default)', 'Amount (used/default)', 'Ready?', 'Why skipped']];
+  const out = [['Row', 'Creator Handle', 'First Name', 'Platform', 'Needs links?', 'Links found?', 'Pieces (used/default)', 'Amount (used/default)', 'Ready?', 'Why skipped']];
   read.rows.forEach((row) => {
     const handle = String(row['creator handle'] || '').trim();
     const firstName = String(row['first name'] || '').trim();
     const displayName = firstName || (handle ? handle.replace(/^@/, '').split(/[._]/)[0] : '');
+    const platform = String(row[normalizeHeader_(PLATFORM_COLUMN_HEADER)] || row['platform (auto)'] || row['platform'] || '').trim()
+      || lookupPlatformsForHandleFromTracker_(handle);
+    const needsLinks = needsProductLinksForPlatforms_(platform);
     const linksFromRow = ['links', 'link', 'video link', 'video links', 'content link', 'content links', 'content used']
       .map((k) => String(row[k] || '').trim()).find((v) => v) || '';
 
@@ -480,17 +495,19 @@ function testDraftReadiness_() {
 
     const alreadyDrafted = !!row[draftKey];
     const alreadySent = !!row[sentKey];
-    let ready = !alreadyDrafted && !alreadySent && !!displayName && !!linksFromRow;
+    const ready = !alreadyDrafted && !alreadySent && !!displayName && (!needsLinks || !!linksFromRow);
     const why = [];
     if (alreadyDrafted) why.push('already has draft');
     if (alreadySent) why.push('already sent');
     if (!displayName) why.push('missing name');
-    if (!linksFromRow) why.push('missing link');
+    if (needsLinks && !linksFromRow) why.push('missing link');
 
     out.push([
       row._sheetRow,
       handle,
       firstName || '(blank)',
+      platform || '(blank)',
+      needsLinks ? 'yes' : 'no (AppLovin)',
       linksFromRow ? 'yes' : 'NO',
       piecesNote,
       amountNote,
@@ -555,11 +572,13 @@ function fillDupeLinks_(sheet, headerIndex, values, i, sheetRow) {
 function appendToMessageSheet_(sheetName, rows) {
   if (!rows.length) return;
   const sheet = getSheet_(sheetName);
-  const headerRow = HEADER_ROW[sheetName === SHEET_NAMES.NEW_CREATORS_MSG ? 'NEW_CREATORS_MSG' : 'FOLLOWUP_MSG'];
+  const headerRowNum = HEADER_ROW[sheetName === SHEET_NAMES.NEW_CREATORS_MSG ? 'NEW_CREATORS_MSG' : 'FOLLOWUP_MSG'];
+  ensureColumn_(sheet, headerRowNum, PLATFORM_COLUMN_HEADER);
   const lastCol = sheet.getLastColumn();
-  const headers = sheet.getRange(headerRow, 1, 1, lastCol).getValues()[0];
+  const headers = sheet.getRange(headerRowNum, 1, 1, lastCol).getValues()[0];
   const headerIndex = buildHeaderIndex_(headers);
   ['creator handle', 'first name', 'new pieces of content used', 'gift card amount', 'email address', 'links'].forEach((h) => colIndex_(headerIndex, h, true));
+  const platformIdx = colIndex_(headerIndex, PLATFORM_COLUMN_HEADER, false);
 
   const startRow = sheet.getLastRow() + 1;
   const out = rows.map((r) => {
@@ -571,13 +590,18 @@ function appendToMessageSheet_(sheetName, rows) {
     arr[headerIndex['gift card amount']] = r.amount;
     arr[headerIndex['email address']] = r.email || '';
     arr[headerIndex['links']] = r.links || '';
+    if (platformIdx !== -1 && r.platform) arr[platformIdx] = r.platform;
     return arr;
   });
   sheet.getRange(startRow, 1, out.length, lastCol).setValues(out);
 }
 
-function draftNewCreatorMessages() { draftMessagesForSheet_(SHEET_NAMES.NEW_CREATORS_MSG, NEW_CREATOR_PROMPT); }
-function draftFollowUpMessages() { draftMessagesForSheet_(SHEET_NAMES.FOLLOWUP_MSG, FOLLOWUP_PROMPT); }
+function draftNewCreatorMessages() {
+  draftMessagesForSheet_(SHEET_NAMES.NEW_CREATORS_MSG, NEW_CREATOR_PROMPT, NEW_CREATOR_PROMPT_NO_LINKS);
+}
+function draftFollowUpMessages() {
+  draftMessagesForSheet_(SHEET_NAMES.FOLLOWUP_MSG, FOLLOWUP_PROMPT, FOLLOWUP_PROMPT_NO_LINKS);
+}
 
 /** Pick the first non-empty cell from a row using several possible header names. */
 function pickRowValue_(row, headerIndex, headerNames) {
@@ -590,10 +614,11 @@ function pickRowValue_(row, headerIndex, headerNames) {
   return '';
 }
 
-function draftMessagesForSheet_(sheetName, template) {
+function draftMessagesForSheet_(sheetName, templateWithLinks, templateWithoutLinks) {
   const sheet = getSheet_(sheetName);
   ensureColumn_(sheet, 1, DRAFT_COLUMN_HEADER);
   ensureColumn_(sheet, 1, SENT_CHECKBOX_HEADER);
+  ensureColumn_(sheet, 1, PLATFORM_COLUMN_HEADER);
   const lastRow = sheet.getLastRow();
   const lastCol = sheet.getLastColumn();
   const numRows = lastRow - 1;
@@ -613,12 +638,17 @@ function draftMessagesForSheet_(sheetName, template) {
     const handle = pickRowValue_(row, headerIndex, ['creator handle', 'creator name']);
     const displayName = firstName || (handle ? handle.replace(/^@/, '').split(/[._]/)[0] : '');
 
+    const platform = pickRowValue_(row, headerIndex, [
+      PLATFORM_COLUMN_HEADER, 'platform (auto)', 'platform', 'platform(s) for usage',
+    ]) || lookupPlatformsForHandleFromTracker_(handle);
+    const needsLinks = needsProductLinksForPlatforms_(platform);
+
     const links = pickRowValue_(row, headerIndex, [
       'links', 'link', 'video link', 'video links', 'content link', 'content links', 'content used',
     ]);
 
     if (!displayName) { skipped++; skippedNoName++; return; }
-    if (!links) { skipped++; skippedNoLinks++; return; }
+    if (needsLinks && !links) { skipped++; skippedNoLinks++; return; }
 
     let pieces = Number(pickRowValue_(row, headerIndex, ['new pieces of content used']));
     if (!pieces || pieces < 1) pieces = 1;
@@ -626,12 +656,13 @@ function draftMessagesForSheet_(sheetName, template) {
     let amount = pickRowValue_(row, headerIndex, ['gift card amount']);
     if (!amount) amount = '$' + (pieces * 50);
 
+    const template = needsLinks ? templateWithLinks : templateWithoutLinks;
     const filled = fillTemplate_(template, {
       FIRST_NAME: displayName,
       PIECES: pieces,
       NEW_PIECES: pieces,
       AMOUNT: amount,
-      LINKS: links,
+      LINKS: links || '',
     });
     sheet.getRange(2 + i, draftIdx + 1).setValue(filled);
     drafted++;

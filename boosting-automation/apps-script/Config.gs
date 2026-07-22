@@ -57,6 +57,10 @@ const SENT_CHECKBOX_HEADER = 'Sent?';
 // to decide a creator is "confirmed."
 const PROMOTED_COLUMN_HEADER = 'Added to Tracker? (auto)';
 
+// Tracks which platform(s) the synced Boosting Tracker row(s) came from.
+// Used to skip the product-links ask for AppLovin-only creators.
+const PLATFORM_COLUMN_HEADER = 'Platform (auto)';
+
 // Off by default: CreatorIQ's API returned "Forbidden" on every single test
 // (even with no authentication at all), which points to an IP-allowlisting
 // restriction outside of what this script can fix. Leaving the lookup
@@ -92,6 +96,17 @@ Can you please confirm the email you would like the gift card to be addressed to
 Best,
 Adriana`;
 
+const NEW_CREATOR_PROMPT_NO_LINKS = `Hi {{FIRST_NAME}},
+
+Exciting news, my team loved your partnership content and would like to use {{PIECES}} piece/s of it! This means that as of right now you have earned a {{AMOUNT}} Wayfair Gift Card. My team will continue monitoring for content and for every additional piece of your content they use, your gift card amount will be raised by $50.
+
+I will update you if anything else gets selected, and I plan to send gift cards out early next month!
+
+Can you please confirm the email you would like the gift card to be addressed to when you get a chance?
+
+Best,
+Adriana`;
+
 const FOLLOWUP_PROMPT = `Hi {{FIRST_NAME}},
 
 More exciting news, my team loved your latest partnership content and would like to use {{NEW_PIECES}} more piece/s of it! Combined with what we've already used this month, your gift card total is now up to {{AMOUNT}}.
@@ -100,6 +115,15 @@ I will keep you posted if anything else gets selected, and I plan to send gift c
 
 Can you send over the product links you featured in just this newest content when you get a chance?:
 {{LINKS}}
+
+Best,
+Adriana`;
+
+const FOLLOWUP_PROMPT_NO_LINKS = `Hi {{FIRST_NAME}},
+
+More exciting news, my team loved your latest partnership content and would like to use {{NEW_PIECES}} more piece/s of it! Combined with what we've already used this month, your gift card total is now up to {{AMOUNT}}.
+
+I will keep you posted if anything else gets selected, and I plan to send gift cards out early next month!
 
 Best,
 Adriana`;

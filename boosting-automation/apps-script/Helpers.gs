@@ -104,6 +104,51 @@ function normalizeHandle_(h) {
   return String(h || '').trim().toLowerCase().replace(/^@/, '');
 }
 
+function isAppLovinPlatform_(platform) {
+  return String(platform || '').trim().toLowerCase().indexOf('applovin') !== -1;
+}
+
+/** True when at least one synced platform is not AppLovin (or platform is unknown). */
+function needsProductLinksForPlatforms_(platforms) {
+  const list = Array.isArray(platforms) ? platforms : String(platforms || '').split(/[,;]/);
+  const cleaned = list.map((p) => String(p || '').trim()).filter(Boolean);
+  if (!cleaned.length) return true;
+  return cleaned.some((p) => !isAppLovinPlatform_(p));
+}
+
+function mergePlatformLabels_(existing, incoming) {
+  const set = {};
+  String(existing || '').split(/[,;]/).concat(String(incoming || '').split(/[,;]/)).forEach((p) => {
+    const label = String(p || '').trim();
+    if (label) set[label] = true;
+  });
+  return Object.keys(set).join(', ');
+}
+
+/** Fallback for message rows synced before Platform (auto) existed. */
+function lookupPlatformsForHandleFromTracker_(handle) {
+  const trackerSheet = getSheet_(SHEET_NAMES.BOOSTING_TRACKER);
+  const lastRow = trackerSheet.getLastRow();
+  const lastCol = trackerSheet.getLastColumn();
+  if (lastRow < HEADER_ROW.BOOSTING_TRACKER + 1) return '';
+
+  const headers = trackerSheet.getRange(HEADER_ROW.BOOSTING_TRACKER, 1, 1, lastCol).getValues()[0];
+  const headerIndex = buildHeaderIndex_(headers);
+  const nameIdx = colIndex_(headerIndex, 'creator name', false);
+  const platformIdx = colIndex_(headerIndex, 'platform(s) for usage', false);
+  if (nameIdx === -1 || platformIdx === -1) return '';
+
+  const handleKey = normalizeHandle_(handle);
+  const values = trackerSheet.getRange(HEADER_ROW.BOOSTING_TRACKER + 1, 1, lastRow - HEADER_ROW.BOOSTING_TRACKER, lastCol).getValues();
+  const platforms = [];
+  values.forEach((row) => {
+    if (normalizeHandle_(row[nameIdx]) !== handleKey) return;
+    const platform = String(row[platformIdx] || '').trim();
+    if (platform) platforms.push(platform);
+  });
+  return mergePlatformLabels_('', platforms.join(', '));
+}
+
 /**
  * Builds { headerName -> 0-based column offset } for a single header row.
  * @param {Array} headerRowValues Row values (e.g. sheet.getRange(row,1,1,numCols).getValues()[0])
