@@ -41,6 +41,7 @@ function onOpen() {
     .addItem('Setup: Set CreatorIQ API key', 'setCreatorIQApiKey_')
     .addItem('Setup: Test CreatorIQ connection (diagnostic)', 'testCreatorIQConnection_')
     .addItem('Setup: Test Names lookup (diagnostic)', 'testNameLookup_')
+    .addItem('Setup: Test draft readiness (diagnostic)', 'testDraftReadiness_')
     .addItem('Setup: Fill missing names from "Names" tab (one-time)', 'fillMissingNamesFromLookup')
     .addToUi();
 }
@@ -446,6 +447,62 @@ function testNameLookup_() {
   debugSheet.getRange(1, 1, rows.length, 2).setValues(rows);
   debugSheet.autoResizeColumns(1, 2);
   SpreadsheetApp.getUi().alert('Done. Check the "Names Lookup Debug" tab, then copy/paste its contents back to me.');
+}
+
+/**
+ * Diagnostic: shows per-row why step 3a would draft or skip each creator.
+ */
+function testDraftReadiness_() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const existing = ss.getSheetByName('Draft Readiness Debug');
+  if (existing) ss.deleteSheet(existing);
+  const debugSheet = ss.insertSheet('Draft Readiness Debug');
+
+  const sheet = getSheet_(SHEET_NAMES.NEW_CREATORS_MSG);
+  const read = readFlatSheetRows_(sheet, HEADER_ROW.NEW_CREATORS_MSG);
+  const draftKey = normalizeHeader_(DRAFT_COLUMN_HEADER);
+  const sentKey = normalizeHeader_(SENT_CHECKBOX_HEADER);
+
+  const out = [['Row', 'Creator Handle', 'First Name', 'Links found?', 'Pieces (used/default)', 'Amount (used/default)', 'Ready?', 'Why skipped']];
+  read.rows.forEach((row) => {
+    const handle = String(row['creator handle'] || '').trim();
+    const firstName = String(row['first name'] || '').trim();
+    const displayName = firstName || (handle ? handle.replace(/^@/, '').split(/[._]/)[0] : '');
+    const linksFromRow = ['links', 'link', 'video link', 'video links', 'content link', 'content links', 'content used']
+      .map((k) => String(row[k] || '').trim()).find((v) => v) || '';
+
+    let pieces = Number(String(row['new pieces of content used'] || '').trim());
+    if (!pieces || pieces < 1) pieces = 1;
+    const piecesNote = String(row['new pieces of content used'] || '').trim() || '(default 1)';
+
+    let amount = String(row['gift card amount'] || '').trim();
+    const amountNote = amount || ('(default $' + (pieces * 50) + ')');
+
+    const alreadyDrafted = !!row[draftKey];
+    const alreadySent = !!row[sentKey];
+    let ready = !alreadyDrafted && !alreadySent && !!displayName && !!linksFromRow;
+    const why = [];
+    if (alreadyDrafted) why.push('already has draft');
+    if (alreadySent) why.push('already sent');
+    if (!displayName) why.push('missing name');
+    if (!linksFromRow) why.push('missing link');
+
+    out.push([
+      row._sheetRow,
+      handle,
+      firstName || '(blank)',
+      linksFromRow ? 'yes' : 'NO',
+      piecesNote,
+      amountNote,
+      ready ? 'YES' : 'no',
+      why.join('; ') || '—',
+    ]);
+  });
+
+  debugSheet.getRange(1, 1, out.length, out[0].length).setValues(out);
+  debugSheet.getRange(1, 1, 1, out[0].length).setFontWeight('bold');
+  debugSheet.autoResizeColumns(1, out[0].length);
+  SpreadsheetApp.getUi().alert('Done. Open the "Draft Readiness Debug" tab to see which rows are missing a name or link.');
 }
 
 function setBlockCell_(sheet, block, row, headerName, value) {
