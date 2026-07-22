@@ -296,7 +296,7 @@ function syncBoostingTracker(silent) {
     } else {
       virtualNewCreators[handleKey] = {
         handle: handle, totalPieces: 1, links: [links],
-        profile: ciqFindPublisherByHandle_(handle),
+        profile: CREATORIQ_LOOKUP_ENABLED ? ciqFindPublisherByHandle_(handle) : null,
       };
     }
 

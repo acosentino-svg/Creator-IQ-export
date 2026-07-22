@@ -57,6 +57,14 @@ const SENT_CHECKBOX_HEADER = 'Sent?';
 // to decide a creator is "confirmed."
 const PROMOTED_COLUMN_HEADER = 'Added to Tracker? (auto)';
 
+// Off by default: CreatorIQ's API returned "Forbidden" on every single test
+// (even with no authentication at all), which points to an IP-allowlisting
+// restriction outside of what this script can fix. Leaving the lookup
+// disabled avoids wasting time on calls that will fail anyway. Flip to
+// true once CreatorIQ/Wayfair IT confirms network access - no other code
+// needs to change.
+const CREATORIQ_LOOKUP_ENABLED = false;
+
 // Script Properties key for the Gemini API key. Set once via
 // Extensions > Apps Script > Project Settings > Script Properties,
 // or by running setGeminiApiKey_() from the script editor.
