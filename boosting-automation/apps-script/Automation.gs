@@ -522,6 +522,17 @@ function appendToMessageSheet_(sheetName, rows) {
 function draftNewCreatorMessages() { draftMessagesForSheet_(SHEET_NAMES.NEW_CREATORS_MSG, NEW_CREATOR_PROMPT); }
 function draftFollowUpMessages() { draftMessagesForSheet_(SHEET_NAMES.FOLLOWUP_MSG, FOLLOWUP_PROMPT); }
 
+/** Pick the first non-empty cell from a row using several possible header names. */
+function pickRowValue_(row, headerIndex, headerNames) {
+  for (let i = 0; i < headerNames.length; i++) {
+    const idx = headerIndex[normalizeHeader_(headerNames[i])];
+    if (idx == null) continue;
+    const val = String(row[idx] || '').trim();
+    if (val) return val;
+  }
+  return '';
+}
+
 function draftMessagesForSheet_(sheetName, template) {
   const sheet = getSheet_(sheetName);
   ensureColumn_(sheet, 1, DRAFT_COLUMN_HEADER);
@@ -537,24 +548,52 @@ function draftMessagesForSheet_(sheetName, template) {
   const draftIdx = headerIndex[normalizeHeader_(DRAFT_COLUMN_HEADER)];
   const sentIdx = headerIndex[normalizeHeader_(SENT_CHECKBOX_HEADER)];
 
-  let drafted = 0, skipped = 0;
+  let drafted = 0, skipped = 0, skippedNoName = 0, skippedNoLinks = 0;
   values.forEach((row, i) => {
     if (row[draftIdx] || row[sentIdx]) return;
-    const firstName = row[headerIndex['first name']];
-    const pieces = row[headerIndex['new pieces of content used']];
-    const amount = row[headerIndex['gift card amount']];
-    const links = row[headerIndex['links']];
-    if (!firstName || !pieces || !amount || !links) { skipped++; return; }
-    const filled = fillTemplate_(template, { FIRST_NAME: firstName, PIECES: pieces, NEW_PIECES: pieces, AMOUNT: amount, LINKS: links });
+
+    const firstName = pickRowValue_(row, headerIndex, ['first name']);
+    const handle = pickRowValue_(row, headerIndex, ['creator handle', 'creator name']);
+    const displayName = firstName || (handle ? handle.replace(/^@/, '').split(/[._]/)[0] : '');
+
+    const links = pickRowValue_(row, headerIndex, [
+      'links', 'link', 'video link', 'video links', 'content link', 'content links', 'content used',
+    ]);
+
+    if (!displayName) { skipped++; skippedNoName++; return; }
+    if (!links) { skipped++; skippedNoLinks++; return; }
+
+    let pieces = Number(pickRowValue_(row, headerIndex, ['new pieces of content used']));
+    if (!pieces || pieces < 1) pieces = 1;
+
+    let amount = pickRowValue_(row, headerIndex, ['gift card amount']);
+    if (!amount) amount = '$' + (pieces * 50);
+
+    const filled = fillTemplate_(template, {
+      FIRST_NAME: displayName,
+      PIECES: pieces,
+      NEW_PIECES: pieces,
+      AMOUNT: amount,
+      LINKS: links,
+    });
     sheet.getRange(2 + i, draftIdx + 1).setValue(filled);
     drafted++;
   });
 
-  toast_('Drafted ' + drafted + ' message(s) in "' + sheetName + '".' + (skipped ? ' ' + skipped + ' skipped (missing name/pieces/amount/links).' : ''));
+  let msg = 'Drafted ' + drafted + ' message(s) in "' + sheetName + '".';
+  if (skipped) {
+    msg += ' ' + skipped + ' skipped';
+    const reasons = [];
+    if (skippedNoName) reasons.push(skippedNoName + ' missing a name');
+    if (skippedNoLinks) reasons.push(skippedNoLinks + ' missing a link');
+    if (reasons.length) msg += ' (' + reasons.join(', ') + ')';
+    msg += '.';
+  }
+  toast_(msg);
 }
 
 /**
- * Optional: when Josh checks "Sent?" on a message row, flip the matching
+ * Optional: when Adriana checks "Sent?" on a message row, flip the matching
  * Boosting Tracker rows for that creator from QUEUED_MARKER to "Yes" so the
  * tracker reflects that the creator was actually notified (not just queued).
  * Wire this up as an installable "On edit" trigger if desired.
