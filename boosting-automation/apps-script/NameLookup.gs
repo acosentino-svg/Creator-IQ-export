@@ -4,7 +4,7 @@
  * either an Instagram or TikTok handle in that tab. It never overwrites a
  * name you already entered yourself.
  */
-function fillMissingNamesFromLookup_() {
+function fillMissingNamesFromLookup() {
   const sheet = getSheet_(SHEET_NAMES.NEW_CREATORS_MSG);
   const read = readFlatSheetRows_(sheet, HEADER_ROW.NEW_CREATORS_MSG);
   const lookup = buildNameLookup_();

@@ -41,7 +41,7 @@ function onOpen() {
     .addItem('Setup: Set CreatorIQ API key', 'setCreatorIQApiKey_')
     .addItem('Setup: Test CreatorIQ connection (diagnostic)', 'testCreatorIQConnection_')
     .addItem('Setup: Test Names lookup (diagnostic)', 'testNameLookup_')
-    .addItem('Setup: Fill missing names from "Names" tab (one-time)', 'fillMissingNamesFromLookup_')
+    .addItem('Setup: Fill missing names from "Names" tab (one-time)', 'fillMissingNamesFromLookup')
     .addToUi();
 }
 
