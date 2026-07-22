@@ -514,7 +514,7 @@ function setBlockCell_(sheet, block, row, headerName, value) {
  * Fills a dupe row's link/SKU-type fields from the original (first) row that
  * shares the same Unique Identifier, but ONLY into cells that are currently
  * blank - never overwrites anything a human already entered. Leaves a note
- * flagging it as auto-filled so Josh can still spot-check per the existing
+ * flagging it as auto-filled so Adriana can still spot-check per the existing
  * "Ctrl+F the identifier" safety habit described in the walkthrough.
  */
 function fillDupeLinks_(sheet, headerIndex, values, i, sheetRow) {
