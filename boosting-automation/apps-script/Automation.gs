@@ -233,6 +233,7 @@ function syncBoostingTracker(silent) {
   const sentKey = normalizeHeader_(SENT_CHECKBOX_HEADER);
   const draftKey = normalizeHeader_(DRAFT_COLUMN_HEADER);
   const newMsgRead = readFlatSheetRows_(newMsgSheet, HEADER_ROW.NEW_CREATORS_MSG);
+  const nameLookup = buildNameLookup_(); // handle -> {firstName, lastName}, from the "Names" tab - no API needed
   const pendingByHandle = {};
   newMsgRead.rows.forEach((r) => {
     const email = String(r['email address'] || '').trim();
@@ -296,7 +297,7 @@ function syncBoostingTracker(silent) {
     } else {
       virtualNewCreators[handleKey] = {
         handle: handle, totalPieces: 1, links: [links],
-        profile: CREATORIQ_LOOKUP_ENABLED ? ciqFindPublisherByHandle_(handle) : null,
+        profile: nameLookup[handleKey] || (CREATORIQ_LOOKUP_ENABLED ? ciqFindPublisherByHandle_(handle) : null),
       };
     }
 
@@ -361,6 +362,17 @@ function syncBoostingTracker(silent) {
     const combinedLinks = (String(p['links'] || '').trim() ? p['links'] + ', ' : '') + p._newLinks.join(', ');
     newMsgSheet.getRange(p._sheetRow, linksCol1).setValue(combinedLinks);
     newMsgSheet.getRange(p._sheetRow, newMsgRead.headerIndex[draftKey] + 1).clearContent(); // force a redraft with the new totals
+
+    // Backfill name if it's still blank and the Names tab has since caught up.
+    if (!String(p['first name'] || '').trim()) {
+      const found = nameLookup[normalizeHandle_(p['creator handle'])];
+      if (found) {
+        newMsgSheet.getRange(p._sheetRow, newMsgRead.headerIndex['first name'] + 1).setValue(found.firstName);
+        if (newMsgRead.headerIndex['last name'] != null) {
+          newMsgSheet.getRange(p._sheetRow, newMsgRead.headerIndex['last name'] + 1).setValue(found.lastName);
+        }
+      }
+    }
   });
 
   const newRows = virtualList.map((v) => ({

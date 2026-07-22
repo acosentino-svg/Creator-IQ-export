@@ -30,6 +30,71 @@ function extractSpreadsheetId_(urlOrId) {
   return match[0];
 }
 
+/**
+ * The Names lookup tab lives alongside wherever the New Boosted Creators
+ * sheet lives (same file, different tab) - so reuse EXTERNAL_SHEET_IDS if
+ * that sheet is external, or fall back to the currently active spreadsheet
+ * if it's just a tab in this same file. Returns null (never throws) if the
+ * tab doesn't exist yet, so name-lookup is always optional/best-effort.
+ */
+function getNamesLookupSheet_() {
+  try {
+    let ss;
+    if (EXTERNAL_SHEET_IDS.NEW_CREATORS_MSG) {
+      ss = SpreadsheetApp.openById(extractSpreadsheetId_(EXTERNAL_SHEET_IDS.NEW_CREATORS_MSG));
+    } else {
+      ss = SpreadsheetApp.getActiveSpreadsheet();
+    }
+    return ss.getSheetByName(NAMES_LOOKUP_SHEET_NAME) || null;
+  } catch (e) {
+    console.warn('getNamesLookupSheet_ failed: ' + e);
+    return null;
+  }
+}
+
+/** "Alexis Pratt" -> { firstName: "Alexis", lastName: "Pratt" }. Single-word names get a blank last name. */
+function splitFullName_(fullName) {
+  const parts = String(fullName || '').trim().split(/\s+/).filter(Boolean);
+  return { firstName: parts[0] || '', lastName: parts.slice(1).join(' ') };
+}
+
+/**
+ * Reads the Names lookup tab (publisher_name + one-or-more *_account_name
+ * columns) into { normalizedHandle -> { firstName, lastName } }, matching a
+ * handle against ANY platform column found (Instagram, TikTok, etc.) so it
+ * doesn't matter which platform the Boosting Tracker's handle came from.
+ * Returns {} (never throws) if the tab is missing or empty.
+ */
+function buildNameLookup_() {
+  const lookup = {};
+  const sheet = getNamesLookupSheet_();
+  if (!sheet) return lookup;
+
+  const lastRow = sheet.getLastRow();
+  const lastCol = sheet.getLastColumn();
+  if (lastRow < 2 || lastCol < 1) return lookup;
+
+  const headerIndex = buildHeaderIndex_(sheet.getRange(1, 1, 1, lastCol).getValues()[0]);
+  const nameCol = ['publisher_name', 'full name', 'name', 'creator name']
+    .map((k) => headerIndex[k]).find((v) => v != null);
+  const handleCols = Object.keys(headerIndex)
+    .filter((k) => k.indexOf('account_name') !== -1 || k.indexOf('handle') !== -1)
+    .map((k) => headerIndex[k]);
+  if (nameCol == null || !handleCols.length) return lookup;
+
+  const values = sheet.getRange(2, 1, lastRow - 1, lastCol).getValues();
+  values.forEach((row) => {
+    const fullName = String(row[nameCol] || '').trim();
+    if (!fullName) return;
+    const parsed = splitFullName_(fullName);
+    handleCols.forEach((col) => {
+      const handle = normalizeHandle_(row[col]);
+      if (handle) lookup[handle] = parsed;
+    });
+  });
+  return lookup;
+}
+
 /** Trims + lowercases so header lookups survive stray spaces ("  Fav's List..."). */
 function normalizeHeader_(h) {
   return String(h || '').trim().toLowerCase();

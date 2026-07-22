@@ -65,6 +65,15 @@ const PROMOTED_COLUMN_HEADER = 'Added to Tracker? (auto)';
 // needs to change.
 const CREATORIQ_LOOKUP_ENABLED = false;
 
+// Name of the tab (inside the same Google Sheets file as the New Boosted
+// Creators sheet) that holds a downloaded creator list with columns like
+// publisher_name, instagram_account_name, tiktok_account_name. Used to fill
+// in First/Last Name by matching a handle against either platform column -
+// no API or network access needed. If this exact tab name doesn't match
+// what you actually named it, update it here (check the tab's name at the
+// bottom of that spreadsheet).
+const NAMES_LOOKUP_SHEET_NAME = 'Names';
+
 // Script Properties key for the Gemini API key. Set once via
 // Extensions > Apps Script > Project Settings > Script Properties,
 // or by running setGeminiApiKey_() from the script editor.
