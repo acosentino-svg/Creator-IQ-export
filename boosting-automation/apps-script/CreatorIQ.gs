@@ -39,6 +39,53 @@ function getCreatorIQApiKey_() {
   return key;
 }
 
+/**
+ * Diagnostic only - tries a handful of plausible base URLs + auth header
+ * styles against your real API key and writes the raw HTTP status + response
+ * body into a "CIQ Debug Output" tab, since I can't get into CreatorIQ's
+ * documentation site directly. Even an error response can be useful - a 404
+ * vs. a 401 vs. an HTML login page all tell us different things about what's
+ * wrong with the guess. Run this, then copy/paste the tab's contents back.
+ * Purely read-only GET requests - does not send or change anything.
+ */
+function testCreatorIQConnection_() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const existing = ss.getSheetByName('CIQ Debug Output');
+  if (existing) ss.deleteSheet(existing);
+  const sheet = ss.insertSheet('CIQ Debug Output');
+  sheet.getRange(1, 1, 1, 3).setValues([['Test', 'HTTP Status', 'Response (first 500 chars)']]).setFontWeight('bold');
+
+  const key = getCreatorIQApiKey_();
+  const baseUrls = [
+    'https://apis.creatoriq.com',
+    'https://api.creatoriq.com',
+    'https://app.creatoriq.com/api',
+  ];
+  const authStyles = [
+    { label: 'Bearer token', headers: { Authorization: 'Bearer ' + key } },
+    { label: 'X-API-Key header', headers: { 'X-API-Key': key } },
+  ];
+
+  const rows = [];
+  baseUrls.forEach((base) => {
+    authStyles.forEach((auth) => {
+      const url = base + '/publishers?handle=test';
+      try {
+        const resp = UrlFetchApp.fetch(url, {
+          method: 'get', headers: auth.headers, muteHttpExceptions: true, followRedirects: true,
+        });
+        rows.push(['GET ' + url + ' (' + auth.label + ')', resp.getResponseCode(), resp.getContentText().substring(0, 500)]);
+      } catch (e) {
+        rows.push(['GET ' + url + ' (' + auth.label + ')', 'ERROR', String(e)]);
+      }
+    });
+  });
+
+  sheet.getRange(2, 1, rows.length, 3).setValues(rows);
+  sheet.autoResizeColumns(1, 1);
+  SpreadsheetApp.getUi().alert('Done. Check the "CIQ Debug Output" tab, then copy/paste its contents back to me.');
+}
+
 function ciqFetch_(path, opts) {
   opts = opts || {};
   const url = CIQ_CONFIG.BASE_URL + path;

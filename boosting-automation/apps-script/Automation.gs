@@ -39,6 +39,7 @@ function onOpen() {
     .addSeparator()
     .addItem('Setup: Set Gemini API key (optional, polish only)', 'setGeminiApiKey_')
     .addItem('Setup: Set CreatorIQ API key', 'setCreatorIQApiKey_')
+    .addItem('Setup: Test CreatorIQ connection (diagnostic)', 'testCreatorIQConnection_')
     .addToUi();
 }
 
