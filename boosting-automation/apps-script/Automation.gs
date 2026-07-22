@@ -41,6 +41,7 @@ function onOpen() {
     .addItem('Setup: Set CreatorIQ API key', 'setCreatorIQApiKey_')
     .addItem('Setup: Test CreatorIQ connection (diagnostic)', 'testCreatorIQConnection_')
     .addItem('Setup: Test Names lookup (diagnostic)', 'testNameLookup_')
+    .addItem('Setup: Fill missing names from Names tab', 'fillMissingNamesFromLookup_')
     .addToUi();
 }
 
@@ -60,11 +61,12 @@ function disableAutoSync() {
 
 function runScheduledSync() {
   const summary = syncBoostingTracker(true);
+  const namesFilled = fillMissingNamesFromLookup_(false).filled;
   draftMessagesForSheet_(SHEET_NAMES.NEW_CREATORS_MSG, NEW_CREATOR_PROMPT);
   draftMessagesForSheet_(SHEET_NAMES.FOLLOWUP_MSG, FOLLOWUP_PROMPT);
 
   if (!summary) return;
-  const nothingHappened = summary.queued === 0 && summary.dupesFixed === 0 && summary.promoted === 0;
+  const nothingHappened = summary.queued === 0 && summary.dupesFixed === 0 && summary.promoted === 0 && namesFilled === 0;
   if (nothingHappened) return;
 
   const ss = SpreadsheetApp.getActiveSpreadsheet();
@@ -73,7 +75,9 @@ function runScheduledSync() {
     '- ' + summary.newCreators + ' brand-new/updated creator row(s) in the New Boosted Creators sheet\n' +
     '- ' + summary.followUps + ' follow-up piece(s) queued (Follow-Up sheet)\n' +
     '- ' + summary.promoted + ' creator(s) moved into the Gift Card Tracker (their email was confirmed)\n' +
-    '- ' + summary.dupesFixed + ' dupe(s) auto-filled from the original entry (worth a quick Ctrl+F spot-check)\n\n' +
+    '- ' + summary.dupesFixed + ' dupe(s) auto-filled from the original entry (worth a quick Ctrl+F spot-check)\n' +
+    (namesFilled ? '- ' + namesFilled + ' missing creator name(s) filled from the Names tab\n' : '') +
+    '\n' +
     'Messages have been drafted in both message sheets - review and send from CreatorIQ, ' +
     'then check "Sent?" on each row.\n\n' +
     'Open the tracker: ' + ss.getUrl();
@@ -193,6 +197,7 @@ function promoteConfirmedNewCreators_(showToast) {
  */
 function syncBoostingTracker(silent) {
   const promotion = promoteConfirmedNewCreators_(false);
+  const namesFilled = fillMissingNamesFromLookup_(false).filled;
 
   const trackerSheet = getSheet_(SHEET_NAMES.BOOSTING_TRACKER);
   const lastRow = trackerSheet.getLastRow();
@@ -392,14 +397,15 @@ function syncBoostingTracker(silent) {
   if (!silent) {
     toast_(
       'Queued ' + queued + ' row(s) [' + totalNewCreatorActivity + ' new-creator update(s), ' + followUpRows.length + ' follow-up], ' +
-      'auto-filled ' + dupesFixed + ' dupe(s), promoted ' + promotion.promoted + ' confirmed creator(s) to the tracker. ' +
+      'auto-filled ' + dupesFixed + ' dupe(s), promoted ' + promotion.promoted + ' confirmed creator(s) to the tracker' +
+      (namesFilled ? ', filled ' + namesFilled + ' missing name(s)' : '') + '. ' +
       'Now run step 3a/3b to draft messages.'
     );
   }
 
   return {
     queued: queued, newCreators: totalNewCreatorActivity, followUps: followUpRows.length,
-    dupesFixed: dupesFixed, promoted: promotion.promoted,
+    dupesFixed: dupesFixed, promoted: promotion.promoted, namesFilled: namesFilled,
   };
 }
 
@@ -522,34 +528,48 @@ function draftNewCreatorMessages() { draftMessagesForSheet_(SHEET_NAMES.NEW_CREA
 function draftFollowUpMessages() { draftMessagesForSheet_(SHEET_NAMES.FOLLOWUP_MSG, FOLLOWUP_PROMPT); }
 
 function draftMessagesForSheet_(sheetName, template) {
+  const headerRow = HEADER_ROW[sheetName === SHEET_NAMES.NEW_CREATORS_MSG ? 'NEW_CREATORS_MSG' : 'FOLLOWUP_MSG'];
+  fillMissingNamesOnSheet_(sheetName, headerRow);
+
   const sheet = getSheet_(sheetName);
-  ensureColumn_(sheet, 1, DRAFT_COLUMN_HEADER);
-  ensureColumn_(sheet, 1, SENT_CHECKBOX_HEADER);
+  ensureColumn_(sheet, headerRow, DRAFT_COLUMN_HEADER);
+  ensureColumn_(sheet, headerRow, SENT_CHECKBOX_HEADER);
   const lastRow = sheet.getLastRow();
   const lastCol = sheet.getLastColumn();
-  const numRows = lastRow - 1;
+  const numRows = lastRow - headerRow;
   if (numRows <= 0) { toast_('No rows in ' + sheetName); return; }
 
-  const headers = sheet.getRange(1, 1, 1, lastCol).getValues()[0];
+  const headers = sheet.getRange(headerRow, 1, 1, lastCol).getValues()[0];
   const headerIndex = buildHeaderIndex_(headers);
-  const values = sheet.getRange(2, 1, numRows, lastCol).getValues();
+  const values = sheet.getRange(headerRow + 1, 1, numRows, lastCol).getValues();
   const draftIdx = headerIndex[normalizeHeader_(DRAFT_COLUMN_HEADER)];
   const sentIdx = headerIndex[normalizeHeader_(SENT_CHECKBOX_HEADER)];
 
-  let drafted = 0, skipped = 0;
+  let drafted = 0, skipped = 0, skippedMissingName = 0;
   values.forEach((row, i) => {
     if (row[draftIdx] || row[sentIdx]) return;
     const firstName = row[headerIndex['first name']];
     const pieces = row[headerIndex['new pieces of content used']];
     const amount = row[headerIndex['gift card amount']];
     const links = row[headerIndex['links']];
-    if (!firstName || !pieces || !amount || !links) { skipped++; return; }
+    if (!firstName || !pieces || !amount || !links) {
+      skipped++;
+      if (!firstName) skippedMissingName++;
+      return;
+    }
     const filled = fillTemplate_(template, { FIRST_NAME: firstName, PIECES: pieces, NEW_PIECES: pieces, AMOUNT: amount, LINKS: links });
-    sheet.getRange(2 + i, draftIdx + 1).setValue(filled);
+    sheet.getRange(headerRow + 1 + i, draftIdx + 1).setValue(filled);
     drafted++;
   });
 
-  toast_('Drafted ' + drafted + ' message(s) in "' + sheetName + '".' + (skipped ? ' ' + skipped + ' skipped (missing name/pieces/amount/links).' : ''));
+  let msg = 'Drafted ' + drafted + ' message(s) in "' + sheetName + '".';
+  if (skipped) {
+    msg += ' ' + skipped + ' skipped (missing name/pieces/amount/links).';
+    if (skippedMissingName) {
+      msg += ' ' + skippedMissingName + ' were missing a First Name — run "Setup: Fill missing names from Names tab" or check the Names tab.';
+    }
+  }
+  toast_(msg);
 }
 
 /**
