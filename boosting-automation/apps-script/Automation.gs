@@ -43,6 +43,7 @@ function onOpen() {
     .addItem('Setup: Test Names lookup (diagnostic)', 'testNameLookup_')
     .addItem('Setup: Test draft readiness (diagnostic)', 'testDraftReadiness_')
     .addItem('Setup: Fill missing names from "Names" tab (one-time)', 'fillMissingNamesFromLookup')
+    .addItem('Setup: Choose active gift card month', 'chooseActiveGiftCardMonth_')
     .addToUi();
 }
 
@@ -83,42 +84,76 @@ function runScheduledSync() {
   MailApp.sendEmail(Session.getActiveUser().getEmail(), 'Boosting Tracker: new content ready to review', body);
 }
 
-const ROWS_TO_PROVISION = 400;
-
 function startNewMonth() {
   const ui = SpreadsheetApp.getUi();
-  const sheet = getSheet_(SHEET_NAMES.GIFT_CARD_TRACKER);
-  const lastBlock = getCurrentMonthBlock_(sheet);
-
   const resp = ui.prompt(
     'Start new month',
-    'Label for the new month block (e.g. "August" or "August - August Posting Competition"):',
+    'Month and year for the new gift card tab (e.g. "July 2026"):',
     ui.ButtonSet.OK_CANCEL
   );
   if (resp.getSelectedButton() !== ui.Button.OK) return;
-  const label = resp.getResponseText().trim();
-  if (!label) return;
+  const input = resp.getResponseText().trim();
+  if (!input) return;
 
-  const newStartCol0 = lastBlock.endCol + 1;
-  const width = lastBlock.width;
+  const match = input.match(/^(\w+)\s+(\d{4})$/);
+  if (!match) {
+    ui.alert('Please enter month and year like "July 2026".');
+    return;
+  }
 
-  sheet.getRange(1, newStartCol0 + 1).setValue(label);
-  sheet.getRange(HEADER_ROW.GIFT_CARD_TRACKER_FIELD_ROW, lastBlock.startCol + 1, 1, width)
-    .copyTo(sheet.getRange(HEADER_ROW.GIFT_CARD_TRACKER_FIELD_ROW, newStartCol0 + 1, 1, width));
+  const tabName = formatGiftCardMonthTabName_(match[1], match[2]);
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  if (ss.getSheetByName(tabName)) {
+    setActiveGiftCardSheet_(tabName);
+    ui.alert('Tab "' + tabName + '" already exists — it is now the active gift card month.');
+    return;
+  }
 
-  const amountOffset = colIndex_(lastBlock.headerIndex, 'Gift Card Amount', true);
-  const oldAmountCol = lastBlock.startCol + amountOffset + 1;
-  const newAmountCol = newStartCol0 + amountOffset + 1;
-  const firstDataRow = HEADER_ROW.GIFT_CARD_TRACKER_FIELD_ROW + 1;
-  sheet.getRange(firstDataRow, oldAmountCol, ROWS_TO_PROVISION, 1)
-    .copyTo(sheet.getRange(firstDataRow, newAmountCol, ROWS_TO_PROVISION, 1));
+  const previousName = getActiveGiftCardSheetName_();
+  const newSheet = createGiftCardMonthTab_(tabName);
+
+  if (previousName !== tabName && isGiftCardMonthTabName_(previousName)) {
+    const hideResp = ui.alert(
+      'Hide previous month?',
+      'Hide "' + previousName + '"? (You can unhide it anytime from the tab menu.)',
+      ui.ButtonSet.YES_NO
+    );
+    if (hideResp === ui.Button.YES) {
+      const prev = ss.getSheetByName(previousName);
+      if (prev) prev.hideSheet();
+    }
+  }
 
   ui.alert(
-    'New month "' + label + '" created with ' + width + ' columns (copied from "' + lastBlock.label + '").\n\n' +
+    'Created "' + tabName + '" and set it as the active gift card month.\n\n' +
     'IMPORTANT: If this month has a different comp/activation (Cranberry Cashout, June Jackpot, etc.), ' +
-    'now is the time to manually overwrite the Gift Card Amount formula for that block with the ' +
-    'comp-specific version before anyone starts entering creators.'
+    'update the Gift Card Amount formula on this tab before entering creators.'
   );
+  ss.setActiveSheet(newSheet);
+}
+
+/** Lets you point automation at a specific month tab (e.g. after unhiding an older month). */
+function chooseActiveGiftCardMonth_() {
+  const ui = SpreadsheetApp.getUi();
+  const tabs = listGiftCardMonthTabs_();
+  const legacy = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_NAMES.GIFT_CARD_LEGACY);
+  let prompt = 'Enter the exact tab name for the active gift card month.\n\n';
+  if (tabs.length) {
+    prompt += 'Per-month tabs found:\n' + tabs.map((t) => '- ' + t.tabName).join('\n') + '\n\n';
+  }
+  if (legacy) prompt += 'Legacy fallback: ' + SHEET_NAMES.GIFT_CARD_LEGACY + '\n\n';
+  prompt += 'Current active: ' + getActiveGiftCardSheetName_();
+
+  const resp = ui.prompt('Choose active gift card month', prompt, ui.ButtonSet.OK_CANCEL);
+  if (resp.getSelectedButton() !== ui.Button.OK) return;
+  const name = resp.getResponseText().trim();
+  if (!name) return;
+  if (!SpreadsheetApp.getActiveSpreadsheet().getSheetByName(name)) {
+    ui.alert('No tab named "' + name + '" was found.');
+    return;
+  }
+  setActiveGiftCardSheet_(name);
+  toast_('Active gift card month set to "' + name + '".');
 }
 
 /**
@@ -141,25 +176,22 @@ function promoteConfirmedNewCreators_(showToast) {
     return { promoted: 0 };
   }
 
-  const giftSheet = getSheet_(SHEET_NAMES.GIFT_CARD_TRACKER);
-  const block = getCurrentMonthBlock_(giftSheet);
-  const nameKey = ('creator handle' in block.headerIndex) ? 'creator handle' : 'creator name';
+  const ctx = getGiftCardContext_();
+  const giftSheet = ctx.sheet;
+  const nameKey = ctx.nameKey;
   const nameHeaderLabel = (nameKey === 'creator handle') ? 'Creator Handle' : 'Creator Name';
-  const newPiecesOffset = colIndex_(block.headerIndex, 'New Pieces of Content Used', true);
-  const firstNameOffset = colIndex_(block.headerIndex, 'First Name', false);
-  const lastNameOffset = colIndex_(block.headerIndex, 'Last Name', false);
-  const emailOffset = colIndex_(block.headerIndex, 'Email Address', false);
+  const firstNameCol = giftCardCol1_(ctx, 'First Name', false);
+  const lastNameCol = giftCardCol1_(ctx, 'Last Name', false);
+  const emailCol = giftCardCol1_(ctx, 'Email Address', false);
+  const newPiecesCol = giftCardCol1_(ctx, 'New Pieces of Content Used', true);
 
-  const blockRows = readBlockRows_(giftSheet, block);
+  const blockRows = readGiftCardRows_(ctx);
   const existingHandles = {};
-  let nextEmptyRow = HEADER_ROW.GIFT_CARD_TRACKER_FIELD_ROW + 1;
-  let foundGap = false;
   blockRows.forEach((r) => {
     const h = normalizeHandle_(r[nameKey]);
     if (h) existingHandles[h] = true;
-    else if (!foundGap) { nextEmptyRow = r._sheetRow; foundGap = true; }
   });
-  if (!foundGap) nextEmptyRow = (blockRows.length ? blockRows[blockRows.length - 1]._sheetRow : HEADER_ROW.GIFT_CARD_TRACKER_FIELD_ROW) + 1;
+  let nextEmptyRow = findNextEmptyGiftCardRow_(ctx, blockRows);
 
   let promotedCount = 0;
   toPromote.forEach((r) => {
@@ -170,11 +202,11 @@ function promoteConfirmedNewCreators_(showToast) {
       return;
     }
     const targetRow = nextEmptyRow++;
-    setBlockCell_(giftSheet, block, targetRow, nameHeaderLabel, r['creator handle']);
-    if (firstNameOffset !== -1) giftSheet.getRange(targetRow, block.startCol + firstNameOffset + 1).setValue(r['first name'] || '');
-    if (lastNameOffset !== -1) giftSheet.getRange(targetRow, block.startCol + lastNameOffset + 1).setValue(r['last name'] || '');
-    giftSheet.getRange(targetRow, block.startCol + newPiecesOffset + 1).setValue(r['new pieces of content used']);
-    if (emailOffset !== -1) giftSheet.getRange(targetRow, block.startCol + emailOffset + 1).setValue(r['email address']);
+    setGiftCardCell_(ctx, targetRow, nameHeaderLabel, r['creator handle']);
+    if (firstNameCol !== -1) giftSheet.getRange(targetRow, firstNameCol).setValue(r['first name'] || '');
+    if (lastNameCol !== -1) giftSheet.getRange(targetRow, lastNameCol).setValue(r['last name'] || '');
+    giftSheet.getRange(targetRow, newPiecesCol).setValue(r['new pieces of content used']);
+    if (emailCol !== -1) giftSheet.getRange(targetRow, emailCol).setValue(r['email address']);
     existingHandles[handleKey] = true;
     msgSheet.getRange(r._sheetRow, read.headerIndex[promotedKey] + 1).setValue(true);
     promotedCount++;
@@ -209,22 +241,18 @@ function syncBoostingTracker(silent) {
   if (numRows <= 0) { toast_('No rows in ' + SHEET_NAMES.BOOSTING_TRACKER); return; }
   const values = trackerSheet.getRange(firstDataRow, 1, numRows, lastCol).getValues();
 
-  const giftSheet = getSheet_(SHEET_NAMES.GIFT_CARD_TRACKER);
-  const block = getCurrentMonthBlock_(giftSheet);
-  const nameKey = ('creator handle' in block.headerIndex) ? 'creator handle' : 'creator name';
-  const newPiecesOffset = colIndex_(block.headerIndex, 'New Pieces of Content Used', true);
-  const amountOffset = colIndex_(block.headerIndex, 'Gift Card Amount', true);
+  const ctx = getGiftCardContext_();
+  const giftSheet = ctx.sheet;
+  const nameKey = ctx.nameKey;
+  const newPiecesCol = giftCardCol1_(ctx, 'New Pieces of Content Used', true);
 
-  const blockRows = readBlockRows_(giftSheet, block);
+  const blockRows = readGiftCardRows_(ctx);
   const handleToBlockRow = {};
-  let nextEmptyRow = HEADER_ROW.GIFT_CARD_TRACKER_FIELD_ROW + 1;
-  let foundGap = false;
+  let nextEmptyRow = findNextEmptyGiftCardRow_(ctx, blockRows);
   blockRows.forEach((r) => {
     const h = normalizeHandle_(r[nameKey]);
     if (h) handleToBlockRow[h] = r;
-    else if (!foundGap) { nextEmptyRow = r._sheetRow; foundGap = true; }
   });
-  if (!foundGap) nextEmptyRow = (blockRows.length ? blockRows[blockRows.length - 1]._sheetRow : HEADER_ROW.GIFT_CARD_TRACKER_FIELD_ROW) + 1;
 
   // Creators already sitting in the New Boosted Creators sheet, still unconfirmed
   // (no email yet, not promoted, and not already sent - if it was already sent, treat
@@ -315,7 +343,7 @@ function syncBoostingTracker(silent) {
   }
 
   piecesUpdates.forEach((u) => {
-    giftSheet.getRange(u.row, block.startCol + newPiecesOffset + 1).setValue(u.value);
+    giftSheet.getRange(u.row, newPiecesCol).setValue(u.value);
   });
   trackerMarkerUpdates.forEach((u) => {
     trackerSheet.getRange(u.row, headerIndex['creator notified'] + 1).setValue(u.value);
@@ -331,8 +359,7 @@ function syncBoostingTracker(silent) {
   const virtualList = Object.keys(virtualNewCreators).map((k) => virtualNewCreators[k]);
   const scratchNeeded = pendingList.length + virtualList.length;
   if (scratchNeeded) {
-    const amountCol = block.startCol + amountOffset + 1;
-    const piecesCol = block.startCol + newPiecesOffset + 1;
+    const piecesCol = newPiecesCol;
     let scratchRow = nextEmptyRow;
     pendingList.forEach((p) => {
       p._scratchRow = scratchRow++;
@@ -510,11 +537,6 @@ function testDraftReadiness_() {
   debugSheet.getRange(1, 1, 1, out[0].length).setFontWeight('bold');
   debugSheet.autoResizeColumns(1, out[0].length);
   SpreadsheetApp.getUi().alert('Done. Open the "Draft Readiness Debug" tab to see which rows are missing a name or link.');
-}
-
-function setBlockCell_(sheet, block, row, headerName, value) {
-  const offset = colIndex_(block.headerIndex, headerName, true);
-  sheet.getRange(row, block.startCol + offset + 1).setValue(value);
 }
 
 /**
@@ -717,10 +739,9 @@ function onEditMarkSent(e) {
  * card upload / campaign import.
  */
 function exportEndOfMonth() {
-  const giftSheet = getSheet_(SHEET_NAMES.GIFT_CARD_TRACKER);
-  const block = getCurrentMonthBlock_(giftSheet);
-  const nameKey = ('creator handle' in block.headerIndex) ? 'creator handle' : 'creator name';
-  const rows = readBlockRows_(giftSheet, block).filter((r) => String(r[nameKey] || '').trim() !== '');
+  const ctx = getGiftCardContext_();
+  const nameKey = ctx.nameKey;
+  const rows = readGiftCardRows_(ctx).filter((r) => String(r[nameKey] || '').trim() !== '');
 
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   const existing = ss.getSheetByName(SHEET_NAMES.EOM_EXPORT);
@@ -728,7 +749,7 @@ function exportEndOfMonth() {
   const exportSheet = ss.insertSheet(SHEET_NAMES.EOM_EXPORT);
 
   const exportCols = ['creator handle', 'first name', 'last name', 'new pieces of content used', 'gift card amount', 'email address']
-    .filter((c) => c in block.headerIndex || c === nameKey);
+    .filter((c) => c in ctx.headerIndex || c === nameKey);
   const prettyHeaders = exportCols.map((c) => c.replace(/\b\w/g, (ch) => ch.toUpperCase()));
   exportSheet.getRange(1, 1, 1, prettyHeaders.length).setValues([prettyHeaders]).setFontWeight('bold');
 
@@ -755,7 +776,7 @@ function exportEndOfMonth() {
   }
 
   toast_(
-    complete.length + ' creator(s) ready to export, ' + missingEmail.length + ' still missing an email. ' +
-    'See the "' + SHEET_NAMES.EOM_EXPORT + '" tab.'
+    complete.length + ' creator(s) ready to export from "' + ctx.sheet.getName() + '", ' +
+    missingEmail.length + ' still missing an email. See the "' + SHEET_NAMES.EOM_EXPORT + '" tab.'
   );
 }

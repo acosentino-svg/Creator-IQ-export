@@ -7,11 +7,19 @@
 
 const SHEET_NAMES = {
   BOOSTING_TRACKER: 'Boosting Tracker',
-  GIFT_CARD_TRACKER: 'Monthly Gift Card Cost Tracker',
+  GIFT_CARD_TEMPLATE: 'Gift Card Template',
+  /** @deprecated Legacy horizontal layout — still supported as a fallback. */
+  GIFT_CARD_LEGACY: 'Monthly Gift Card Cost Tracker',
   NEW_CREATORS_MSG: 'New Boosted Creators Automated Message',
   FOLLOWUP_MSG: 'Follow-Up Boosted Creators Automated Message',
   EOM_EXPORT: 'EOM Export',
 };
+
+/** Per-month tabs are named like "July 2026 Gift Card Cost Tracker". */
+const GIFT_CARD_MONTH_TAB_SUFFIX = 'Gift Card Cost Tracker';
+const ACTIVE_GIFT_CARD_SHEET_PROPERTY = 'ACTIVE_GIFT_CARD_SHEET';
+/** How many data rows get the Gift Card Amount formula when a new month tab is created. */
+const GIFT_CARD_FORMULA_ROWS = 400;
 
 const EXTERNAL_SHEET_IDS = {
   NEW_CREATORS_MSG: 'https://docs.google.com/spreadsheets/d/1iYm99c9OaUf3uwSu6AsR2XTEGwBbGop7TU3s-LV_9UI/edit',
@@ -20,6 +28,9 @@ const EXTERNAL_SHEET_IDS = {
 
 const HEADER_ROW = {
   BOOSTING_TRACKER: 2,
+  /** Header row on per-month gift card tabs (e.g. "July 2026 Gift Card Cost Tracker"). */
+  GIFT_CARD_TRACKER: 1,
+  /** Legacy horizontal layout only — row 1 = month labels, row 2 = field headers. */
   GIFT_CARD_TRACKER_MONTH_LABEL_ROW: 1,
   GIFT_CARD_TRACKER_FIELD_ROW: 2,
   NEW_CREATORS_MSG: 1,

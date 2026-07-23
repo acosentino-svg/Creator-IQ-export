@@ -1,7 +1,9 @@
 /**
  * Helpers.gs
- * Generic utilities shared by Automation.gs: header lookup, month-block
- * detection in the Monthly Gift Card Cost Tracker, and handle normalization.
+ * Generic utilities shared by Automation.gs: header lookup, gift card month-tab
+ * helpers (one tab per month, e.g. "July 2026 Gift Card Cost Tracker"), and
+ * handle normalization. Legacy horizontal "Monthly Gift Card Cost Tracker" is
+ * still supported as a fallback.
  */
 
 function getSheet_(name) {
@@ -171,11 +173,9 @@ function isAlreadyBoostedThisMonth_(handle) {
   if (!handleKey) return false;
 
   try {
-    const giftSheet = getSheet_(SHEET_NAMES.GIFT_CARD_TRACKER);
-    const block = getCurrentMonthBlock_(giftSheet);
-    const nameKey = ('creator handle' in block.headerIndex) ? 'creator handle' : 'creator name';
-    const rows = readBlockRows_(giftSheet, block);
-    if (rows.some((r) => normalizeHandle_(r[nameKey]) === handleKey && String(r[nameKey] || '').trim() !== '')) {
+    const ctx = getGiftCardContext_();
+    const rows = readGiftCardRows_(ctx);
+    if (rows.some((r) => normalizeHandle_(r[ctx.nameKey]) === handleKey && String(r[ctx.nameKey] || '').trim() !== '')) {
       return true;
     }
   } catch (e) { /* optional */ }
@@ -285,8 +285,237 @@ function colIndex_(headerIndex, name, required) {
   return headerIndex[key];
 }
 
+// --- Per-month gift card tabs (e.g. "July 2026 Gift Card Cost Tracker") ---
+
+const GIFT_CARD_MONTH_NAMES_ = [
+  'january', 'february', 'march', 'april', 'may', 'june',
+  'july', 'august', 'september', 'october', 'november', 'december',
+];
+
+/** Builds the tab name: "July 2026 Gift Card Cost Tracker". */
+function formatGiftCardMonthTabName_(monthName, year) {
+  const month = String(monthName || '').trim();
+  const y = Number(year);
+  if (!month || !y) throw new Error('Month and year are required (e.g. July 2026).');
+  return month + ' ' + y + ' ' + GIFT_CARD_MONTH_TAB_SUFFIX;
+}
+
+/** Parses "July 2026 Gift Card Cost Tracker" -> { month, year, monthIndex, sortKey }. */
+function parseGiftCardMonthTabName_(tabName) {
+  const suffix = ' ' + GIFT_CARD_MONTH_TAB_SUFFIX;
+  const name = String(tabName || '').trim();
+  if (!name.endsWith(suffix)) return null;
+  const prefix = name.slice(0, -suffix.length).trim();
+  const match = prefix.match(/^(\w+)\s+(\d{4})$/);
+  if (!match) return null;
+  const monthIndex = GIFT_CARD_MONTH_NAMES_.indexOf(match[1].toLowerCase());
+  if (monthIndex === -1) return null;
+  const year = parseInt(match[2], 10);
+  return {
+    month: match[1],
+    year: year,
+    monthIndex: monthIndex,
+    sortKey: year * 12 + monthIndex,
+    tabName: name,
+  };
+}
+
+function isGiftCardMonthTabName_(tabName) {
+  return parseGiftCardMonthTabName_(tabName) != null;
+}
+
+function isLegacyGiftCardSheet_(sheet) {
+  return sheet.getName() === SHEET_NAMES.GIFT_CARD_LEGACY;
+}
+
+function listGiftCardMonthTabs_() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  return ss.getSheets()
+    .map((s) => parseGiftCardMonthTabName_(s.getName()))
+    .filter(Boolean)
+    .sort((a, b) => a.sortKey - b.sortKey);
+}
+
+function getActiveGiftCardSheetName_() {
+  const stored = PropertiesService.getScriptProperties().getProperty(ACTIVE_GIFT_CARD_SHEET_PROPERTY);
+  if (stored) {
+    const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(stored);
+    if (sheet) return stored;
+  }
+  const tabs = listGiftCardMonthTabs_();
+  if (tabs.length) return tabs[tabs.length - 1].tabName;
+  return SHEET_NAMES.GIFT_CARD_LEGACY;
+}
+
+function getActiveGiftCardSheet_() {
+  const name = getActiveGiftCardSheetName_();
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(name);
+  if (!sheet) {
+    throw new Error(
+      'Gift card tracker tab not found: "' + name + '". Run "Start new month" or create a tab like "July 2026 Gift Card Cost Tracker".'
+    );
+  }
+  return sheet;
+}
+
+function setActiveGiftCardSheet_(tabName) {
+  PropertiesService.getScriptProperties().setProperty(ACTIVE_GIFT_CARD_SHEET_PROPERTY, tabName);
+}
+
+function getGiftCardHeaderRow_(sheet) {
+  if (isLegacyGiftCardSheet_(sheet)) return HEADER_ROW.GIFT_CARD_TRACKER_FIELD_ROW;
+  if (isGiftCardMonthTabName_(sheet.getName())) return HEADER_ROW.GIFT_CARD_TRACKER;
+  const lastCol = Math.max(sheet.getLastColumn(), 1);
+  const row1 = buildHeaderIndex_(sheet.getRange(1, 1, 1, lastCol).getValues()[0]);
+  if ('creator handle' in row1 || 'creator name' in row1) return HEADER_ROW.GIFT_CARD_TRACKER;
+  return HEADER_ROW.GIFT_CARD_TRACKER_FIELD_ROW;
+}
+
 /**
- * The Monthly Gift Card Cost Tracker lays months out side-by-side:
+ * Returns everything needed to read/write the active gift card month.
+ * Supports per-month tabs and the legacy horizontal layout.
+ */
+function getGiftCardContext_() {
+  const sheet = getActiveGiftCardSheet_();
+  const isLegacy = isLegacyGiftCardSheet_(sheet);
+  if (isLegacy) {
+    const block = getCurrentMonthBlock_(sheet);
+    return {
+      sheet: sheet,
+      isLegacy: true,
+      headerRow: HEADER_ROW.GIFT_CARD_TRACKER_FIELD_ROW,
+      headerIndex: block.headerIndex,
+      block: block,
+      nameKey: ('creator handle' in block.headerIndex) ? 'creator handle' : 'creator name',
+    };
+  }
+  const headerRow = getGiftCardHeaderRow_(sheet);
+  const lastCol = sheet.getLastColumn();
+  const headerIndex = buildHeaderIndex_(sheet.getRange(headerRow, 1, 1, lastCol).getValues()[0]);
+  return {
+    sheet: sheet,
+    isLegacy: false,
+    headerRow: headerRow,
+    headerIndex: headerIndex,
+    block: null,
+    nameKey: ('creator handle' in headerIndex) ? 'creator handle' : 'creator name',
+  };
+}
+
+/** 1-based column number for a header on the active gift card sheet. */
+function giftCardCol1_(ctx, headerName, required) {
+  const offset = colIndex_(ctx.headerIndex, headerName, required !== false);
+  if (offset === -1) return -1;
+  return ctx.isLegacy ? ctx.block.startCol + offset + 1 : offset + 1;
+}
+
+function readGiftCardRows_(ctx) {
+  if (ctx.isLegacy) return readBlockRows_(ctx.sheet, ctx.block);
+  const read = readFlatSheetRows_(ctx.sheet, ctx.headerRow);
+  return read.rows;
+}
+
+function setGiftCardCell_(ctx, row, headerName, value) {
+  const col = giftCardCol1_(ctx, headerName, true);
+  ctx.sheet.getRange(row, col).setValue(value);
+}
+
+function findNextEmptyGiftCardRow_(ctx, rows) {
+  const startDataRow = ctx.headerRow + 1;
+  let nextEmptyRow = startDataRow;
+  let foundGap = false;
+  rows.forEach((r) => {
+    const h = normalizeHandle_(r[ctx.nameKey]);
+    if (!h && !foundGap) { nextEmptyRow = r._sheetRow; foundGap = true; }
+  });
+  if (!foundGap) {
+    nextEmptyRow = rows.length ? rows[rows.length - 1]._sheetRow + 1 : startDataRow;
+  }
+  return nextEmptyRow;
+}
+
+/**
+ * Copies the template (or the current month tab) to start a new month tab.
+ * Returns the new Sheet object.
+ */
+function createGiftCardMonthTab_(tabName) {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  if (ss.getSheetByName(tabName)) {
+    throw new Error('A tab named "' + tabName + '" already exists.');
+  }
+
+  const template = ss.getSheetByName(SHEET_NAMES.GIFT_CARD_TEMPLATE);
+  if (template) {
+    return copyGiftCardMonthTab_(template, tabName);
+  }
+
+  let source = null;
+  try {
+    source = getActiveGiftCardSheet_();
+  } catch (e) {
+    source = ss.getSheetByName(SHEET_NAMES.GIFT_CARD_LEGACY);
+  }
+  if (!source) {
+    throw new Error(
+      'No source tab found. Create a "' + SHEET_NAMES.GIFT_CARD_TEMPLATE + '" tab, or keep the legacy "' +
+      SHEET_NAMES.GIFT_CARD_LEGACY + '" tab until you run Start new month once.'
+    );
+  }
+
+  if (isLegacyGiftCardSheet_(source)) {
+    return createGiftCardMonthTabFromLegacyBlock_(tabName, source);
+  }
+  return copyGiftCardMonthTab_(source, tabName);
+}
+
+function copyGiftCardMonthTab_(source, tabName) {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const newSheet = source.copyTo(ss);
+  newSheet.setName(tabName);
+
+  const headerRow = getGiftCardHeaderRow_(newSheet);
+  const lastRow = newSheet.getLastRow();
+  if (lastRow > headerRow) {
+    const lastCol = newSheet.getLastColumn();
+    newSheet.getRange(headerRow + 1, 1, lastRow - headerRow, lastCol).clearContent();
+  }
+
+  newSheet.showSheet();
+  setActiveGiftCardSheet_(tabName);
+  return newSheet;
+}
+
+/** Flattens the right-most block from the legacy horizontal sheet into a new month tab. */
+function createGiftCardMonthTabFromLegacyBlock_(tabName, legacySheet) {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const block = getCurrentMonthBlock_(legacySheet);
+  const newSheet = ss.insertSheet(tabName);
+  const headerRow = HEADER_ROW.GIFT_CARD_TRACKER;
+  const width = block.width;
+
+  legacySheet.getRange(HEADER_ROW.GIFT_CARD_TRACKER_FIELD_ROW, block.startCol + 1, 1, width)
+    .copyTo(newSheet.getRange(headerRow, 1, 1, width));
+
+  const amountOffset = colIndex_(block.headerIndex, 'Gift Card Amount', false);
+  if (amountOffset !== -1) {
+    const firstDataRow = headerRow + 1;
+    legacySheet.getRange(
+      HEADER_ROW.GIFT_CARD_TRACKER_FIELD_ROW + 1,
+      block.startCol + amountOffset + 1,
+      GIFT_CARD_FORMULA_ROWS,
+      1
+    ).copyTo(newSheet.getRange(firstDataRow, amountOffset + 1, GIFT_CARD_FORMULA_ROWS, 1));
+  }
+
+  newSheet.showSheet();
+  setActiveGiftCardSheet_(tabName);
+  return newSheet;
+}
+
+// --- Legacy horizontal month blocks (fallback) ---
+
+/**
+ * The legacy Monthly Gift Card Cost Tracker lays months out side-by-side:
  * row 1 has a label (e.g. "July") only in the first column of each block,
  * row 2 has that block's real field headers. Block width = distance to the
  * next labeled column (or sheet edge). The right-most labeled block is
@@ -299,7 +528,7 @@ function getMonthBlocks_(sheet) {
   labelRow.forEach((v, i) => {
     if (String(v || '').trim() !== '') starts.push(i); // 0-based col offset
   });
-  if (starts.length === 0) throw new Error('No month labels found in row ' + HEADER_ROW.GIFT_CARD_TRACKER_MONTH_LABEL_ROW + ' of "' + SHEET_NAMES.GIFT_CARD_TRACKER + '".');
+  if (starts.length === 0) throw new Error('No month labels found in row ' + HEADER_ROW.GIFT_CARD_TRACKER_MONTH_LABEL_ROW + ' of "' + SHEET_NAMES.GIFT_CARD_LEGACY + '".');
 
   const fieldRow = sheet.getRange(HEADER_ROW.GIFT_CARD_TRACKER_FIELD_ROW, 1, 1, lastCol).getValues()[0];
   return starts.map((startCol, i) => {
