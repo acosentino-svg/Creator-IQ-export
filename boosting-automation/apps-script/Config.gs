@@ -10,87 +10,49 @@ const SHEET_NAMES = {
   GIFT_CARD_TRACKER: 'Monthly Gift Card Cost Tracker',
   NEW_CREATORS_MSG: 'New Boosted Creators Automated Message',
   FOLLOWUP_MSG: 'Follow-Up Boosted Creators Automated Message',
-  EOM_EXPORT: 'EOM Export', // created automatically by exportEndOfMonth()
+  EOM_EXPORT: 'EOM Export',
 };
 
-// "New Boosted Creators Automated Message" and "Follow-Up Boosted Creators
-// Automated Message" are SEPARATE Google Sheets files, not tabs inside the
-// Boosting Program Tracker. Paste each file's URL (or just the long ID from
-// the middle of the URL) here so the script knows where to reach them.
-// Leave blank and it'll assume they're tabs in this same file instead.
 const EXTERNAL_SHEET_IDS = {
   NEW_CREATORS_MSG: 'https://docs.google.com/spreadsheets/d/1iYm99c9OaUf3uwSu6AsR2XTEGwBbGop7TU3s-LV_9UI/edit',
   FOLLOWUP_MSG: 'https://docs.google.com/spreadsheets/d/1eWhsrdo5jxBTms70o5yuHpDV2rEgIvNowwO0T7Z6I7c/edit',
 };
 
-// Row (1-indexed) that holds the real column headers in each tab.
 const HEADER_ROW = {
-  BOOSTING_TRACKER: 2, // row 1 is the "tag Adriana" instruction banner
-  GIFT_CARD_TRACKER_MONTH_LABEL_ROW: 1, // month name band, e.g. "July"
-  GIFT_CARD_TRACKER_FIELD_ROW: 2, // Creator Handle / New Pieces / ... per block
+  BOOSTING_TRACKER: 2,
+  GIFT_CARD_TRACKER_MONTH_LABEL_ROW: 1,
+  GIFT_CARD_TRACKER_FIELD_ROW: 2,
   NEW_CREATORS_MSG: 1,
   FOLLOWUP_MSG: 1,
 };
 
-// Values in the Boosting Tracker "Creator Notified" column that mean
-// "already handled, do not touch again".
 const ALREADY_HANDLED_VALUES = ['yes'];
-
-// Any "Creator Notified" value containing one of these substrings is a dupe.
 const DUPE_MARKERS = ['dupe'];
-
-// Marker this script writes into "Creator Notified" once a row has been
-// drafted (added to a message sheet + gift card tracker) but a human has not
-// yet actually sent the message in CreatorIQ. Keeping this distinct from
-// "Yes" preserves the rule that "Yes" = a person actually notified the creator.
 const QUEUED_MARKER = 'Queued (auto)';
-
-// Column this script adds to the message sheets to hold the Gemini-drafted
-// text and to track whether the send has actually happened yet.
 const DRAFT_COLUMN_HEADER = 'Drafted Message (auto)';
 const SENT_CHECKBOX_HEADER = 'Sent?';
-
-// Column added to the New Boosted Creators sheet to mark a row as already
-// copied into the Gift Card Tracker, so it never gets copied there twice.
-// A row becomes eligible to promote the moment a human types something into
-// its Email Address cell - that's the one and only signal this script uses
-// to decide a creator is "confirmed."
 const PROMOTED_COLUMN_HEADER = 'Added to Tracker? (auto)';
-
-// Tracks which platform(s) the synced Boosting Tracker row(s) came from.
-// Used to skip the product-links ask for AppLovin-only creators.
 const PLATFORM_COLUMN_HEADER = 'Platform (auto)';
 
-// Off by default: CreatorIQ's API returned "Forbidden" on every single test
-// (even with no authentication at all), which points to an IP-allowlisting
-// restriction outside of what this script can fix. Leaving the lookup
-// disabled avoids wasting time on calls that will fail anyway. Flip to
-// true once CreatorIQ/Wayfair IT confirms network access - no other code
-// needs to change.
-const CREATORIQ_LOOKUP_ENABLED = false;
+// Payout: 1st selected piece = $100, each additional piece = +$50.
+const GIFT_CARD_BASE_AMOUNT = 100;
+const GIFT_CARD_INCREMENT_AMOUNT = 50;
 
-// Name of the tab (inside the same Google Sheets file as the New Boosted
-// Creators sheet) that holds a downloaded creator list with columns like
-// publisher_name, instagram_account_name, tiktok_account_name. Used to fill
-// in First/Last Name by matching a handle against either platform column -
-// no API or network access needed. If this exact tab name doesn't match
-// what you actually named it, update it here (check the tab's name at the
-// bottom of that spreadsheet).
+const CREATORIQ_LOOKUP_ENABLED = false;
 const NAMES_LOOKUP_SHEET_NAME = 'Names';
 
-// Script Properties key for the Gemini API key. Set once via
-// Extensions > Apps Script > Project Settings > Script Properties,
-// or by running setGeminiApiKey_() from the script editor.
 const GEMINI_API_KEY_PROPERTY = 'GEMINI_API_KEY';
 const GEMINI_MODEL = 'gemini-2.5-flash';
 
+// --- Brand-new creator this month (first boost) ---
+
 const NEW_CREATOR_PROMPT = `Hi {{FIRST_NAME}},
 
-Exciting news, my team loved your partnership content and would like to use {{PIECES}} piece/s of it! This means that as of right now you have earned a {{AMOUNT}} Wayfair Gift Card. My team will continue monitoring for content and for every additional piece of your content they use, your gift card amount will be raised by $50.
+Exciting news, my team loved your partnership content and would like to use {{PIECES_LABEL}} of it! This means that as of right now you have earned a {{AMOUNT}} Wayfair Gift Card. My team will continue monitoring for content and for every additional piece of your content they use, your gift card amount will be raised by $50.
 
 I will update you if anything else gets selected, and I plan to send gift cards out early next month!
 
-Can you please confirm the email you would like the gift card to be addressed to, and send over the product links you featured in just these selected videos when you get a chance?:
+Can you please confirm the email you would like the gift card to be addressed to, and send over the product links you featured in {{SELECTED_VIDEOS_PHRASE}} when you get a chance?:
 {{LINKS}}
 
 Best,
@@ -98,7 +60,7 @@ Adriana`;
 
 const NEW_CREATOR_PROMPT_NO_LINKS = `Hi {{FIRST_NAME}},
 
-Exciting news, my team loved your partnership content and would like to use {{PIECES}} piece/s of it! This means that as of right now you have earned a {{AMOUNT}} Wayfair Gift Card. My team will continue monitoring for content and for every additional piece of your content they use, your gift card amount will be raised by $50.
+Exciting news, my team loved your partnership content and would like to use {{PIECES_LABEL}} of it! This means that as of right now you have earned a {{AMOUNT}} Wayfair Gift Card. My team will continue monitoring for content and for every additional piece of your content they use, your gift card amount will be raised by $50.
 
 I will update you if anything else gets selected, and I plan to send gift cards out early next month!
 
@@ -107,21 +69,50 @@ Can you please confirm the email you would like the gift card to be addressed to
 Best,
 Adriana`;
 
-const FOLLOWUP_PROMPT = `Hi {{FIRST_NAME}},
+// --- Already boosted this month: one new piece selected ---
 
-More exciting news, my team loved your latest partnership content and would like to use {{NEW_PIECES}} more piece/s of it! Combined with what we've already used this month, your gift card total is now up to {{AMOUNT}}.
+const INCREMENTAL_SINGLE_PROMPT = `Hi {{FIRST_NAME}},
 
-I will keep you posted if anything else gets selected, and I plan to send gift cards out early next month!
+Exciting news, my team loved another piece of your partnership content and would like to use it! This means your Wayfair Gift Card amount has now been raised by another {{INCREMENT_AMOUNT}}.
 
-Can you send over the product links you featured in just this newest content when you get a chance?:
+My team will continue monitoring for content and for every additional piece of your content they use, your gift card amount will be raised by $50.
+
+I will update you if anything else gets selected, and I plan to send gift cards out early next month!
+
+Can you please send over the product link you featured in this selected video when you get a chance?:
 {{LINKS}}
 
 Best,
 Adriana`;
 
-const FOLLOWUP_PROMPT_NO_LINKS = `Hi {{FIRST_NAME}},
+const INCREMENTAL_SINGLE_PROMPT_NO_LINKS = `Hi {{FIRST_NAME}},
 
-More exciting news, my team loved your latest partnership content and would like to use {{NEW_PIECES}} more piece/s of it! Combined with what we've already used this month, your gift card total is now up to {{AMOUNT}}.
+Exciting news, my team loved another piece of your partnership content and would like to use it! This means your Wayfair Gift Card amount has now been raised by another {{INCREMENT_AMOUNT}}.
+
+My team will continue monitoring for content and for every additional piece of your content they use, your gift card amount will be raised by $50.
+
+I will update you if anything else gets selected, and I plan to send gift cards out early next month!
+
+Best,
+Adriana`;
+
+// --- Already boosted this month: multiple new pieces in one email ---
+
+const INCREMENTAL_MULTI_PROMPT = `Hi {{FIRST_NAME}},
+
+More exciting news, my team loved your latest partnership content and would like to use {{NEW_PIECES_LABEL}} more of it! Combined with what we've already used this month, your gift card total is now up to {{AMOUNT}}.
+
+I will keep you posted if anything else gets selected, and I plan to send gift cards out early next month!
+
+Can you please send over the product links you featured in {{SELECTED_VIDEOS_PHRASE}} when you get a chance?:
+{{LINKS}}
+
+Best,
+Adriana`;
+
+const INCREMENTAL_MULTI_PROMPT_NO_LINKS = `Hi {{FIRST_NAME}},
+
+More exciting news, my team loved your latest partnership content and would like to use {{NEW_PIECES_LABEL}} more of it! Combined with what we've already used this month, your gift card total is now up to {{AMOUNT}}.
 
 I will keep you posted if anything else gets selected, and I plan to send gift cards out early next month!
 

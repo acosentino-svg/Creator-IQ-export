@@ -289,7 +289,8 @@ function syncBoostingTracker(silent) {
       followUpRows.push({
         handle: handle, blockRow: existing._sheetRow,
         firstName: existing['first name'] || '', lastName: existing['last name'] || '',
-        newPieces: 1, email: existing['email address'] || '', links: links, platform: platform,
+        newPieces: 1, totalPieces: newTotal,
+        email: existing['email address'] || '', links: links, platform: platform,
       });
     } else if (pendingByHandle[handleKey]) {
       const p = pendingByHandle[handleKey];
@@ -321,19 +322,11 @@ function syncBoostingTracker(silent) {
   });
   if (piecesUpdates.length) SpreadsheetApp.flush();
 
-  if (piecesUpdates.length) {
-    const rows = piecesUpdates.map((u) => u.row);
-    const minRow = Math.min.apply(null, rows);
-    const maxRow = Math.max.apply(null, rows);
-    const amountCol = block.startCol + amountOffset + 1;
-    const amounts = giftSheet.getRange(minRow, amountCol, maxRow - minRow + 1, 1).getValues();
-    const amountByRow = {};
-    amounts.forEach((r, idx) => { amountByRow[minRow + idx] = r[0]; });
-    followUpRows.forEach((r) => { r.amount = amountByRow[r.blockRow]; });
-  }
+  followUpRows.forEach((r) => {
+    r.amount = formatAmount_(calculateGiftCardAmount_(r.totalPieces));
+  });
 
-  // Compute the correct Gift Card Amount for every pending update + brand-new creator by
-  // briefly borrowing not-yet-used formula rows further down this same block, in one batch.
+  // Compute gift card amounts for pending + brand-new creators.
   const pendingList = Object.keys(pendingByHandle).map((k) => pendingByHandle[k]).filter((p) => p._pendingDelta);
   const virtualList = Object.keys(virtualNewCreators).map((k) => virtualNewCreators[k]);
   const scratchNeeded = pendingList.length + virtualList.length;
@@ -351,11 +344,8 @@ function syncBoostingTracker(silent) {
     virtualList.forEach((v) => { giftSheet.getRange(v._scratchRow, piecesCol).setValue(v.totalPieces); });
     SpreadsheetApp.flush();
 
-    const amounts = giftSheet.getRange(nextEmptyRow, amountCol, scratchNeeded, 1).getValues();
-    const amountByRow = {};
-    amounts.forEach((r, idx) => { amountByRow[nextEmptyRow + idx] = r[0]; });
-    pendingList.forEach((p) => { p._newAmount = amountByRow[p._scratchRow]; });
-    virtualList.forEach((v) => { v.amount = amountByRow[v._scratchRow]; });
+    pendingList.forEach((p) => { p._newAmount = formatAmount_(calculateGiftCardAmount_(p._newTotalPieces)); });
+    virtualList.forEach((v) => { v.amount = formatAmount_(calculateGiftCardAmount_(v.totalPieces)); });
 
     giftSheet.getRange(nextEmptyRow, piecesCol, scratchNeeded, 1).clearContent();
   }
@@ -491,7 +481,7 @@ function testDraftReadiness_() {
     const piecesNote = String(row['new pieces of content used'] || '').trim() || '(default 1)';
 
     let amount = String(row['gift card amount'] || '').trim();
-    const amountNote = amount || ('(default $' + (pieces * 50) + ')');
+    const amountNote = amount || formatAmount_(calculateGiftCardAmount_(pieces));
 
     const alreadyDrafted = !!row[draftKey];
     const alreadySent = !!row[sentKey];
@@ -597,10 +587,10 @@ function appendToMessageSheet_(sheetName, rows) {
 }
 
 function draftNewCreatorMessages() {
-  draftMessagesForSheet_(SHEET_NAMES.NEW_CREATORS_MSG, NEW_CREATOR_PROMPT, NEW_CREATOR_PROMPT_NO_LINKS);
+  draftMessagesForSheet_(SHEET_NAMES.NEW_CREATORS_MSG);
 }
 function draftFollowUpMessages() {
-  draftMessagesForSheet_(SHEET_NAMES.FOLLOWUP_MSG, FOLLOWUP_PROMPT, FOLLOWUP_PROMPT_NO_LINKS);
+  draftMessagesForSheet_(SHEET_NAMES.FOLLOWUP_MSG);
 }
 
 /** Pick the first non-empty cell from a row using several possible header names. */
@@ -614,8 +604,9 @@ function pickRowValue_(row, headerIndex, headerNames) {
   return '';
 }
 
-function draftMessagesForSheet_(sheetName, templateWithLinks, templateWithoutLinks) {
+function draftMessagesForSheet_(sheetName) {
   const sheet = getSheet_(sheetName);
+  const isFollowUpSheet = sheetName === SHEET_NAMES.FOLLOWUP_MSG;
   ensureColumn_(sheet, 1, DRAFT_COLUMN_HEADER);
   ensureColumn_(sheet, 1, SENT_CHECKBOX_HEADER);
   ensureColumn_(sheet, 1, PLATFORM_COLUMN_HEADER);
@@ -636,7 +627,7 @@ function draftMessagesForSheet_(sheetName, templateWithLinks, templateWithoutLin
 
     const firstName = pickRowValue_(row, headerIndex, ['first name']);
     const handle = pickRowValue_(row, headerIndex, ['creator handle', 'creator name']);
-    const displayName = firstName || (handle ? handle.replace(/^@/, '').split(/[._]/)[0] : '');
+    const displayName = firstName || (handle ? capitalizeFirst_(handle.replace(/^@/, '').split(/[._]/)[0]) : '');
 
     const platform = pickRowValue_(row, headerIndex, [
       PLATFORM_COLUMN_HEADER, 'platform (auto)', 'platform', 'platform(s) for usage',
@@ -650,19 +641,21 @@ function draftMessagesForSheet_(sheetName, templateWithLinks, templateWithoutLin
     if (!displayName) { skipped++; skippedNoName++; return; }
     if (needsLinks && !links) { skipped++; skippedNoLinks++; return; }
 
-    let pieces = Number(pickRowValue_(row, headerIndex, ['new pieces of content used']));
-    if (!pieces || pieces < 1) pieces = 1;
+    let newPieces = Number(pickRowValue_(row, headerIndex, ['new pieces of content used']));
+    if (!newPieces || newPieces < 1) newPieces = 1;
 
     let amount = pickRowValue_(row, headerIndex, ['gift card amount']);
-    if (!amount) amount = '$' + (pieces * 50);
+    if (!amount) amount = formatAmount_(calculateGiftCardAmount_(newPieces));
 
-    const template = needsLinks ? templateWithLinks : templateWithoutLinks;
-    const filled = fillTemplate_(template, {
-      FIRST_NAME: displayName,
-      PIECES: pieces,
-      NEW_PIECES: pieces,
-      AMOUNT: amount,
-      LINKS: links || '',
+    const filled = buildDraftMessage_({
+      isFollowUp: isFollowUpSheet,
+      handle: handle,
+      firstName: displayName,
+      pieces: newPieces,
+      newPieces: newPieces,
+      amount: amount,
+      links: links,
+      needsLinks: needsLinks,
     });
     sheet.getRange(2 + i, draftIdx + 1).setValue(filled);
     drafted++;

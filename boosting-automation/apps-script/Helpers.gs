@@ -125,6 +125,120 @@ function mergePlatformLabels_(existing, incoming) {
   return Object.keys(set).join(', ');
 }
 
+/** 1 piece = $100, each additional piece = +$50. */
+function calculateGiftCardAmount_(pieces) {
+  const n = Number(pieces) || 0;
+  if (n <= 0) return 0;
+  return GIFT_CARD_BASE_AMOUNT + GIFT_CARD_INCREMENT_AMOUNT * (n - 1);
+}
+
+function formatAmount_(value) {
+  const num = typeof value === 'string' ? parseFloat(String(value).replace(/[^0-9.]/g, '')) : Number(value);
+  if (isNaN(num)) return '';
+  return '$' + (num % 1 === 0 ? String(num) : num.toFixed(2));
+}
+
+function formatPiecesLabel_(pieces) {
+  const n = Number(pieces) || 0;
+  if (n === 1) return '1 piece';
+  return n + ' pieces';
+}
+
+function formatMorePiecesLabel_(pieces) {
+  const n = Number(pieces) || 0;
+  if (n === 1) return '1 more piece';
+  return n + ' more pieces';
+}
+
+function capitalizeFirst_(text) {
+  const t = String(text || '').trim();
+  if (!t) return t;
+  if (t !== t.toLowerCase() && t !== t.toUpperCase()) return t;
+  return t.charAt(0).toUpperCase() + t.slice(1).toLowerCase();
+}
+
+function splitLinks_(linksText) {
+  return String(linksText || '').split(/[\n,]+/).map((s) => s.trim()).filter(Boolean);
+}
+
+function formatSelectedVideosPhrase_(linkCount) {
+  return linkCount === 1 ? 'just this selected video' : 'just these selected videos';
+}
+
+/** True if this creator already received an initial boost this month. */
+function isAlreadyBoostedThisMonth_(handle) {
+  const handleKey = normalizeHandle_(handle);
+  if (!handleKey) return false;
+
+  try {
+    const giftSheet = getSheet_(SHEET_NAMES.GIFT_CARD_TRACKER);
+    const block = getCurrentMonthBlock_(giftSheet);
+    const nameKey = ('creator handle' in block.headerIndex) ? 'creator handle' : 'creator name';
+    const rows = readBlockRows_(giftSheet, block);
+    if (rows.some((r) => normalizeHandle_(r[nameKey]) === handleKey && String(r[nameKey] || '').trim() !== '')) {
+      return true;
+    }
+  } catch (e) { /* optional */ }
+
+  try {
+    const msgSheet = getSheet_(SHEET_NAMES.NEW_CREATORS_MSG);
+    const read = readFlatSheetRows_(msgSheet, HEADER_ROW.NEW_CREATORS_MSG);
+    const sentKey = normalizeHeader_(SENT_CHECKBOX_HEADER);
+    if (read.rows.some((r) => normalizeHandle_(r['creator handle']) === handleKey && r[sentKey])) {
+      return true;
+    }
+  } catch (e) { /* optional */ }
+
+  return false;
+}
+
+/**
+ * Picks the right template and fills it. New-creator vs incremental is based on
+ * the sheet (Follow-Up = incremental) or whether they were already boosted.
+ */
+function buildDraftMessage_(opts) {
+  const firstName = capitalizeFirst_(opts.firstName || '');
+  const pieces = Number(opts.pieces) || 1;
+  const newPieces = Number(opts.newPieces) || pieces;
+  const links = String(opts.links || '').trim();
+  const linkList = splitLinks_(links);
+  const linkCount = linkList.length || (links ? 1 : 0);
+  const needsLinks = opts.needsLinks !== false;
+  const isFollowUp = !!opts.isFollowUp || isAlreadyBoostedThisMonth_(opts.handle);
+
+  let amount = opts.amount;
+  if (!amount) {
+    amount = formatAmount_(isFollowUp && newPieces < pieces
+      ? calculateGiftCardAmount_(pieces)
+      : calculateGiftCardAmount_(isFollowUp ? newPieces : pieces));
+  } else if (String(amount).indexOf('$') === -1) {
+    amount = formatAmount_(amount);
+  }
+
+  const values = {
+    FIRST_NAME: firstName,
+    PIECES_LABEL: formatPiecesLabel_(pieces),
+    NEW_PIECES_LABEL: formatMorePiecesLabel_(newPieces),
+    AMOUNT: amount,
+    INCREMENT_AMOUNT: formatAmount_(GIFT_CARD_INCREMENT_AMOUNT * newPieces),
+    SELECTED_VIDEOS_PHRASE: formatSelectedVideosPhrase_(linkCount),
+    LINKS: links,
+  };
+
+  let template;
+  if (isFollowUp) {
+    if (newPieces === 1) {
+      template = needsLinks ? INCREMENTAL_SINGLE_PROMPT : INCREMENTAL_SINGLE_PROMPT_NO_LINKS;
+    } else {
+      template = needsLinks ? INCREMENTAL_MULTI_PROMPT : INCREMENTAL_MULTI_PROMPT_NO_LINKS;
+    }
+  } else {
+    template = needsLinks ? NEW_CREATOR_PROMPT : NEW_CREATOR_PROMPT_NO_LINKS;
+  }
+
+  return fillTemplate_(template, values);
+}
+
 /** Fallback for message rows synced before Platform (auto) existed. */
 function lookupPlatformsForHandleFromTracker_(handle) {
   const trackerSheet = getSheet_(SHEET_NAMES.BOOSTING_TRACKER);
