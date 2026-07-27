@@ -93,6 +93,7 @@ def get_raw_data() -> tuple[RawData, dict[str, str | None]]:
 
 
 def render_mode_badge() -> None:
+    st.sidebar.caption("🔒 **Internal use only** — not shared with creators.")
     config = get_config()
     if config.is_demo:
         st.sidebar.info(
