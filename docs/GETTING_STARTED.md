@@ -60,6 +60,9 @@ pages in the left sidebar:
 | **Went Dark** | Who to re-engage, with a suggested next step |
 | **Creator Activity** | Full table — use **Download CSV** for email lists |
 
+| **Chat Assistant** | Ask questions in plain English and get creator lists |
+| **Outreach Queue** | Prioritized who-to-email lists with CSV export |
+
 Use the **sidebar** to change the date range and what counts as "Active" or
 "Went Dark."
 

@@ -36,9 +36,9 @@ def test_overview_page_shows_expected_metrics():
     at.run(timeout=60)
     assert not at.exception
     metric_labels = [m.label for m in at.metric]
-    assert "Total Creators" in metric_labels
-    assert "Active" in metric_labels
-    assert "Went Dark" in metric_labels
+    assert "Total enrolled" in metric_labels
+    assert "Ever activated" in metric_labels
+    assert "Ghosts" in metric_labels
 
 
 def test_overview_page_handles_live_mode_before_any_sync(monkeypatch, tmp_path):

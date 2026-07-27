@@ -26,6 +26,16 @@ import streamlit as st  # noqa: E402
 
 from creatoriq_dashboard.config import AppConfig, load_config  # noqa: E402
 from creatoriq_dashboard.data_access import load_inputs  # noqa: E402
+from creatoriq_dashboard.activation_analytics import (  # noqa: E402
+    ActivationContext,
+    build_outreach_queue,
+    compute_activation_funnel,
+    compute_activation_trends,
+    compute_cohort_activation,
+    compute_extended_kpis,
+    compute_struggle_segments,
+    enrich_activation_fields,
+)
 from creatoriq_dashboard.metrics import (  # noqa: E402
     DATE_RANGE_PRESETS,
     RawData,
@@ -207,13 +217,35 @@ def get_bundle() -> dict:
         z_score_threshold=2.0,
     )
 
+    enriched = enrich_activation_fields(summary)
+    extended_kpis = compute_extended_kpis(enriched, classified)
+    funnel = compute_activation_funnel(enriched)
+    cohorts = compute_cohort_activation(enriched)
+    activation_trends = compute_activation_trends(enriched, raw.posts, raw.links)
+    struggle_segments = compute_struggle_segments(enriched, classified)
+    outreach_queue = build_outreach_queue(enriched, classified)
+    activation_ctx = ActivationContext(
+        summary=summary,
+        classified=classified,
+        active_days=controls["active_days"],
+        went_dark_days=controls["went_dark_days"],
+    )
+
     return {
         "controls": controls,
         "raw": raw,
         "sync_status": sync_status,
         "summary": summary,
+        "enriched": enriched,
         "classified": classified,
         "kpis": kpis,
+        "extended_kpis": extended_kpis,
+        "funnel": funnel,
+        "cohorts": cohorts,
+        "activation_trends": activation_trends,
+        "struggle_segments": struggle_segments,
+        "outreach_queue": outreach_queue,
+        "activation_ctx": activation_ctx,
         "momentum": momentum,
         "went_dark": went_dark,
         "new_activations": new_activations,

@@ -46,12 +46,34 @@ KPI below responds to instantly.
   clicking through from any other page.
 - **Data & Settings** — current mode (mock vs. live), sync freshness, and
   where every remaining config value lives.
+- **Chat Assistant** — ask plain-English questions like *"give me 10 creators
+  that activated for the first time this week"* and get an answer + downloadable
+  table. Works with a built-in parser; set `OPENAI_API_KEY` for more flexible
+  phrasing.
+- **Outreach Queue** — prioritized intervention lists by struggle segment,
+  with CSV export for email campaigns.
 
 Runs out of the box in **mock-data mode** with a realistic synthetic creator
 population — no CreatorIQ credentials required to explore every page above,
 including examples of every activation state (there are always some Never
 Activated, Went Dark, Reactivated, Newly Activated, and Consistently Active
 creators in the generated data).
+
+## Chat Assistant
+
+Open the **Chat Assistant** page and type questions in plain English:
+
+```
+Give me 10 creators that activated for the first time this week
+How many creators are ghosts?
+Show creators who posted but never linked
+What's our activation funnel?
+List the outreach priority queue
+```
+
+The built-in parser handles common phrasing without any API key. For more
+flexible natural-language understanding, set `OPENAI_API_KEY` in `.env`
+(optional).
 
 ## Quickstart (mock data, no API key needed)
 
