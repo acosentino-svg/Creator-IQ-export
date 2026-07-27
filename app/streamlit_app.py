@@ -8,8 +8,10 @@ import sys
 from pathlib import Path
 
 APP_DIR = Path(__file__).resolve().parent
-if str(APP_DIR) not in sys.path:
-    sys.path.insert(0, str(APP_DIR))
+SRC_DIR = APP_DIR.parent / "src"
+for path in (str(APP_DIR), str(SRC_DIR)):
+    if path not in sys.path:
+        sys.path.insert(0, path)
 
 import plotly.express as px  # noqa: E402
 import plotly.graph_objects as go  # noqa: E402
