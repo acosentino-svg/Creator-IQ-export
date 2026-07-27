@@ -55,10 +55,12 @@ creators in the generated data).
 
 ## Quickstart (mock data, no API key needed)
 
+**New to this?** See [`docs/GETTING_STARTED.md`](docs/GETTING_STARTED.md) for a
+step-by-step guide in plain English.
+
 ```bash
-python3 -m venv .venv
-source .venv/bin/activate
 pip install -r requirements.txt
+pip install -e .
 streamlit run app/streamlit_app.py
 ```
 
