@@ -31,6 +31,7 @@ class RawData:
     links: pd.DataFrame  # trackable link *creation* events (Link Generator), not click deltas
     email_events: pd.DataFrame
     link_clicks: pd.DataFrame | None = None  # optional day-over-day click activity from post snapshots
+    active_member_links: pd.DataFrame | None = None  # optional CSV: last/first link from Active Members report
 
 
 # Backwards-compatible alias (older code/tests may still import this name).
@@ -290,7 +291,82 @@ def build_creator_summary(raw: RawData, range_start: pd.Timestamp, range_end: pd
     summary["first_activity_at"] = summary[["first_post", "first_link"]].min(axis=1)
     summary["days_since_last_activity"] = (now - summary["last_activity_at"]).dt.days
 
-    return summary
+    summary = _merge_active_member_link_dates(summary, raw.active_member_links)
+    return _apply_post_link_proxy(summary, posts)
+
+
+def _merge_active_member_link_dates(
+    summary: pd.DataFrame, active_member_links: pd.DataFrame | None
+) -> pd.DataFrame:
+    """Apply link dates from an Active Members (or similar) CSV export."""
+    if active_member_links is None or active_member_links.empty:
+        return summary
+
+    aml = active_member_links.copy()
+    aml["creator_id"] = aml["creator_id"].astype(str).str.strip()
+    aml["last_link"] = _to_datetime_utc(aml["last_link"])
+    aml["first_link"] = _to_datetime_utc(aml.get("first_link", aml["last_link"]))
+
+    out = summary.copy()
+    out["creator_id"] = out["creator_id"].astype(str)
+    merged = out.merge(
+        aml[["creator_id", "last_link", "first_link"]].rename(
+            columns={"last_link": "_aml_last_link", "first_link": "_aml_first_link"}
+        ),
+        on="creator_id",
+        how="left",
+    )
+    merged["last_link"] = merged[["last_link", "_aml_last_link"]].max(axis=1)
+    merged["first_link"] = merged[["first_link", "_aml_first_link"]].min(axis=1)
+    merged.loc[merged["first_link"].isna(), "first_link"] = merged.loc[
+        merged["first_link"].isna(), "_aml_first_link"
+    ]
+    merged["lifetime_link_count"] = merged["lifetime_link_count"].where(
+        merged["lifetime_link_count"] > 0, merged["_aml_last_link"].notna().astype(int)
+    )
+    merged = merged.drop(columns=["_aml_last_link", "_aml_first_link"])
+
+    now = UTC_NOW()
+    merged["days_since_last_link"] = (now - merged["last_link"]).dt.days
+    merged["last_activity_at"] = merged[["last_post", "last_link"]].max(axis=1)
+    merged["first_activity_at"] = merged[["first_post", "first_link"]].min(axis=1)
+    merged["days_since_last_activity"] = (now - merged["last_activity_at"]).dt.days
+    return merged
+
+
+def _apply_post_link_proxy(summary: pd.DataFrame, posts: pd.DataFrame) -> pd.DataFrame:
+    """When link-creation events aren't available, posts with link clicks indicate
+    the creator published trackable/affiliate content (a reasonable proxy for
+    'linked' in live CreatorIQ data)."""
+    if posts.empty or "link_clicks" not in posts.columns:
+        return summary
+    out = summary.copy()
+    posts = posts.copy()
+    posts["link_clicks"] = pd.to_numeric(posts["link_clicks"], errors="coerce").fillna(0)
+    with_clicks = posts[posts["link_clicks"] > 0]
+    if with_clicks.empty:
+        return out
+
+    proxy_first = with_clicks.groupby("creator_id")["posted_at"].min()
+    proxy_last = with_clicks.groupby("creator_id")["posted_at"].max()
+    now = UTC_NOW()
+    for creator_id in proxy_first.index.astype(str):
+        mask = out["creator_id"].astype(str) == creator_id
+        first_dt = pd.Timestamp(proxy_first[creator_id])
+        last_dt = pd.Timestamp(proxy_last[creator_id])
+        if out.loc[mask, "first_link"].isna().all():
+            out.loc[mask, "first_link"] = first_dt
+        if out.loc[mask, "last_link"].isna().all():
+            out.loc[mask, "last_link"] = last_dt
+        if out.loc[mask, "lifetime_link_count"].fillna(0).eq(0).all():
+            out.loc[mask, "lifetime_link_count"] = int(
+                with_clicks[with_clicks["creator_id"].astype(str) == creator_id].shape[0]
+            )
+
+    out["last_activity_at"] = out[["last_post", "last_link"]].max(axis=1)
+    out["first_activity_at"] = out[["first_post", "first_link"]].min(axis=1)
+    out["days_since_last_activity"] = (now - out["last_activity_at"]).dt.days
+    return out
 
 
 # ---------------------------------------------------------------------------
@@ -310,8 +386,16 @@ def classify_creators(
     """Adds `activation_state` (one of: Never Activated, Active, Inactive,
     Went Dark) plus three boolean flags that can co-occur with "Active":
     `is_newly_activated`, `is_reactivated`, `is_consistently_active`.
+
+    Definitions (based on posting + linking activity, NOT email):
+    - **Active**: posted or linked within `active_days`
+    - **Went Dark**: previously posted AND linked, but no post/link in `went_dark_days`+
+    - **Inactive**: had some activity but doesn't meet Active or Went Dark
+    - **Never Activated**: no post or link on record
     """
     df = summary.copy()
+    df["has_ever_posted"] = df["first_post"].notna()
+    df["has_ever_linked"] = df["first_link"].notna()
 
     def primary_state(row) -> str:
         if pd.isna(row["last_activity_at"]):
@@ -319,9 +403,9 @@ def classify_creators(
         days = row["days_since_last_activity"]
         if days <= active_days:
             return "Active"
-        if days <= went_dark_days:
-            return "Inactive"
-        return "Went Dark"
+        if row["has_ever_posted"] and row["has_ever_linked"] and days >= went_dark_days:
+            return "Went Dark"
+        return "Inactive"
 
     df["activation_state"] = df.apply(primary_state, axis=1)
 
@@ -375,6 +459,9 @@ def compute_data_quality(raw: RawData, summary: pd.DataFrame, *, is_live: bool) 
         int((summary["first_post"].notna() & summary["first_link"].isna()).sum()) if not summary.empty else 0
     )
     link_creation_rows = len(raw.links) if raw.links is not None and not raw.links.empty else 0
+    active_member_link_rows = (
+        len(raw.active_member_links) if raw.active_member_links is not None and not raw.active_member_links.empty else 0
+    )
     link_click_rows = len(raw.link_clicks) if raw.link_clicks is not None and not raw.link_clicks.empty else 0
     post_join_rate = (
         round(creators_with_posts / max(unique_posters_in_cache, 1) * 100, 1) if unique_posters_in_cache else None
@@ -387,9 +474,10 @@ def compute_data_quality(raw: RawData, summary: pd.DataFrame, *, is_live: bool) 
         "creators_with_link_creations": creators_with_links,
         "posted_without_link": posted_without_link,
         "link_creation_rows": link_creation_rows,
+        "active_member_link_rows": active_member_link_rows,
         "link_click_rows": link_click_rows,
         "post_join_rate_pct": post_join_rate,
-        "link_creations_unavailable": is_live and link_creation_rows == 0,
+        "link_creations_unavailable": is_live and link_creation_rows == 0 and active_member_link_rows == 0,
         "posts_likely_incomplete": is_live and enrolled > 0 and creators_with_posts < enrolled * 0.01,
     }
 
@@ -510,15 +598,16 @@ def compute_went_dark(classified: pd.DataFrame) -> pd.DataFrame:
         return df
 
     def recommend(row) -> str:
-        click_days = row.get("days_since_last_email_click")
-        open_days = row.get("days_since_last_email_open")
-        if pd.notna(click_days) and click_days <= 30:
-            return "Clicked an email recently -- try a personal outreach call, they're still paying attention."
-        if pd.notna(open_days) and open_days <= 45:
-            return "Opens emails but hasn't acted -- send a stronger CTA or a limited-time incentive."
-        if pd.isna(row["last_email_opened"]):
-            return "Not opening email at all -- try SMS/DM or a different outreach channel entirely."
-        return "Gone quiet everywhere -- send a re-engagement email or reassess fit for the program."
+        days_post = row.get("days_since_last_post")
+        days_link = row.get("days_since_last_link")
+        if pd.notna(days_post) and pd.notna(days_link):
+            return (
+                "Was posting and linking but went quiet — send a 'what's trending' "
+                "product email or a second-post nudge with fresh picks."
+            )
+        if pd.notna(days_post) and days_post >= 90:
+            return "Long time since last post — share creator social proof and a simple one-post brief."
+        return "Re-engagement outreach — highlight new commission opportunities or program updates."
 
     df["recommended_action"] = df.apply(recommend, axis=1)
     return df.sort_values("days_since_last_activity", ascending=False)

@@ -50,9 +50,14 @@ live_sync:
   #
   # Only sync campaigns matching these statuses (set to [] to sync all).
   campaign_status_filter: ["Active"]
-  # Cap how many campaigns get synced per run (null = no cap). Start small
-  # (e.g. 5-10) the first time you point this at a real account.
-  max_campaigns: 10
+  # Cap how many campaigns get synced per run (null = all matching campaigns).
+  # Was 10 for safety during first connect — raise or set null for full post coverage.
+  max_campaigns: null
+  # When max_campaigns is set, campaigns whose names contain these terms sync first
+  # (e.g. affiliate program posts).
+  priority_campaign_name_contains:
+    - affiliate
+    - Affiliate
   # Program enrollment in CreatorIQ = publishers with this Status (~42k Active).
   enrolled_status_filter: "Active"
   # Pages of /publishers to pull (100 creators/page). 450 pages ≈ 45k enrolled.

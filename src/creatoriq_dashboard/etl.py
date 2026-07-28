@@ -43,6 +43,28 @@ from .storage import (
 logger = logging.getLogger(__name__)
 
 
+def _prioritize_campaigns(campaigns_df: pd.DataFrame, config: AppConfig) -> pd.DataFrame:
+    """When syncing a capped number of campaigns, pull affiliate (etc.) first."""
+    if campaigns_df.empty or "campaign_name" not in campaigns_df.columns:
+        return campaigns_df
+    terms = config.settings.get("live_sync", "priority_campaign_name_contains", default=[]) or []
+    if not terms:
+        return campaigns_df
+
+    def priority_score(name: str) -> int:
+        text = str(name).lower()
+        for idx, term in enumerate(terms):
+            if str(term).lower() in text:
+                return len(terms) - idx
+        return 0
+
+    df = campaigns_df.copy()
+    df["_sync_priority"] = df["campaign_name"].map(priority_score)
+    return df.sort_values(["_sync_priority", "campaign_name"], ascending=[False, True]).drop(
+        columns=["_sync_priority"]
+    )
+
+
 def _fetch_campaigns(config: AppConfig, client: CreatorIQClient) -> pd.DataFrame:
     mapping = config.field_mappings.get("campaigns", {})
     raw = client.fetch_all("campaigns")
@@ -51,7 +73,7 @@ def _fetch_campaigns(config: AppConfig, client: CreatorIQClient) -> pd.DataFrame
     status_filter = config.settings.get("live_sync", "campaign_status_filter", default=[]) or []
     if status_filter and not df.empty and "status" in df.columns:
         df = df[df["status"].isin(status_filter)]
-    return df.reset_index(drop=True)
+    return _prioritize_campaigns(df.reset_index(drop=True), config)
 
 
 def _fetch_roster_and_posts(

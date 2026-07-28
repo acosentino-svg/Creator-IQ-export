@@ -48,9 +48,9 @@ def raw() -> RawData:
     )
     links = pd.DataFrame(
         {
-            "link_id": ["l1", "l2"],
-            "creator_id": ["c1", "c4"],
-            "created_at": [days_ago(1), days_ago(5)],
+            "link_id": ["l1", "l2", "l3"],
+            "creator_id": ["c1", "c4", "c2"],
+            "created_at": [days_ago(1), days_ago(5), days_ago(95)],
         }
     )
     email_events = pd.DataFrame(
@@ -139,9 +139,31 @@ def test_classify_creators_states(raw: RawData):
     states = classified.set_index("creator_id")["activation_state"]
 
     assert states["c1"] == "Active"  # last activity 1 day ago
-    assert states["c2"] == "Went Dark"  # last post 90 days ago
+    assert states["c2"] == "Went Dark"  # posted + linked, quiet 90+ days
     assert states["c3"] == "Never Activated"  # no posts/links ever
     assert states["c4"] == "Active"  # link created 5 days ago
+
+
+def test_classify_went_dark_requires_post_and_link():
+    """Post-only creators who go quiet are Inactive, not Went Dark."""
+    creators = pd.DataFrame({"creator_id": ["c1"], "name": ["Post Only"], "joined_date": [days_ago(200)]})
+    posts = pd.DataFrame({"post_id": ["p1"], "creator_id": ["c1"], "posted_at": [days_ago(90)]})
+    links = pd.DataFrame(columns=["link_id", "creator_id", "created_at"])
+    raw = RawData(creators=creators, posts=posts, links=links, email_events=pd.DataFrame())
+    start, end = resolve_date_range("Last 30 days")
+    summary = build_creator_summary(raw, start, end)
+    events = build_activity_events(posts, links)
+    classified = classify_creators(summary, events, active_days=30, went_dark_days=60, range_start=start, range_end=end)
+    assert classified.iloc[0]["activation_state"] == "Inactive"
+
+
+def test_classify_active_threshold_responds_to_sidebar(raw: RawData):
+    start, end = resolve_date_range("Last 30 days")
+    summary = build_creator_summary(raw, start, end)
+    events = build_activity_events(raw.posts, raw.links)
+    tight = classify_creators(summary, events, active_days=1, went_dark_days=60, range_start=start, range_end=end)
+    loose = classify_creators(summary, events, active_days=30, went_dark_days=60, range_start=start, range_end=end)
+    assert int((tight["activation_state"] == "Active").sum()) < int((loose["activation_state"] == "Active").sum())
 
 
 def test_classify_creators_reactivated_flag(raw: RawData):

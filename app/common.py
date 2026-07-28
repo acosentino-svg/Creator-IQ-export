@@ -75,6 +75,7 @@ def _get_raw_inputs(_config_mode: str) -> tuple[dict[str, pd.DataFrame], dict[st
             "links": inputs.links,
             "email_events": inputs.email_events,
             "link_clicks": inputs.link_clicks,
+            "active_member_links": inputs.active_member_links,
         },
         sync_status,
     )
@@ -90,6 +91,7 @@ def get_raw_data() -> tuple[RawData, dict[str, str | None]]:
             links=raw["links"],
             email_events=raw["email_events"],
             link_clicks=raw.get("link_clicks"),
+            active_member_links=raw.get("active_member_links"),
         ),
         sync_status,
     )
@@ -155,11 +157,20 @@ def render_sidebar_controls() -> dict:
         max_value=730,
         step=1,
         key="went_dark_days",
-        help="A previously-active creator who's been quiet for at least this many days is flagged Went Dark.",
+        help=(
+            "Must have posted AND linked in the past, but no post or link activity "
+            "for at least this many days. Not based on email opens."
+        ),
     )
     if went_dark_days <= active_days:
         st.sidebar.warning("'Went Dark' should be greater than 'Active' — adjusting automatically.")
         went_dark_days = active_days + 1
+        st.session_state["went_dark_days"] = went_dark_days
+
+    st.sidebar.caption(
+        f"Using **{int(active_days)}**-day active window · **{int(went_dark_days)}**+ days = went dark "
+        "(posted & linked before, now quiet)"
+    )
 
     return {
         "range_start": range_start,
@@ -227,7 +238,12 @@ def get_bundle() -> dict:
     funnel = compute_activation_funnel(enriched)
     cohorts = compute_cohort_activation(enriched)
     activation_trends = compute_activation_trends(enriched, raw.posts, raw.links)
-    struggle_segments = compute_struggle_segments(enriched, classified)
+    struggle_segments = compute_struggle_segments(
+        enriched,
+        classified,
+        active_days=controls["active_days"],
+        went_dark_days=controls["went_dark_days"],
+    )
     outreach_queue = build_outreach_queue(enriched, classified)
     activation_ctx = ActivationContext(
         summary=summary,

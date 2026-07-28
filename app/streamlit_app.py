@@ -75,7 +75,11 @@ r1[3].metric(
     help="% of creators (joined 14+ days ago) who activated within 14 days of joining",
 )
 r1[4].metric("Ghosts", f"{ek.get('ghost_count', 0):,}", help="Joined 14+ days ago, zero activity")
-r1[5].metric("Went dark", f"{ek.get('went_dark_creators', 0):,}")
+r1[5].metric(
+    "Went dark",
+    f"{ek.get('went_dark_creators', 0):,}",
+    help=f"Posted AND linked before, but no post/link in {controls['went_dark_days']}+ days",
+)
 
 r2 = st.columns(4)
 r2[0].metric("Linked only (no post)", f"{ek.get('linked_only_count', 0):,}")
@@ -84,7 +88,11 @@ r2[2].metric(
     "Median days → first activity",
     ek.get("median_days_to_first_activity") or "—",
 )
-r2[3].metric("Currently active", f"{ek.get('active_creators', 0):,}")
+r2[3].metric(
+    "Currently active",
+    f"{ek.get('active_creators', 0):,}",
+    help=f"Posted or linked in the last {controls['active_days']} days (sidebar threshold)",
+)
 
 st.divider()
 

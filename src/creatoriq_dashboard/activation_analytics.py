@@ -73,7 +73,7 @@ STRUGGLE_SEGMENT_META: dict[str, dict] = {
         "email_template": "trending_content",
     },
     "went_dark": {
-        "label": "Went dark (quiet 60+ days after prior activity)",
+        "label": "Went dark (posted & linked, now quiet)",
         "priority": 9,
         "intervention": "Win-back campaign — new incentive, program updates, or fit reassessment.",
         "email_template": "win_back",
@@ -322,7 +322,13 @@ def assign_struggle_segment(row: pd.Series, ghost_days: int = 14, active_days: i
     return "healthy"
 
 
-def compute_struggle_segments(enriched: pd.DataFrame, classified: pd.DataFrame, ghost_days: int = 14) -> pd.DataFrame:
+def compute_struggle_segments(
+    enriched: pd.DataFrame,
+    classified: pd.DataFrame,
+    ghost_days: int = 14,
+    active_days: int = 30,
+    went_dark_days: int = 60,
+) -> pd.DataFrame:
     """Segment summary with counts, priority, and recommended intervention."""
     merged = enriched.merge(
         classified[["creator_id", "activation_state"]],
@@ -330,7 +336,12 @@ def compute_struggle_segments(enriched: pd.DataFrame, classified: pd.DataFrame, 
         how="left",
         suffixes=("", "_cls"),
     )
-    merged["struggle_segment"] = merged.apply(assign_struggle_segment, axis=1)
+    merged["struggle_segment"] = merged.apply(
+        lambda row: assign_struggle_segment(
+            row, ghost_days=ghost_days, active_days=active_days, went_dark_days=went_dark_days
+        ),
+        axis=1,
+    )
 
     rows = []
     for seg_id, meta in STRUGGLE_SEGMENT_META.items():

@@ -23,6 +23,7 @@ _EMPTY_TABLE_COLUMNS: dict[str, list[str]] = {
     "posts": ["post_id", "creator_id", "campaign_id", "campaign_name", "platform", "post_type", "posted_at"],
     "links": ["link_id", "creator_id", "label", "destination_url", "created_at", "campaign_id"],
     "link_clicks": ["event_id", "creator_id", "campaign_id", "link_id", "clicked_at", "clicks"],
+    "active_member_links": ["creator_id", "last_link", "first_link"],
     "email_events": ["event_id", "creator_id", "message_id", "subject", "sent_at", "opened_at", "clicked_at"],
 }
 
@@ -76,7 +77,10 @@ def load_inputs(config: AppConfig) -> tuple[ActivationInputs, dict[str, str | No
     """
     if config.is_demo:
         demo = generate_demo_data()
-        sync_status = {name: "demo" for name in ("creators", "campaigns", "posts", "links", "link_clicks", "email_events")}
+        sync_status = {
+            name: "demo"
+            for name in ("creators", "campaigns", "posts", "links", "link_clicks", "email_events", "active_member_links")
+        }
         return (
             ActivationInputs(
                 creators=normalize_creators_df(demo.creators),
@@ -84,6 +88,7 @@ def load_inputs(config: AppConfig) -> tuple[ActivationInputs, dict[str, str | No
                 links=demo.links,
                 email_events=demo.email_events,
                 link_clicks=pd.DataFrame(),
+                active_member_links=pd.DataFrame(),
             ),
             sync_status,
         )
@@ -93,6 +98,7 @@ def load_inputs(config: AppConfig) -> tuple[ActivationInputs, dict[str, str | No
     posts = _read_table_with_shape(engine, "posts")
     links = normalize_links_df(_read_table_with_shape(engine, "links"))
     link_clicks = _read_table_with_shape(engine, "link_clicks")
+    active_member_links = _read_table_with_shape(engine, "active_member_links")
     email_events = _read_table_with_shape(engine, "email_events")
 
     for date_col, df in (("joined_date", creators),):
@@ -100,10 +106,13 @@ def load_inputs(config: AppConfig) -> tuple[ActivationInputs, dict[str, str | No
             df[date_col] = pd.to_datetime(df[date_col], utc=True, errors="coerce")
     if not link_clicks.empty and "clicked_at" in link_clicks.columns:
         link_clicks["clicked_at"] = pd.to_datetime(link_clicks["clicked_at"], utc=True, errors="coerce")
+    for col in ("last_link", "first_link"):
+        if not active_member_links.empty and col in active_member_links.columns:
+            active_member_links[col] = pd.to_datetime(active_member_links[col], utc=True, errors="coerce")
 
     sync_status = {
         name: get_last_synced_at(engine, name)
-        for name in ("creators", "campaigns", "posts", "links", "link_clicks", "email_events")
+        for name in ("creators", "campaigns", "posts", "links", "link_clicks", "email_events", "active_member_links")
     }
 
     return (
@@ -113,6 +122,7 @@ def load_inputs(config: AppConfig) -> tuple[ActivationInputs, dict[str, str | No
             links=links,
             email_events=email_events,
             link_clicks=link_clicks,
+            active_member_links=active_member_links,
         ),
         sync_status,
     )

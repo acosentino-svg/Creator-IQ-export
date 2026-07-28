@@ -14,6 +14,9 @@ if str(APP_DIR) not in sys.path:
 import streamlit as st  # noqa: E402
 
 from common import get_bundle, get_config  # noqa: E402
+from creatoriq_dashboard.active_members import parse_active_members_csv, parse_active_members_csv_preview  # noqa: E402
+from creatoriq_dashboard.storage import get_engine, record_sync, write_table  # noqa: E402
+from datetime import datetime, timezone  # noqa: E402
 
 st.set_page_config(page_title="Data & Settings", page_icon="⚙️", layout="wide")
 config = get_config()
@@ -58,14 +61,17 @@ if not config.is_demo:
     c1.metric("Enrolled creators", f"{dq.get('enrolled', 0):,}")
     c2.metric("Creators with posts (matched)", f"{dq.get('creators_with_posts', 0):,}")
     c3.metric("Posted, no link creation on file", f"{dq.get('posted_without_link', 0):,}")
-    c4.metric("Link creation events in cache", f"{dq.get('link_creation_rows', 0):,}")
+    c4.metric("Link rows (API + Active Members)", f"{dq.get('link_creation_rows', 0) + dq.get('active_member_link_rows', 0):,}")
+    if dq.get("active_member_link_rows", 0) > 0:
+        st.success(
+            f"Active Members report loaded for **{dq.get('active_member_link_rows', 0):,}** creators "
+            "(last link created dates)."
+        )
     if dq.get("link_creations_unavailable"):
         st.warning(
-            "**Link-creation events are missing.** CreatorIQ's campaign-activity API tells us "
-            "who posted, but not who used the **Link Generator** to create a trackable affiliate link. "
-            "That requires a separate API (often CreatorIQ Convert / Link-Tracking). "
-            "Until it's wired, *Posted only (no link)* will undercount. "
-            "Ask your CreatorIQ rep for the trackable-links endpoint and add it to `config/endpoints.yaml`."
+            "**No link-creation dates on file yet.** Export the **Active Members** report from CreatorIQ "
+            "(CSV) and upload it below — look for a column like *Last Link Created*. "
+            "That powers *Last Link Date*, *Posted only (no link)*, and *Went dark*."
         )
     if dq.get("posts_likely_incomplete"):
         st.info(
@@ -89,6 +95,39 @@ if not config.is_demo:
         else:
             st.error("Refresh failed — see logs below.")
         st.code(result.stdout + "\n" + result.stderr)
+
+st.divider()
+st.subheader("Active Members report (link dates)")
+st.markdown(
+    """
+    If your **Active Members** export includes **when each creator last created a link**, upload it here.
+    The dashboard will use that for **Last Link Date**, **Posted only (no link)**, and **Went dark**.
+
+    **In CreatorIQ:** run or export **Active Members** → save as **CSV** → upload below.
+
+    We auto-detect columns like `Publisher Id` and `Last Link Created` (names can vary slightly).
+    """
+)
+
+uploaded = st.file_uploader("Active Members CSV", type=["csv"])
+if uploaded is not None:
+    try:
+        preview = parse_active_members_csv_preview(uploaded.getvalue())
+        st.write(
+            f"Found **{preview['rows']:,}** creators; "
+            f"**{preview['with_last_link']:,}** with a last-link date."
+        )
+        st.dataframe(preview["sample"], use_container_width=True, hide_index=True)
+        if st.button("Import link dates from this file"):
+            parsed = parse_active_members_csv(uploaded.getvalue())
+            engine = get_engine(config.db_path)
+            write_table(engine, "active_member_links", parsed)
+            record_sync(engine, "active_member_links", datetime.now(timezone.utc))
+            st.cache_data.clear()
+            st.success(f"Imported {len(parsed):,} creator link dates. Reload the page to refresh metrics.")
+    except ValueError as exc:
+        st.error(str(exc))
+        st.caption("Send a screenshot of your CSV column headers if auto-detect fails — we'll add your column names.")
 
 st.divider()
 st.subheader("Where the rest of the config lives")

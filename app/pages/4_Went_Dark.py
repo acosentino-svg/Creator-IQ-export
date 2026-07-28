@@ -16,14 +16,20 @@ from common import get_bundle, go_to_creator_profile  # noqa: E402
 st.set_page_config(page_title="Went Dark", page_icon="🌙", layout="wide")
 
 st.title("🌙 Went Dark")
-st.caption("Creators who used to be active but have gone quiet — ranked with a recommended follow-up action.")
+st.caption(
+    "Creators who **used to post AND link** but have gone quiet — ranked with a recommended follow-up. "
+    "This is based on posting/linking activity, **not** email opens."
+)
 
 bundle = get_bundle()
 went_dark = bundle["went_dark"]
 controls = bundle["controls"]
 
 st.metric("Went Dark creators", f"{len(went_dark):,}")
-st.caption(f"Quiet for {controls['went_dark_days']}+ days (adjustable in the sidebar).")
+st.caption(
+    f"No post or link in **{controls['went_dark_days']}+** days, after previously doing both. "
+    "Adjust thresholds in the sidebar — counts update when you change them."
+)
 
 if went_dark.empty:
     st.success("Nobody has gone dark right now. 🎉")
@@ -73,11 +79,13 @@ if selection:
 with st.expander("How recommended actions are decided"):
     st.markdown(
         """
-        - **Clicked an email recently** → they're still paying attention; try a personal call/DM.
-        - **Opens emails but hasn't acted** → send a stronger call-to-action or a limited-time incentive.
-        - **Never opens email at all** → try a different channel entirely (SMS, DM, phone).
-        - **Gone quiet everywhere** → send a re-engagement email, or reassess whether they're still a fit.
+        Recommendations are based on **how long since their last post or link**, not email engagement.
 
-        Edit the rule logic in `src/creatoriq_dashboard/metrics.py::compute_went_dark`.
+        - **Was posting and linking** → send trending products or a fresh content brief
+        - **Long time since last post** → social proof + a simple one-post prompt
+        - **Otherwise** → re-engagement with commission or program updates
+
+        **Went Dark** requires a creator to have both posted and linked in the past, then gone quiet
+        for the threshold in the sidebar (default 60 days).
         """
     )
