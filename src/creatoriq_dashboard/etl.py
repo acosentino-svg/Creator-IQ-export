@@ -212,6 +212,81 @@ def _fetch_email_events(
     return pd.DataFrame(rows)
 
 
+def _fetch_link_creations(
+    config: AppConfig,
+    client: CreatorIQClient,
+    roster_df: pd.DataFrame,
+    posts_df: pd.DataFrame,
+) -> pd.DataFrame:
+    """Trackable link *creation* events (Link Generator), when the account exposes them.
+
+    CreatorIQ's campaign-activity API does not include these — only cumulative
+  click counters on posts. Many Wayfair-style programs track link generation in
+    CreatorIQ Convert / a separate Link-Tracking API. When no endpoint is
+    configured or calls fail, this returns an empty shaped frame so activation
+    metrics don't treat click deltas as link creation.
+    """
+    empty = pd.DataFrame(columns=["link_id", "creator_id", "label", "destination_url", "created_at", "campaign_id"])
+    resources = config.endpoints.get("resources", {})
+    if "publisher_trackable_links" not in resources:
+        logger.info(
+            "No publisher_trackable_links endpoint configured — link-creation metrics "
+            "will be unavailable until that API is wired (see config/endpoints.yaml)."
+        )
+        return empty
+
+    mapping = config.field_mappings.get("link_creations", {})
+    max_lookups = config.settings.get("live_sync", "max_link_lookups", default=0)
+    if max_lookups is not None and int(max_lookups) <= 0:
+        return empty
+
+    if roster_df.empty or "network_publisher_id" not in roster_df.columns:
+        return empty
+
+    # Prioritize creators we already know posted — they're the ones we segment on.
+    poster_ids: set[str] = set()
+    if not posts_df.empty and "creator_id" in posts_df.columns:
+        poster_ids = set(posts_df["creator_id"].astype(str).unique())
+
+    roster = roster_df.dropna(subset=["network_publisher_id"]).drop_duplicates(subset=["creator_id"])
+    if poster_ids:
+        roster = pd.concat(
+            [
+                roster[roster["creator_id"].astype(str).isin(poster_ids)],
+                roster[~roster["creator_id"].astype(str).isin(poster_ids)],
+            ],
+            ignore_index=True,
+        )
+
+    rows: list[dict] = []
+    creators_fetched = 0
+    for _, creator in roster.iterrows():
+        if max_lookups is not None and creators_fetched >= int(max_lookups):
+            break
+        network_id = str(creator["network_publisher_id"])
+        creator_id = str(creator["creator_id"])
+        try:
+            raw_links = client.fetch_unpaginated_list(
+                "publisher_trackable_links",
+                path_params={"network_publisher_id": network_id},
+            )
+        except Exception:  # noqa: BLE001
+            logger.debug("Trackable links unavailable for creator %s", creator_id, exc_info=True)
+            creators_fetched += 1
+            continue
+        creators_fetched += 1
+        for record in normalize_records(raw_links, mapping):
+            record["creator_id"] = creator_id
+            rows.append(record)
+
+    if not rows:
+        return empty
+    df = clean_id_columns(pd.DataFrame(rows), ["link_id", "creator_id", "campaign_id"])
+    if "created_at" in df.columns:
+        df["created_at"] = pd.to_datetime(df["created_at"], utc=True, errors="coerce")
+    return df.reset_index(drop=True)
+
+
 def sync_all(config: AppConfig) -> dict[str, int]:
     client = CreatorIQClient(config)
     engine = get_engine(config.db_path)
@@ -239,8 +314,12 @@ def sync_all(config: AppConfig) -> dict[str, int]:
 
     if not posts_df.empty:
         append_link_click_snapshot(engine, posts_df, now)
-    links_df = derive_link_click_deltas(engine)
-    write_table(engine, "links", links_df)
+    link_clicks_df = derive_link_click_deltas(engine)
+    write_table(engine, "link_clicks", link_clicks_df)
+    record_sync(engine, "link_clicks", now)
+
+    link_creations_df = _fetch_link_creations(config, client, roster_df, posts_df)
+    write_table(engine, "links", link_creations_df)
     record_sync(engine, "links", now)
 
     email_events_df = pd.DataFrame()
@@ -260,6 +339,7 @@ def sync_all(config: AppConfig) -> dict[str, int]:
         "campaigns": len(campaigns_df),
         "creators": len(roster_df),
         "posts": len(posts_df),
-        "links": len(links_df),
+        "link_clicks": len(link_clicks_df),
+        "links": len(link_creations_df),
         "email_events": len(email_events_df),
     }

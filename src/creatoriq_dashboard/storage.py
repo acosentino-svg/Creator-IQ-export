@@ -13,7 +13,7 @@ import pandas as pd
 from sqlalchemy import create_engine, text
 from sqlalchemy.engine import Engine
 
-TABLES = ("creators", "campaigns", "posts", "links", "email_events")
+TABLES = ("creators", "campaigns", "posts", "links", "link_clicks", "email_events")
 LINK_SNAPSHOT_TABLE = "link_click_snapshots"
 
 
@@ -93,10 +93,12 @@ def append_link_click_snapshot(engine: Engine, posts_df: pd.DataFrame, snapshot_
 
 
 def derive_link_click_deltas(engine: Engine) -> pd.DataFrame:
-    """Turn accumulated link_click_snapshots into "links" event rows: one
-    row per (post, snapshot) where the cumulative click counter increased,
-    with `clicks` holding the size of that increase. Shaped to match the
-    `links` table schema the rest of the app already expects.
+    """Turn accumulated link_click_snapshots into link *click* event rows:
+    one row per (post, snapshot) where the cumulative click counter increased,
+    with `clicks` holding the size of that increase.
+
+    These are NOT link-creation events — do not use them for "posted but never
+    linked" or other activation metrics. Persist to the `link_clicks` table.
     """
     snapshots = read_table(engine, LINK_SNAPSHOT_TABLE)
     if snapshots.empty:

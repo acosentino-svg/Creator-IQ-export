@@ -78,3 +78,12 @@ resources:
     path: /publisher/{network_publisher_id}/summary
     method: GET
     result_key: Summary
+
+  # Optional — confirm the path with CreatorIQ before enabling max_link_lookups.
+  # Used for "posted but never linked" / link-creation activation metrics.
+  # publisher_trackable_links:
+  #   description: "Trackable/affiliate links a creator generated via Link Generator."
+  #   path: /publisher/{network_publisher_id}/trackablelinks
+  #   method: GET
+  #   results_path: TrackableLinkCollection
+  #   item_unwrap_key: TrackableLink

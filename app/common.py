@@ -44,6 +44,7 @@ from creatoriq_dashboard.metrics import (  # noqa: E402
     build_daily_activity,
     classify_creators,
     combine_activity_timelines,
+    compute_data_quality,
     compute_email_segments,
     compute_kpis,
     compute_momentum,
@@ -73,6 +74,7 @@ def _get_raw_inputs(_config_mode: str) -> tuple[dict[str, pd.DataFrame], dict[st
             "posts": inputs.posts,
             "links": inputs.links,
             "email_events": inputs.email_events,
+            "link_clicks": inputs.link_clicks,
         },
         sync_status,
     )
@@ -87,6 +89,7 @@ def get_raw_data() -> tuple[RawData, dict[str, str | None]]:
             posts=raw["posts"],
             links=raw["links"],
             email_events=raw["email_events"],
+            link_clicks=raw.get("link_clicks"),
         ),
         sync_status,
     )
@@ -208,7 +211,8 @@ def get_bundle() -> dict:
     email_segments = compute_email_segments(summary)
 
     posts_timeline = build_daily_activity(raw.posts, "posted_at", "Posts")
-    links_timeline = build_daily_activity(raw.links, "created_at", "Links")
+    link_click_df = raw.link_clicks if raw.link_clicks is not None else pd.DataFrame()
+    links_timeline = build_daily_activity(link_click_df, "clicked_at", "Link clicks")
     timeline = combine_activity_timelines(posts_timeline, links_timeline)
     spike_cfg = config.settings.get("momentum", default={}) or {}
     spikes = detect_spikes(
@@ -231,6 +235,7 @@ def get_bundle() -> dict:
         active_days=controls["active_days"],
         went_dark_days=controls["went_dark_days"],
     )
+    data_quality = compute_data_quality(raw, summary, is_live=not config.is_demo)
 
     return {
         "controls": controls,
@@ -247,6 +252,7 @@ def get_bundle() -> dict:
         "struggle_segments": struggle_segments,
         "outreach_queue": outreach_queue,
         "activation_ctx": activation_ctx,
+        "data_quality": data_quality,
         "momentum": momentum,
         "went_dark": went_dark,
         "new_activations": new_activations,

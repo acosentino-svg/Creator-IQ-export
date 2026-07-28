@@ -47,6 +47,32 @@ bundle = get_bundle()
 sync_status = bundle["sync_status"]
 st.table({"resource": list(sync_status.keys()), "last_synced_at": list(sync_status.values())})
 
+dq = bundle.get("data_quality", {})
+if not config.is_demo:
+    st.subheader("Data coverage (live)")
+    st.markdown(
+        "All pages read from the **same cached dataset** — if a number looks wrong here, "
+        "it will be wrong everywhere until the underlying sync improves."
+    )
+    c1, c2, c3, c4 = st.columns(4)
+    c1.metric("Enrolled creators", f"{dq.get('enrolled', 0):,}")
+    c2.metric("Creators with posts (matched)", f"{dq.get('creators_with_posts', 0):,}")
+    c3.metric("Posted, no link creation on file", f"{dq.get('posted_without_link', 0):,}")
+    c4.metric("Link creation events in cache", f"{dq.get('link_creation_rows', 0):,}")
+    if dq.get("link_creations_unavailable"):
+        st.warning(
+            "**Link-creation events are missing.** CreatorIQ's campaign-activity API tells us "
+            "who posted, but not who used the **Link Generator** to create a trackable affiliate link. "
+            "That requires a separate API (often CreatorIQ Convert / Link-Tracking). "
+            "Until it's wired, *Posted only (no link)* will undercount. "
+            "Ask your CreatorIQ rep for the trackable-links endpoint and add it to `config/endpoints.yaml`."
+        )
+    if dq.get("posts_likely_incomplete"):
+        st.info(
+            "Post activity is only synced from a **subset of campaigns** (`live_sync.max_campaigns` in settings). "
+            "Raise that cap (or set to `null`) to pull posts from more campaigns."
+        )
+
 if not config.is_demo:
     st.caption("Data is served from the local SQLite cache. Run the refresh script below to pull fresh data.")
     if st.button("Run refresh now (python scripts/refresh_data.py)"):

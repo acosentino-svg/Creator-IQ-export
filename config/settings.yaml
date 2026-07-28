@@ -65,3 +65,7 @@ live_sync:
   # Cap on total per-creator email/message lookups per run (each is 1-2 API
   # calls: optional ID resolution + the messages fetch). null = no cap.
   max_email_lookups: 300
+  # Per-creator lookups for trackable link *creation* events (Link Generator).
+  # Requires publisher_trackable_links in config/endpoints.yaml — ask CreatorIQ
+  # for the correct path for your account. 0 = skip (link-creation metrics unavailable).
+  max_link_lookups: 0

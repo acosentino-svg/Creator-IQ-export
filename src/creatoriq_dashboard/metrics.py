@@ -28,8 +28,9 @@ def _to_datetime_utc(series: pd.Series | None) -> pd.Series:
 class RawData:
     creators: pd.DataFrame
     posts: pd.DataFrame
-    links: pd.DataFrame
+    links: pd.DataFrame  # trackable link *creation* events (Link Generator), not click deltas
     email_events: pd.DataFrame
+    link_clicks: pd.DataFrame | None = None  # optional day-over-day click activity from post snapshots
 
 
 # Backwards-compatible alias (older code/tests may still import this name).
@@ -360,6 +361,36 @@ def compute_kpis(classified: pd.DataFrame, posts_in_range_total: int, links_in_r
         "consistently_active_creators": int(classified["is_consistently_active"].sum()) if not classified.empty else 0,
         "total_posts_in_range": posts_in_range_total,
         "total_links_in_range": links_in_range_total,
+    }
+
+
+def compute_data_quality(raw: RawData, summary: pd.DataFrame, *, is_live: bool) -> dict:
+    """Diagnostics for live-mode gaps (posts vs enrollment, link-creation coverage)."""
+    enrolled = len(raw.creators)
+    posts_in_cache = len(raw.posts)
+    unique_posters_in_cache = int(raw.posts["creator_id"].nunique()) if not raw.posts.empty else 0
+    creators_with_posts = int(summary["first_post"].notna().sum()) if not summary.empty else 0
+    creators_with_links = int(summary["first_link"].notna().sum()) if not summary.empty else 0
+    posted_without_link = (
+        int((summary["first_post"].notna() & summary["first_link"].isna()).sum()) if not summary.empty else 0
+    )
+    link_creation_rows = len(raw.links) if raw.links is not None and not raw.links.empty else 0
+    link_click_rows = len(raw.link_clicks) if raw.link_clicks is not None and not raw.link_clicks.empty else 0
+    post_join_rate = (
+        round(creators_with_posts / max(unique_posters_in_cache, 1) * 100, 1) if unique_posters_in_cache else None
+    )
+    return {
+        "enrolled": enrolled,
+        "posts_in_cache": posts_in_cache,
+        "unique_posters_in_cache": unique_posters_in_cache,
+        "creators_with_posts": creators_with_posts,
+        "creators_with_link_creations": creators_with_links,
+        "posted_without_link": posted_without_link,
+        "link_creation_rows": link_creation_rows,
+        "link_click_rows": link_click_rows,
+        "post_join_rate_pct": post_join_rate,
+        "link_creations_unavailable": is_live and link_creation_rows == 0,
+        "posts_likely_incomplete": is_live and enrolled > 0 and creators_with_posts < enrolled * 0.01,
     }
 
 

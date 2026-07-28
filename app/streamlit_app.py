@@ -17,7 +17,7 @@ import plotly.express as px  # noqa: E402
 import plotly.graph_objects as go  # noqa: E402
 import streamlit as st  # noqa: E402
 
-from common import get_bundle  # noqa: E402
+from common import get_bundle, get_config  # noqa: E402
 
 st.set_page_config(page_title="Activation Command Center", page_icon="📊", layout="wide")
 
@@ -32,6 +32,24 @@ ek = bundle["extended_kpis"]
 funnel = bundle["funnel"]
 struggle = bundle["struggle_segments"]
 controls = bundle["controls"]
+data_quality = bundle["data_quality"]
+config = get_config()
+
+if not config.is_demo and data_quality.get("link_creations_unavailable"):
+    st.warning(
+        "**Link-creation data is not available yet from CreatorIQ.** "
+        "Metrics like *Posted only (no link)* and *Linked only (no post)* need trackable link "
+        "creation events (from the Link Generator), which are separate from post activity and "
+        "link click counts. Until that API is connected, those counts may show **0** even when "
+        "you know creators exist in that segment. See **Data & Settings** for coverage details."
+    )
+elif not config.is_demo and data_quality.get("posts_likely_incomplete"):
+    st.info(
+        f"Post activity is synced from a **limited set of campaigns** (currently capped in config). "
+        f"Only **{data_quality.get('creators_with_posts', 0):,}** of "
+        f"**{data_quality.get('enrolled', 0):,}** enrolled creators have matched post data — "
+        "activation segments may undercount until more campaigns are synced."
+    )
 
 # --- Hero KPIs ---
 st.subheader("Activation at a glance")
