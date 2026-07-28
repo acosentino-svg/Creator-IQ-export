@@ -109,14 +109,29 @@ st.markdown(
     If your **Active Members** export includes **when each creator last created a link**, upload it here.
     The dashboard will use that for **Last Link Date**, **Posted only (no link)**, and **Went dark**.
 
-    **Can't export all ~42k at once?** That's normal. You can:
-    - Export a **filtered** slice (by tier, tag, or "has link activity")
-    - Export **multiple smaller files** and upload each one — we **merge** them (newer dates win)
-    - You only need creators who've **ever linked or posted** for activation metrics (~thousands, not 42k)
+    **Can't export all ~42k at once?** Upload partial CSVs (we merge them), **or** click
+    **Pull from CreatorIQ API** below — uses the CRM Reports API (same family as Daily Campaign Posts).
 
     We auto-detect columns like `Publisher Id` and `Last Link Created`.
     """
 )
+
+if not config.is_demo:
+    if st.button("Pull Active Members link dates from CreatorIQ API"):
+        with st.spinner("Requesting Active Members report from CRM API (may take a few minutes)..."):
+            try:
+                from creatoriq_dashboard.crm_reports import sync_active_member_links_from_crm  # noqa: WPS433
+
+                count = sync_active_member_links_from_crm(config)
+                st.cache_data.clear()
+                st.success(f"Pulled link dates for **{count:,}** creators. Reload the page.")
+            except Exception as exc:  # noqa: BLE001
+                st.error(f"CRM pull failed: {exc}")
+                st.caption(
+                    "The exact report name varies by account. Ask CreatorIQ for the "
+                    "`view=` path for Active Members, then add it to "
+                    "`config/settings.yaml` → `live_sync.active_members_report.view_candidates`."
+                )
 
 existing_links = pd.DataFrame()
 if not config.is_demo:

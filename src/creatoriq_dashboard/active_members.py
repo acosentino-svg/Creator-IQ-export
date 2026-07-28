@@ -60,9 +60,11 @@ def _find_column(columns: list[str], aliases: tuple[str, ...]) -> str | None:
     return None
 
 
-def parse_active_members_csv(source: str | bytes | BinaryIO) -> pd.DataFrame:
-    """Return creator_id, last_link, and optional first_link from a CSV export."""
-    if isinstance(source, str):
+def parse_active_members_csv(source: str | bytes | BinaryIO | pd.DataFrame) -> pd.DataFrame:
+    """Return creator_id, last_link, and optional first_link from a CSV export or DataFrame."""
+    if isinstance(source, pd.DataFrame):
+        df = source.copy()
+    elif isinstance(source, str):
         df = pd.read_csv(source)
     else:
         df = pd.read_csv(source)

@@ -12,6 +12,7 @@ def make_config(**overrides) -> AppConfig:
     defaults = dict(
         mode="live",
         base_url="https://api.example.test",
+        crm_base_url="https://crm.example.test/crm/v1",
         api_key="test-key",
         org_id="org-1",
         db_path="/tmp/does-not-matter.db",

@@ -43,6 +43,7 @@ class Settings:
 class AppConfig:
     mode: str
     base_url: str
+    crm_base_url: str
     api_key: str
     org_id: str
     db_path: Path
@@ -91,6 +92,7 @@ def load_config() -> AppConfig:
     return AppConfig(
         mode=_env("CREATORIQ_DASHBOARD_MODE", "demo"),
         base_url=_env("CREATORIQ_BASE_URL", "https://api.creatoriq.com/api"),
+        crm_base_url=_env("CREATORIQ_CRM_BASE_URL", "https://apis.creatoriq.com/crm/v1"),
         api_key=_env("CREATORIQ_API_KEY", ""),
         org_id=_env("CREATORIQ_ORG_ID", ""),
         db_path=db_path,

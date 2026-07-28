@@ -74,3 +74,17 @@ live_sync:
   # Requires publisher_trackable_links in config/endpoints.yaml — ask CreatorIQ
   # for the correct path for your account. 0 = skip (link-creation metrics unavailable).
   max_link_lookups: 0
+  # Pull Active Members / Creators report via CRM API (apis.creatoriq.com) for
+  # last link created dates. Uses same CREATORIQ_API_KEY with x-api-key header.
+  active_members_report:
+    enabled: true
+    # Tried in order until one returns rows with link dates.
+    view_candidates:
+      - Reports/ActiveMembers
+      - Reports/ActiveMembersReport
+      - Reports/Creators
+      - Reports/GetCreatorsReport
+    page_size: 500
+    max_pages: 100
+    poll_interval_seconds: 3
+    poll_timeout_seconds: 300

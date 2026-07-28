@@ -32,6 +32,7 @@ from .api_client import CreatorIQClient
 from .config import AppConfig
 from .normalize import clean_id_columns, normalize_records
 from .tiers import extract_tier_from_tags, normalize_tag_string
+from .crm_reports import sync_active_member_links_from_crm
 from .storage import (
     append_link_click_snapshot,
     derive_link_click_deltas,
@@ -357,6 +358,14 @@ def sync_all(config: AppConfig) -> dict[str, int]:
     write_table(engine, "email_events", email_events_df)
     record_sync(engine, "email_events", now)
 
+    active_member_links_count = 0
+    if (config.settings.get("live_sync", "active_members_report", default={}) or {}).get("enabled", True):
+        try:
+            active_member_links_count = sync_active_member_links_from_crm(config)
+            logger.info("Synced %d active member link rows from CRM report", active_member_links_count)
+        except Exception:  # noqa: BLE001
+            logger.exception("Active Members CRM report sync failed (CSV upload still works)")
+
     return {
         "campaigns": len(campaigns_df),
         "creators": len(roster_df),
@@ -364,4 +373,5 @@ def sync_all(config: AppConfig) -> dict[str, int]:
         "link_clicks": len(link_clicks_df),
         "links": len(link_creations_df),
         "email_events": len(email_events_df),
+        "active_member_links": active_member_links_count,
     }
