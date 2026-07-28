@@ -149,7 +149,7 @@ def _extract_segment(text: str) -> str | None:
 
 
 def _extract_tier(text: str) -> str | None:
-    for tier in ("VIP", "Core", "Emerging", "New"):
+    for tier in ("Curator", "Designer", "Trendsetter"):
         if re.search(rf"\b{tier}\b", text, re.I):
             return tier
     return None

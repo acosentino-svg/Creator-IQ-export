@@ -36,7 +36,11 @@ controls = bundle["controls"]
 # --- Hero KPIs ---
 st.subheader("Activation at a glance")
 r1 = st.columns(6)
-r1[0].metric("Total enrolled", f"{ek.get('total_creators', 0):,}")
+r1[0].metric(
+    "Enrolled (Active)",
+    f"{ek.get('total_creators', 0):,}",
+    help="Creators with Status=Active in CreatorIQ — your enrolled program population",
+)
 r1[1].metric(
     "Ever activated",
     f"{ek.get('ever_activated_rate', 0)}%",
@@ -141,15 +145,18 @@ with cohort_col:
     if cohorts.empty:
         st.info("No cohort data yet.")
     else:
-        recent = cohorts.tail(8)
-        fig4 = px.line(
-            recent,
-            x="cohort_month",
-            y=["ever_activated_pct", "activated_14d_pct", "activated_30d_pct"],
-            markers=True,
-        )
-        fig4.update_layout(xaxis_title="Join month", yaxis_title="% activated", legend_title=None)
-        st.plotly_chart(fig4, use_container_width=True)
+        recent = cohorts.tail(8).copy()
+        plot_cols = [
+            c
+            for c in ("ever_activated_pct", "activated_14d_pct", "activated_30d_pct")
+            if c in recent.columns and recent[c].notna().any()
+        ]
+        if not plot_cols:
+            st.info("Not enough cohort history to chart yet.")
+        else:
+            fig4 = px.line(recent, x="cohort_month", y=plot_cols, markers=True)
+            fig4.update_layout(xaxis_title="Join month", yaxis_title="% activated", legend_title=None)
+            st.plotly_chart(fig4, use_container_width=True)
 
 st.divider()
 

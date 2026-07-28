@@ -36,7 +36,7 @@ def test_overview_page_shows_expected_metrics():
     at.run(timeout=60)
     assert not at.exception
     metric_labels = [m.label for m in at.metric]
-    assert "Total enrolled" in metric_labels
+    assert "Enrolled (Active)" in metric_labels
     assert "Ever activated" in metric_labels
     assert "Ghosts" in metric_labels
 

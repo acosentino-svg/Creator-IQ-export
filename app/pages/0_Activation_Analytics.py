@@ -82,13 +82,21 @@ with tab_cohort:
         st.info("No cohort data.")
     else:
         st.dataframe(cohorts, use_container_width=True, hide_index=True)
-        fig = px.imshow(
-            cohorts.set_index("cohort_month")[["ever_activated_pct", "activated_14d_pct", "activated_30d_pct"]].T,
-            aspect="auto",
-            color_continuous_scale="Greens",
-            labels=dict(x="Join month", y="Metric", color="%"),
-        )
-        st.plotly_chart(fig, use_container_width=True)
+        heatmap_cols = [
+            c
+            for c in ("ever_activated_pct", "activated_14d_pct", "activated_30d_pct")
+            if c in cohorts.columns and cohorts[c].notna().any()
+        ]
+        if heatmap_cols:
+            fig = px.imshow(
+                cohorts.set_index("cohort_month")[heatmap_cols].T,
+                aspect="auto",
+                color_continuous_scale="Greens",
+                labels=dict(x="Join month", y="Metric", color="%"),
+            )
+            st.plotly_chart(fig, use_container_width=True)
+        else:
+            st.info("Not enough cohort history to chart yet.")
 
 with tab_timing:
     col_a, col_b = st.columns(2)
@@ -114,7 +122,10 @@ with tab_timing:
 
     st.subheader("Days: join → any first activity")
     if not act_df.empty:
-        fig3 = px.box(act_df, y="days_join_to_first_activity", color="tier", points="outliers")
+        if "tier" in act_df.columns and act_df["tier"].notna().any():
+            fig3 = px.box(act_df, y="days_join_to_first_activity", color="tier", points="outliers")
+        else:
+            fig3 = px.box(act_df, y="days_join_to_first_activity", points="outliers")
         st.plotly_chart(fig3, use_container_width=True)
 
 with tab_segments:

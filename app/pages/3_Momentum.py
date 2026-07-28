@@ -13,6 +13,7 @@ import plotly.express as px  # noqa: E402
 import streamlit as st  # noqa: E402
 
 from common import get_bundle  # noqa: E402
+from display_utils import merge_creator_identity, pick_columns  # noqa: E402
 
 st.set_page_config(page_title="Momentum", page_icon="🚀", layout="wide")
 
@@ -38,9 +39,10 @@ if momentum.empty:
         "if this seems too strict."
     )
 else:
-    display = bundle["classified"][["creator_id", "name", "handle", "tier"]].merge(momentum, on="creator_id", how="right")
+    display = merge_creator_identity(momentum, bundle["classified"])
     st.dataframe(
-        display[
+        pick_columns(
+            display,
             [
                 "name",
                 "handle",
@@ -51,16 +53,15 @@ else:
                 "historical_average",
                 "spike_pct",
                 "most_recent_activity",
-            ]
-        ].rename(
-            columns={
+            ],
+            {
                 "posts_this_week": "Posts",
                 "links_this_week": "Links",
                 "activity_score": "Activity Score",
                 "historical_average": "Historical Avg",
                 "spike_pct": "Spike %",
                 "most_recent_activity": "Most Recent Activity",
-            }
+            },
         ),
         use_container_width=True,
         hide_index=True,

@@ -23,6 +23,17 @@ creators:
   status: Status # per-campaign status (Accepted/Applied/Pending/...); etl.py keeps the most recent across campaigns
   joined_date: DatePublisherAdded
 
+publishers:
+  # Full program roster from /publishers?filter=Status=Active (~42k enrolled).
+  # Use Id (internal) as creator_id so it matches campaign activity PublisherId.
+  creator_id: Id
+  network_publisher_id: PublisherId
+  name: PublisherName
+  status: Status
+  joined_date: DateRecruitingStarted
+  tags: Tags
+  email: Email
+
 campaigns:
   campaign_id: CampaignId
   campaign_name: CampaignName

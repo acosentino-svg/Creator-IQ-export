@@ -31,6 +31,7 @@ import pandas as pd
 from .api_client import CreatorIQClient
 from .config import AppConfig
 from .normalize import clean_id_columns, normalize_records
+from .tiers import extract_tier_from_tags, normalize_tag_string
 from .storage import (
     append_link_click_snapshot,
     derive_link_click_deltas,
@@ -119,6 +120,71 @@ def _resolve_network_publisher_ids(
     return known
 
 
+def _fetch_enrolled_creators(config: AppConfig, client: CreatorIQClient) -> pd.DataFrame:
+    """All program enrollees: CreatorIQ publishers with Status=Active (~42k)."""
+    mapping = config.field_mappings.get("publishers", {})
+    status = config.settings.get("live_sync", "enrolled_status_filter", default="Active")
+    max_pages = config.settings.get("live_sync", "max_publisher_pages", default=450)
+    rows: list[dict] = []
+    for record in client.iter_resource(
+        "publishers",
+        extra_params={"filter": f"Status={status}"},
+        max_pages=max_pages,
+    ):
+        pub = record.get("Publisher", record) if isinstance(record, dict) else record
+        if not isinstance(pub, dict):
+            continue
+        row = normalize_records([pub], mapping)[0]
+        tags = normalize_tag_string(row.get("tags"))
+        row["tags"] = tags
+        row["tier"] = extract_tier_from_tags(tags)
+        rows.append(row)
+    df = clean_id_columns(pd.DataFrame(rows), ["creator_id", "network_publisher_id"])
+    if not df.empty and "joined_date" in df.columns:
+        df["joined_date"] = pd.to_datetime(df["joined_date"], utc=True, errors="coerce")
+    return df.reset_index(drop=True)
+
+
+def _fetch_publisher_metadata_index(config: AppConfig, client: CreatorIQClient) -> dict[str, dict[str, str | None]]:
+    """Index CreatorIQ /publishers tags by both Id and PublisherId for roster joins."""
+    max_pages = config.settings.get("live_sync", "max_publisher_pages", default=100)
+    index: dict[str, dict[str, str | None]] = {}
+    for record in client.iter_resource("publishers", max_pages=max_pages):
+        pub = record.get("Publisher", record) if isinstance(record, dict) else record
+        if not isinstance(pub, dict):
+            continue
+        tags = normalize_tag_string(pub.get("Tags") or pub.get("TagNames"))
+        tier = extract_tier_from_tags(tags)
+        meta = {
+            "tags": tags,
+            "tier": tier,
+            "email": pub.get("Email") or pub.get("PrimaryEmail") or "",
+        }
+        for key in (pub.get("Id"), pub.get("PublisherId")):
+            if key is not None and str(key).strip():
+                index[str(key)] = meta
+    return index
+
+
+def _apply_publisher_metadata(roster_df: pd.DataFrame, metadata_index: dict[str, dict[str, str | None]]) -> pd.DataFrame:
+    if roster_df.empty or not metadata_index:
+        return roster_df
+    df = roster_df.copy()
+    tags_vals = []
+    tier_vals = []
+    email_vals = []
+    for _, row in df.iterrows():
+        meta = metadata_index.get(str(row["creator_id"]), {})
+        tags = meta.get("tags") or row.get("tags") or ""
+        tags_vals.append(tags)
+        tier_vals.append(meta.get("tier") or extract_tier_from_tags(tags) or row.get("tier"))
+        email_vals.append(meta.get("email") or row.get("email") or "")
+    df["tags"] = tags_vals
+    df["tier"] = tier_vals
+    df["email"] = email_vals
+    return df
+
+
 def _fetch_email_events(
     config: AppConfig, client: CreatorIQClient, network_ids_by_creator: dict[str, str]
 ) -> pd.DataFrame:
@@ -155,13 +221,17 @@ def sync_all(config: AppConfig) -> dict[str, int]:
     write_table(engine, "campaigns", campaigns_df)
     record_sync(engine, "campaigns", now)
 
+    logger.info("Syncing enrolled creators (Status=%s)...", config.settings.get("live_sync", "enrolled_status_filter", default="Active"))
+    roster_df = _fetch_enrolled_creators(config, client)
+    logger.info("Fetched %d enrolled creators", len(roster_df))
+
     max_campaigns = config.settings.get("live_sync", "max_campaigns", default=None)
     campaign_ids = campaigns_df["campaign_id"].tolist() if not campaigns_df.empty else []
     if max_campaigns is not None:
         campaign_ids = campaign_ids[: int(max_campaigns)]
-    logger.info("Syncing roster + posts for %d campaign(s)", len(campaign_ids))
+    logger.info("Syncing posts/activity for %d campaign(s)", len(campaign_ids))
 
-    roster_df, posts_df = _fetch_roster_and_posts(config, client, campaign_ids)
+    _, posts_df = _fetch_roster_and_posts(config, client, campaign_ids)
     write_table(engine, "creators", roster_df)
     write_table(engine, "posts", posts_df)
     record_sync(engine, "creators", now)
@@ -174,9 +244,15 @@ def sync_all(config: AppConfig) -> dict[str, int]:
     record_sync(engine, "links", now)
 
     email_events_df = pd.DataFrame()
-    if not roster_df.empty:
-        network_ids_by_creator = _resolve_network_publisher_ids(config, client, roster_df["creator_id"], posts_df)
-        email_events_df = _fetch_email_events(config, client, network_ids_by_creator)
+    if not roster_df.empty and "network_publisher_id" in roster_df.columns:
+        network_ids = (
+            roster_df.dropna(subset=["network_publisher_id"])
+            .drop_duplicates(subset=["creator_id"])
+            .set_index("creator_id")["network_publisher_id"]
+            .astype(str)
+            .to_dict()
+        )
+        email_events_df = _fetch_email_events(config, client, network_ids)
     write_table(engine, "email_events", email_events_df)
     record_sync(engine, "email_events", now)
 

@@ -14,7 +14,7 @@ from dataclasses import dataclass
 import numpy as np
 import pandas as pd
 
-TIERS = ["VIP", "Core", "Emerging", "New"]
+TIERS = ["Curator", "Designer", "Trendsetter"]
 PLATFORMS = ["Instagram", "TikTok", "YouTube", "Pinterest"]
 POST_TYPES = ["Reel", "Static Post", "Story", "Video"]
 STATUSES = ["Accepted", "Applied", "Pending"]
@@ -28,10 +28,10 @@ TAG_POOL = [
     "Parenting",
     "Tech",
     "Travel",
-    "VIP",
     "Ambassador",
-    "Affiliate",
-    "New Recruit",
+    "Curator",
+    "Designer",
+    "Trendsetter",
 ]
 
 EMAIL_SUBJECTS = [
@@ -88,7 +88,7 @@ def generate_demo_data(n_creators: int = 220, days_of_history: int = 150, seed: 
     archetype_weights = archetype_weights / archetype_weights.sum()
 
     joined_offsets = rng.integers(20, 500, size=n_creators)
-    tiers = rng.choice(TIERS, size=n_creators, p=[0.08, 0.27, 0.35, 0.30])
+    tiers = rng.choice(TIERS, size=n_creators, p=[0.35, 0.40, 0.25])
     statuses = rng.choice(STATUSES, size=n_creators, p=[0.82, 0.12, 0.06])
     archetypes = rng.choice(archetype_names, size=n_creators, p=archetype_weights)
 

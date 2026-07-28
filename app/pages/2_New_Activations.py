@@ -13,6 +13,7 @@ import plotly.express as px  # noqa: E402
 import streamlit as st  # noqa: E402
 
 from common import get_bundle  # noqa: E402
+from display_utils import pick_columns  # noqa: E402
 
 st.set_page_config(page_title="New Activations", page_icon="✨", layout="wide")
 
@@ -46,8 +47,10 @@ with tab1:
         st.info("No creators published their first-ever post in this range.")
     else:
         st.dataframe(
-            first_time_posters[["name", "handle", "tier", "first_post", "joined_date"]].rename(
-                columns={"first_post": "First Post Date", "joined_date": "Joined Program"}
+            pick_columns(
+                first_time_posters,
+                ["name", "handle", "tier", "first_post", "joined_date"],
+                {"first_post": "First Post Date", "joined_date": "Joined Program"},
             ),
             use_container_width=True,
             hide_index=True,
@@ -58,8 +61,10 @@ with tab2:
         st.info("No creators created their first-ever link in this range.")
     else:
         st.dataframe(
-            first_time_linkers[["name", "handle", "tier", "first_link", "joined_date"]].rename(
-                columns={"first_link": "First Link Date", "joined_date": "Joined Program"}
+            pick_columns(
+                first_time_linkers,
+                ["name", "handle", "tier", "first_link", "joined_date"],
+                {"first_link": "First Link Date", "joined_date": "Joined Program"},
             ),
             use_container_width=True,
             hide_index=True,
@@ -70,8 +75,10 @@ with tab3:
         st.success("Everyone who's created a link has also posted. 🎉")
     else:
         st.dataframe(
-            linked_no_post[["name", "handle", "tier", "first_link", "days_since_last_link"]].rename(
-                columns={"first_link": "First Link Date", "days_since_last_link": "Days Since Link"}
+            pick_columns(
+                linked_no_post,
+                ["name", "handle", "tier", "first_link", "days_since_last_link"],
+                {"first_link": "First Link Date", "days_since_last_link": "Days Since Link"},
             ),
             use_container_width=True,
             hide_index=True,
@@ -106,7 +113,8 @@ else:
 
 with st.expander("See full per-creator timing table"):
     st.dataframe(
-        with_day_calcs[
+        pick_columns(
+            with_day_calcs,
             [
                 "name",
                 "handle",
@@ -116,8 +124,8 @@ with st.expander("See full per-creator timing table"):
                 "days_join_to_first_link",
                 "days_join_to_first_post",
                 "days_first_link_to_first_post",
-            ]
-        ],
+            ],
+        ),
         use_container_width=True,
         hide_index=True,
     )

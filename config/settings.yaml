@@ -53,6 +53,10 @@ live_sync:
   # Cap how many campaigns get synced per run (null = no cap). Start small
   # (e.g. 5-10) the first time you point this at a real account.
   max_campaigns: 10
+  # Program enrollment in CreatorIQ = publishers with this Status (~42k Active).
+  enrolled_status_filter: "Active"
+  # Pages of /publishers to pull (100 creators/page). 450 pages ≈ 45k enrolled.
+  max_publisher_pages: 450
   # Whether to resolve each creator's NetworkPublisherId via an extra
   # /publishers?filter= lookup when it wasn't already available from a post
   # (needed to fetch that creator's email/messages). Costs one extra API

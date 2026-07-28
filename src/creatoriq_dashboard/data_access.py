@@ -10,6 +10,7 @@ from .config import AppConfig
 from .demo_data import generate_demo_data
 from .metrics import ActivationInputs
 from .storage import get_engine, get_last_synced_at, read_table
+from .tiers import extract_tier_from_tags
 
 # Minimal column shape for each table when the live SQLite cache doesn't
 # exist yet (e.g. live mode selected but `scripts/refresh_data.py` hasn't
@@ -23,6 +24,24 @@ _EMPTY_TABLE_COLUMNS: dict[str, list[str]] = {
     "links": ["link_id", "creator_id", "label", "destination_url", "created_at", "campaign_id"],
     "email_events": ["event_id", "creator_id", "message_id", "subject", "sent_at", "opened_at", "clicked_at"],
 }
+
+
+def normalize_creators_df(df: pd.DataFrame) -> pd.DataFrame:
+    """Ensure live CreatorIQ rows always have tier/tags/handle columns."""
+    required = ["creator_id", "name", "handle", "email", "status", "tier", "tags", "joined_date"]
+    if df.empty and df.columns.empty:
+        return pd.DataFrame(columns=required)
+    out = df.copy()
+    for col in required:
+        if col not in out.columns:
+            out[col] = pd.NA if col in ("tier", "joined_date") else ""
+    if out["tier"].isna().all():
+        out["tier"] = out["tags"].apply(extract_tier_from_tags)
+    else:
+        out["tier"] = out["tier"].fillna(out["tags"].apply(extract_tier_from_tags))
+    for col in ("name", "handle", "email", "tags"):
+        out[col] = out[col].fillna("").astype(str)
+    return out
 
 
 def _read_table_with_shape(engine, table_name: str) -> pd.DataFrame:
@@ -42,7 +61,7 @@ def load_inputs(config: AppConfig) -> tuple[ActivationInputs, dict[str, str | No
         sync_status = {name: "demo" for name in ("creators", "campaigns", "posts", "links", "email_events")}
         return (
             ActivationInputs(
-                creators=demo.creators,
+                creators=normalize_creators_df(demo.creators),
                 posts=demo.posts,
                 links=demo.links,
                 email_events=demo.email_events,
@@ -51,7 +70,7 @@ def load_inputs(config: AppConfig) -> tuple[ActivationInputs, dict[str, str | No
         )
 
     engine = get_engine(config.db_path)
-    creators = _read_table_with_shape(engine, "creators")
+    creators = normalize_creators_df(_read_table_with_shape(engine, "creators"))
     posts = _read_table_with_shape(engine, "posts")
     links = _read_table_with_shape(engine, "links")
     email_events = _read_table_with_shape(engine, "email_events")
