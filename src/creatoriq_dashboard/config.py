@@ -58,10 +58,28 @@ class AppConfig:
 
 @lru_cache(maxsize=1)
 def load_config() -> AppConfig:
-    """Load .env + YAML config once per process. Cached for cheap re-use."""
+    """Load .env + YAML config once per process. Cached for cheap re-use.
+
+    On Streamlit Community Cloud, secrets from the app Settings → Secrets
+    tab are read via ``st.secrets`` (root-level keys are also env vars, but
+    we check both to be safe).
+    """
     load_dotenv(REPO_ROOT / ".env", override=False)
 
-    db_path_raw = os.environ.get("CREATORIQ_DB_PATH", "data/warehouse.db")
+    def _env(key: str, default: str = "") -> str:
+        val = os.environ.get(key)
+        if val:
+            return val
+        try:
+            import streamlit as st  # noqa: WPS433 — optional runtime dependency
+
+            if key in st.secrets:
+                return str(st.secrets[key])
+        except Exception:
+            pass
+        return default
+
+    db_path_raw = _env("CREATORIQ_DB_PATH", "data/warehouse.db")
     db_path = Path(db_path_raw)
     if not db_path.is_absolute():
         db_path = REPO_ROOT / db_path
@@ -71,12 +89,12 @@ def load_config() -> AppConfig:
     field_mappings = _load_yaml(CONFIG_DIR / "field_mappings.yaml")
 
     return AppConfig(
-        mode=os.environ.get("CREATORIQ_DASHBOARD_MODE", "demo"),
-        base_url=os.environ.get("CREATORIQ_BASE_URL", "https://api.creatoriq.com"),
-        api_key=os.environ.get("CREATORIQ_API_KEY", ""),
-        org_id=os.environ.get("CREATORIQ_ORG_ID", ""),
+        mode=_env("CREATORIQ_DASHBOARD_MODE", "demo"),
+        base_url=_env("CREATORIQ_BASE_URL", "https://api.creatoriq.com/api"),
+        api_key=_env("CREATORIQ_API_KEY", ""),
+        org_id=_env("CREATORIQ_ORG_ID", ""),
         db_path=db_path,
-        slack_webhook_url=os.environ.get("SLACK_WEBHOOK_URL", ""),
+        slack_webhook_url=_env("SLACK_WEBHOOK_URL", ""),
         settings=settings,
         endpoints=endpoints,
         field_mappings=field_mappings,
