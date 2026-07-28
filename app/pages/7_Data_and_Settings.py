@@ -13,9 +13,15 @@ if str(APP_DIR) not in sys.path:
 
 import streamlit as st  # noqa: E402
 
+import pandas as pd  # noqa: E402
+
 from common import get_bundle, get_config  # noqa: E402
-from creatoriq_dashboard.active_members import parse_active_members_csv, parse_active_members_csv_preview  # noqa: E402
-from creatoriq_dashboard.storage import get_engine, record_sync, write_table  # noqa: E402
+from creatoriq_dashboard.active_members import (  # noqa: E402
+    merge_active_member_link_frames,
+    parse_active_members_csv,
+    parse_active_members_csv_preview,
+)
+from creatoriq_dashboard.storage import get_engine, read_table, record_sync, write_table  # noqa: E402
 from datetime import datetime, timezone  # noqa: E402
 
 st.set_page_config(page_title="Data & Settings", page_icon="⚙️", layout="wide")
@@ -103,13 +109,25 @@ st.markdown(
     If your **Active Members** export includes **when each creator last created a link**, upload it here.
     The dashboard will use that for **Last Link Date**, **Posted only (no link)**, and **Went dark**.
 
-    **In CreatorIQ:** run or export **Active Members** → save as **CSV** → upload below.
+    **Can't export all ~42k at once?** That's normal. You can:
+    - Export a **filtered** slice (by tier, tag, or "has link activity")
+    - Export **multiple smaller files** and upload each one — we **merge** them (newer dates win)
+    - You only need creators who've **ever linked or posted** for activation metrics (~thousands, not 42k)
 
-    We auto-detect columns like `Publisher Id` and `Last Link Created` (names can vary slightly).
+    We auto-detect columns like `Publisher Id` and `Last Link Created`.
     """
 )
 
-uploaded = st.file_uploader("Active Members CSV", type=["csv"])
+existing_links = pd.DataFrame()
+if not config.is_demo:
+    try:
+        existing_links = read_table(get_engine(config.db_path), "active_member_links")
+    except Exception:  # noqa: BLE001
+        existing_links = pd.DataFrame()
+if not existing_links.empty:
+    st.info(f"You already have link dates for **{len(existing_links):,}** creators on file. New uploads **add to** this.")
+
+uploaded = st.file_uploader("Active Members CSV (full or partial)", type=["csv"])
 if uploaded is not None:
     try:
         preview = parse_active_members_csv_preview(uploaded.getvalue())
@@ -121,10 +139,14 @@ if uploaded is not None:
         if st.button("Import link dates from this file"):
             parsed = parse_active_members_csv(uploaded.getvalue())
             engine = get_engine(config.db_path)
-            write_table(engine, "active_member_links", parsed)
+            merged = merge_active_member_link_frames(read_table(engine, "active_member_links"), parsed)
+            write_table(engine, "active_member_links", merged)
             record_sync(engine, "active_member_links", datetime.now(timezone.utc))
             st.cache_data.clear()
-            st.success(f"Imported {len(parsed):,} creator link dates. Reload the page to refresh metrics.")
+            st.success(
+                f"Added **{len(parsed):,}** rows from this file. "
+                f"**{len(merged):,}** creators total with link dates. Reload to refresh metrics."
+            )
     except ValueError as exc:
         st.error(str(exc))
         st.caption("Send a screenshot of your CSV column headers if auto-detect fails — we'll add your column names.")

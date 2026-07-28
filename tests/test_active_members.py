@@ -4,7 +4,7 @@ import io
 
 import pandas as pd
 
-from creatoriq_dashboard.active_members import parse_active_members_csv
+from creatoriq_dashboard.active_members import merge_active_member_link_frames, parse_active_members_csv
 from creatoriq_dashboard.metrics import RawData, build_creator_summary, resolve_date_range
 
 
@@ -42,3 +42,23 @@ def test_active_members_merges_into_creator_summary():
     jane = summary.set_index("creator_id").loc["12345"]
     assert pd.notna(jane["last_link"])
     assert jane["last_link"].date().isoformat() == "2025-06-01"
+
+
+def test_merge_active_member_link_frames_combines_batches():
+    first = pd.DataFrame(
+        {
+            "creator_id": ["1", "2"],
+            "last_link": [pd.Timestamp("2025-01-01", tz="UTC"), pd.Timestamp("2025-02-01", tz="UTC")],
+            "first_link": [pd.Timestamp("2025-01-01", tz="UTC"), pd.Timestamp("2025-02-01", tz="UTC")],
+        }
+    )
+    second = pd.DataFrame(
+        {
+            "creator_id": ["2", "3"],
+            "last_link": [pd.Timestamp("2025-06-01", tz="UTC"), pd.Timestamp("2025-03-01", tz="UTC")],
+            "first_link": [pd.Timestamp("2025-02-01", tz="UTC"), pd.Timestamp("2025-03-01", tz="UTC")],
+        }
+    )
+    merged = merge_active_member_link_frames(first, second)
+    assert len(merged) == 3
+    assert merged.set_index("creator_id").loc["2", "last_link"].date().isoformat() == "2025-06-01"

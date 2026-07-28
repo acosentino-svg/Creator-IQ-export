@@ -106,6 +106,27 @@ def parse_active_members_csv(source: str | bytes | BinaryIO) -> pd.DataFrame:
     return out.reset_index(drop=True)
 
 
+def merge_active_member_link_frames(existing: pd.DataFrame, new: pd.DataFrame) -> pd.DataFrame:
+    """Combine partial Active Members exports (upload in batches)."""
+    empty = pd.DataFrame(columns=["creator_id", "last_link", "first_link"])
+    if existing is None or existing.empty:
+        base = empty
+    else:
+        base = existing.copy()
+    if new is None or new.empty:
+        return base.reset_index(drop=True)
+    combined = pd.concat([base, new], ignore_index=True)
+    combined["creator_id"] = combined["creator_id"].astype(str).str.strip()
+    combined["last_link"] = _to_datetime_utc(combined["last_link"])
+    combined["first_link"] = _to_datetime_utc(combined["first_link"])
+    merged = (
+        combined.groupby("creator_id", as_index=False)
+        .agg(last_link=("last_link", "max"), first_link=("first_link", "min"))
+        .reset_index(drop=True)
+    )
+    return merged
+
+
 def parse_active_members_csv_preview(source: str | bytes | BinaryIO) -> dict:
     """Parse plus metadata for the upload UI."""
     if isinstance(source, bytes):
