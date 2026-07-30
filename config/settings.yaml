@@ -85,6 +85,11 @@ live_sync:
       - Reports/Creators
       - Reports/GetCreatorsReport
     page_size: 500
-    max_pages: 100
+    max_pages: 20
     poll_interval_seconds: 3
-    poll_timeout_seconds: 300
+    poll_timeout_seconds: 120
+  # Used by scripts/refresh_data.py --quick (Streamlit Cloud button).
+  cloud_safe:
+    max_campaigns: 5
+    max_publisher_pages: 5
+    max_email_lookups: 50

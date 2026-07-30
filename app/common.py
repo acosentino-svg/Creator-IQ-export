@@ -54,7 +54,12 @@ from creatoriq_dashboard.metrics import (  # noqa: E402
     detect_spikes,
     resolve_date_range,
 )
-from creatoriq_dashboard.storage import get_engine, get_sync_status_map  # noqa: E402
+from creatoriq_dashboard.storage import (  # noqa: E402
+    count_table_rows,
+    ensure_performance_indexes,
+    get_engine,
+    get_sync_status_map,
+)
 
 DATA_CACHE_TTL_SECONDS = 300
 
@@ -197,10 +202,18 @@ def get_settings_context() -> dict:
         data_quality = compute_data_quality(raw, summary, is_live=False)
         return {"sync_status": sync_status, "data_quality": data_quality}
 
+    return _load_live_settings_context(config.mode)
+
+
+@st.cache_data(ttl=60, show_spinner=False)
+def _load_live_settings_context(_config_mode: str) -> dict:
+    config = get_config()
     engine = get_engine(config.db_path)
+    ensure_performance_indexes(engine)
     return {
         "sync_status": get_sync_status_map(engine),
         "data_quality": compute_data_quality_from_db(engine, is_live=True),
+        "active_member_link_rows": count_table_rows(engine, "active_member_links"),
     }
 
 

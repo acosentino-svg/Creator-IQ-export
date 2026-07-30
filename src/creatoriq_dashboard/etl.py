@@ -24,6 +24,7 @@ per-creator lookups for email data. See `config/settings.yaml`'s
 from __future__ import annotations
 
 import logging
+import os
 from datetime import datetime, timezone
 
 import pandas as pd
@@ -42,6 +43,16 @@ from .storage import (
 )
 
 logger = logging.getLogger(__name__)
+
+
+def _live_sync_limit(config: AppConfig, key: str, default=None):
+    """Read live_sync.<key>, optionally overridden by live_sync.<CREATORIQ_SYNC_PROFILE>.<key>."""
+    profile = os.environ.get("CREATORIQ_SYNC_PROFILE", "").strip()
+    if profile:
+        overrides = config.settings.get("live_sync", profile, default={}) or {}
+        if isinstance(overrides, dict) and key in overrides:
+            return overrides[key]
+    return config.settings.get("live_sync", key, default=default)
 
 
 def _prioritize_campaigns(campaigns_df: pd.DataFrame, config: AppConfig) -> pd.DataFrame:
@@ -128,7 +139,7 @@ def _resolve_network_publisher_ids(
     if not config.settings.get("live_sync", "resolve_missing_network_ids", default=True):
         return known
 
-    max_lookups = config.settings.get("live_sync", "max_email_lookups", default=None)
+    max_lookups = _live_sync_limit(config, "max_email_lookups", default=None)
     missing = [cid for cid in creator_ids.astype(str).unique() if cid not in known]
     if max_lookups is not None:
         missing = missing[: max(0, int(max_lookups) - len(known))]
@@ -147,7 +158,7 @@ def _fetch_enrolled_creators(config: AppConfig, client: CreatorIQClient) -> pd.D
     """All program enrollees: CreatorIQ publishers with Status=Active (~42k)."""
     mapping = config.field_mappings.get("publishers", {})
     status = config.settings.get("live_sync", "enrolled_status_filter", default="Active")
-    max_pages = config.settings.get("live_sync", "max_publisher_pages", default=450)
+    max_pages = _live_sync_limit(config, "max_publisher_pages", default=450)
     rows: list[dict] = []
     for record in client.iter_resource(
         "publishers",
@@ -170,7 +181,7 @@ def _fetch_enrolled_creators(config: AppConfig, client: CreatorIQClient) -> pd.D
 
 def _fetch_publisher_metadata_index(config: AppConfig, client: CreatorIQClient) -> dict[str, dict[str, str | None]]:
     """Index CreatorIQ /publishers tags by both Id and PublisherId for roster joins."""
-    max_pages = config.settings.get("live_sync", "max_publisher_pages", default=100)
+    max_pages = _live_sync_limit(config, "max_publisher_pages", default=100)
     index: dict[str, dict[str, str | None]] = {}
     for record in client.iter_resource("publishers", max_pages=max_pages):
         pub = record.get("Publisher", record) if isinstance(record, dict) else record
@@ -212,7 +223,7 @@ def _fetch_email_events(
     config: AppConfig, client: CreatorIQClient, network_ids_by_creator: dict[str, str]
 ) -> pd.DataFrame:
     mapping = config.field_mappings.get("email_events", {})
-    max_lookups = config.settings.get("live_sync", "max_email_lookups", default=None)
+    max_lookups = _live_sync_limit(config, "max_email_lookups", default=None)
     items = list(network_ids_by_creator.items())
     if max_lookups is not None:
         items = items[: int(max_lookups)]
@@ -323,7 +334,7 @@ def sync_all(config: AppConfig) -> dict[str, int]:
     roster_df = _fetch_enrolled_creators(config, client)
     logger.info("Fetched %d enrolled creators", len(roster_df))
 
-    max_campaigns = config.settings.get("live_sync", "max_campaigns", default=None)
+    max_campaigns = _live_sync_limit(config, "max_campaigns", default=None)
     campaign_ids = campaigns_df["campaign_id"].tolist() if not campaigns_df.empty else []
     if max_campaigns is not None:
         campaign_ids = campaign_ids[: int(max_campaigns)]

@@ -13,40 +13,38 @@ if str(APP_DIR) not in sys.path:
 
 import streamlit as st  # noqa: E402
 
-import pandas as pd  # noqa: E402
-
 from common import get_config, get_settings_context  # noqa: E402
 from creatoriq_dashboard.active_members import (  # noqa: E402
     merge_active_member_link_frames,
     parse_active_members_csv,
     parse_active_members_csv_preview,
 )
+from creatoriq_dashboard.runtime import is_streamlit_cloud  # noqa: E402
 from creatoriq_dashboard.storage import get_engine, read_table, record_sync, write_table  # noqa: E402
 from datetime import datetime, timezone  # noqa: E402
 
+SYNC_TIMEOUT_SECONDS = 900  # 15 minutes — Streamlit Cloud will kill longer runs anyway
+
 st.set_page_config(page_title="Data & Settings", page_icon="⚙️", layout="wide")
 config = get_config()
+on_cloud = is_streamlit_cloud()
 
 st.title("⚙️ Data & Settings")
+
+if on_cloud:
+    st.info(
+        "**Streamlit Cloud note:** A full sync of ~42k creators can take **many hours** and will "
+        "look like this page is stuck. Use **Quick sync** below first (a few minutes). "
+        "If the app has been spinning for a long time, open **Manage app → Reboot app** in the "
+        "lower-right corner of Streamlit Cloud."
+    )
 
 st.subheader("Mode")
 st.write(f"**Current mode:** `{config.mode}`")
 if config.is_demo:
     st.write(
         "Showing mock/synthetic data so every page is fully explorable without CreatorIQ credentials. "
-        "The dashboard was **structured so mock data can be swapped for the real CreatorIQ API without "
-        "changing any page code**:\n\n"
-        "- `src/creatoriq_dashboard/demo_data.py` generates the mock `creators` / `posts` / `links` / "
-        "`email_events` tables.\n"
-        "- `src/creatoriq_dashboard/data_access.load_inputs()` is the single switch point — in `live` mode "
-        "it reads the exact same table shapes from a local SQLite cache instead, populated by "
-        "`scripts/refresh_data.py` against the real CreatorIQ API "
-        "(client + endpoint config already built in `src/creatoriq_dashboard/api_client.py` + "
-        "`config/endpoints.yaml`/`config/field_mappings.yaml`).\n"
-        "- Every page and every function in `metrics.py` only ever sees those four normalized tables — "
-        "swapping the data source underneath doesn't require touching the pages.\n\n"
-        "To switch: copy `.env.example` to `.env`, set `CREATORIQ_API_KEY` + "
-        "`CREATORIQ_DASHBOARD_MODE=live`, run `python scripts/refresh_data.py`, then restart the app."
+        "Set `CREATORIQ_DASHBOARD_MODE=live` in Streamlit secrets (or `.env` locally) once your API key is ready."
     )
 else:
     st.write(f"**API base URL:** `{config.base_url}`")
@@ -59,6 +57,12 @@ st.table({"resource": list(sync_status.keys()), "last_synced_at": list(sync_stat
 dq = settings_ctx.get("data_quality", {})
 if not config.is_demo:
     st.subheader("Data coverage (live)")
+    if dq.get("enrolled", 0) == 0:
+        st.warning(
+            "**No creator data in the cache yet.** Click **Quick sync** below (or run "
+            "`python scripts/refresh_data.py --quick` locally). "
+            "A full ~42k sync should be run on a server with a long timeout, not in the browser."
+        )
     st.markdown(
         "All pages read from the **same cached dataset** — if a number looks wrong here, "
         "it will be wrong everywhere until the underlying sync improves."
@@ -86,21 +90,42 @@ if not config.is_demo:
         )
 
 if not config.is_demo:
-    st.caption("Data is served from the local SQLite cache. Run the refresh script below to pull fresh data.")
-    if st.button("Run refresh now (python scripts/refresh_data.py)"):
-        with st.spinner("Refreshing from CreatorIQ..."):
-            result = subprocess.run(
-                [sys.executable, str(REPO_ROOT / "scripts" / "refresh_data.py")],
-                capture_output=True,
-                text=True,
-                cwd=str(REPO_ROOT),
-            )
-        if result.returncode == 0:
-            st.success("Refresh complete. Reload the page to see updated data.")
-            st.cache_data.clear()
-        else:
-            st.error("Refresh failed — see logs below.")
-        st.code(result.stdout + "\n" + result.stderr)
+    st.caption("Data is served from the local SQLite cache on this server.")
+    col_quick, col_full = st.columns(2)
+    with col_quick:
+        run_quick = st.button("Quick sync (~5 min)", type="primary", help="5 campaigns, 5 publisher pages — safe on Streamlit Cloud")
+    with col_full:
+        run_full = st.button(
+            "Full sync (hours — not recommended on Streamlit Cloud)",
+            help="Pulls all campaigns and up to 45k enrolled creators",
+        )
+
+    if run_quick or run_full:
+        cmd = [sys.executable, str(REPO_ROOT / "scripts" / "refresh_data.py")]
+        if run_quick or on_cloud:
+            cmd.append("--quick")
+        label = "Quick sync" if "--quick" in cmd else "Full sync"
+        with st.spinner(f"{label} in progress (max {SYNC_TIMEOUT_SECONDS // 60} minutes)..."):
+            try:
+                result = subprocess.run(
+                    cmd,
+                    capture_output=True,
+                    text=True,
+                    cwd=str(REPO_ROOT),
+                    timeout=SYNC_TIMEOUT_SECONDS,
+                )
+            except subprocess.TimeoutExpired:
+                st.error(
+                    f"{label} timed out after {SYNC_TIMEOUT_SECONDS // 60} minutes. "
+                    "Use Quick sync, or run `python scripts/refresh_data.py` on a machine that can stay on for hours."
+                )
+            else:
+                if result.returncode == 0:
+                    st.success(f"{label} complete. Reload the page to see updated data.")
+                    st.cache_data.clear()
+                else:
+                    st.error(f"{label} failed — see logs below.")
+                st.code((result.stdout or "") + "\n" + (result.stderr or ""))
 
 st.divider()
 st.subheader("Active Members report (link dates)")
@@ -118,7 +143,7 @@ st.markdown(
 
 if not config.is_demo:
     if st.button("Pull Active Members link dates from CreatorIQ API"):
-        with st.spinner("Requesting Active Members report from CRM API (may take a few minutes)..."):
+        with st.spinner("Requesting Active Members report from CRM API (up to ~2 minutes)..."):
             try:
                 from creatoriq_dashboard.crm_reports import sync_active_member_links_from_crm  # noqa: WPS433
 
@@ -133,14 +158,9 @@ if not config.is_demo:
                     "`config/settings.yaml` → `live_sync.active_members_report.view_candidates`."
                 )
 
-existing_links = pd.DataFrame()
-if not config.is_demo:
-    try:
-        existing_links = read_table(get_engine(config.db_path), "active_member_links")
-    except Exception:  # noqa: BLE001
-        existing_links = pd.DataFrame()
-if not existing_links.empty:
-    st.info(f"You already have link dates for **{len(existing_links):,}** creators on file. New uploads **add to** this.")
+active_member_link_rows = int(settings_ctx.get("active_member_link_rows", dq.get("active_member_link_rows", 0)))
+if active_member_link_rows > 0:
+    st.info(f"You already have link dates for **{active_member_link_rows:,}** creators on file. New uploads **add to** this.")
 
 uploaded = st.file_uploader("Active Members CSV (full or partial)", type=["csv"])
 if uploaded is not None:
@@ -176,4 +196,5 @@ st.markdown(
     - **Live CreatorIQ sync limits** (once you switch to live mode) — `config/settings.yaml` → `live_sync`.
     """
 )
-st.json(config.settings.raw)
+with st.expander("Raw settings.yaml (advanced)"):
+    st.json(config.settings.raw)

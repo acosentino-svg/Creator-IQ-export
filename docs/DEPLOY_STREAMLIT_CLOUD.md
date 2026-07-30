@@ -84,11 +84,13 @@ Then set up a scheduled job to refresh data (ask someone technical, or we can ad
 
 ---
 
-## If deploy fails
+## If deploy fails or a page spins forever
 
-1. Confirm branch is **`cursor/internal-activation-dashboard-4859`** (not `main` — main doesn't have the dashboard yet).
+1. Confirm branch is **`cursor/internal-activation-dashboard-4859`** (or **`main`** after PR #7 is merged).
 2. Confirm main file is **`app/streamlit_app.py`** exactly.
-3. Check the build log on Streamlit for red errors — send a screenshot to your technical contact or this chat.
+3. **Reboot the app:** Streamlit Cloud → lower-right **Manage app** → **Reboot app** (clears a stuck sync).
+4. On **Data & Settings**, use **Quick sync** first — **not** Full sync. A full ~42k pull can run for **many hours** and looks like the page is frozen.
+5. Check the build log on Streamlit for red errors — send a screenshot to your technical contact or this chat.
 
 ---
 

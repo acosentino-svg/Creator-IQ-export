@@ -205,3 +205,23 @@ def count_posted_without_link_creation(engine: Engine) -> int:
         return int(row[0]) if row else 0
     except Exception:  # noqa: BLE001
         return 0
+
+
+_INDEXED_TABLES: tuple[tuple[str, str], ...] = (
+    ("posts", "creator_id"),
+    ("links", "creator_id"),
+    ("active_member_links", "creator_id"),
+    ("creators", "creator_id"),
+)
+
+
+def ensure_performance_indexes(engine: Engine) -> None:
+    """Speed up coverage COUNT queries on large SQLite caches."""
+    try:
+        with engine.begin() as conn:
+            for table, column in _INDEXED_TABLES:
+                conn.execute(
+                    text(f"CREATE INDEX IF NOT EXISTS idx_{table}_{column} ON {table} ({column})")
+                )
+    except Exception:  # noqa: BLE001 - table may not exist yet
+        return

@@ -19,12 +19,28 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
 from creatoriq_dashboard.config import load_config  # noqa: E402
 from creatoriq_dashboard.etl import sync_all  # noqa: E402
+from creatoriq_dashboard.storage import ensure_performance_indexes, get_engine  # noqa: E402
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 logger = logging.getLogger(__name__)
 
 
 def main() -> int:
+    import argparse
+    import os
+
+    parser = argparse.ArgumentParser(description="Refresh CreatorIQ data into the local SQLite cache.")
+    parser.add_argument(
+        "--quick",
+        action="store_true",
+        help="Use live_sync.cloud_safe limits (few campaigns/pages) — for Streamlit Cloud.",
+    )
+    args = parser.parse_args()
+
+    if args.quick:
+        os.environ["CREATORIQ_SYNC_PROFILE"] = "cloud_safe"
+        logger.info("Quick sync profile: live_sync.cloud_safe limits")
+
     config = load_config()
     if config.is_demo:
         logger.error(
@@ -35,6 +51,7 @@ def main() -> int:
         return 1
 
     logger.info("Starting CreatorIQ sync against %s ...", config.base_url)
+    ensure_performance_indexes(get_engine(config.db_path))
     counts = sync_all(config)
     for resource, count in counts.items():
         logger.info("  %-14s %d records", resource, count)
