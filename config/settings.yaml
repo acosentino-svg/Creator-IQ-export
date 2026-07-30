@@ -77,7 +77,7 @@ live_sync:
   # Pull Active Members / Creators report via CRM API (apis.creatoriq.com) for
   # last link created dates. Uses same CREATORIQ_API_KEY with x-api-key header.
   active_members_report:
-    enabled: true
+    enabled: false
     # Tried in order until one returns rows with link dates.
     view_candidates:
       - Reports/ActiveMembers

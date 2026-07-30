@@ -359,7 +359,7 @@ def sync_all(config: AppConfig) -> dict[str, int]:
     record_sync(engine, "email_events", now)
 
     active_member_links_count = 0
-    if (config.settings.get("live_sync", "active_members_report", default={}) or {}).get("enabled", True):
+    if (config.settings.get("live_sync", "active_members_report", default={}) or {}).get("enabled", False):
         try:
             active_member_links_count = sync_active_member_links_from_crm(config)
             logger.info("Synced %d active member link rows from CRM report", active_member_links_count)

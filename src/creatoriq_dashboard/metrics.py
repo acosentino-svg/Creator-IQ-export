@@ -448,6 +448,45 @@ def compute_kpis(classified: pd.DataFrame, posts_in_range_total: int, links_in_r
     }
 
 
+def compute_data_quality_from_db(engine, *, is_live: bool) -> dict:
+    """Fast coverage stats for the Data & Settings page — SQL counts only."""
+    from .storage import (
+        count_distinct_column,
+        count_enrolled_creators_with_posts,
+        count_posted_without_link_creation,
+        count_table_rows,
+    )
+
+    enrolled = count_table_rows(engine, "creators")
+    posts_in_cache = count_table_rows(engine, "posts")
+    unique_posters_in_cache = count_distinct_column(engine, "posts", "creator_id")
+    link_creation_rows = count_table_rows(engine, "links")
+    active_member_link_rows = count_table_rows(engine, "active_member_links")
+    link_click_rows = count_table_rows(engine, "link_clicks")
+    creators_with_posts = count_enrolled_creators_with_posts(engine)
+    posted_without_link = count_posted_without_link_creation(engine)
+
+    post_join_rate = (
+        round(creators_with_posts / max(unique_posters_in_cache, 1) * 100, 1)
+        if unique_posters_in_cache
+        else None
+    )
+    return {
+        "enrolled": enrolled,
+        "posts_in_cache": posts_in_cache,
+        "unique_posters_in_cache": unique_posters_in_cache,
+        "creators_with_posts": creators_with_posts,
+        "creators_with_link_creations": active_member_link_rows + link_creation_rows,
+        "posted_without_link": posted_without_link,
+        "link_creation_rows": link_creation_rows,
+        "active_member_link_rows": active_member_link_rows,
+        "link_click_rows": link_click_rows,
+        "post_join_rate_pct": post_join_rate,
+        "link_creations_unavailable": is_live and link_creation_rows == 0 and active_member_link_rows == 0,
+        "posts_likely_incomplete": is_live and enrolled > 0 and creators_with_posts < enrolled * 0.01,
+    }
+
+
 def compute_data_quality(raw: RawData, summary: pd.DataFrame, *, is_live: bool) -> dict:
     """Diagnostics for live-mode gaps (posts vs enrollment, link-creation coverage)."""
     enrolled = len(raw.creators)

@@ -45,6 +45,7 @@ from creatoriq_dashboard.metrics import (  # noqa: E402
     classify_creators,
     combine_activity_timelines,
     compute_data_quality,
+    compute_data_quality_from_db,
     compute_email_segments,
     compute_kpis,
     compute_momentum,
@@ -53,6 +54,7 @@ from creatoriq_dashboard.metrics import (  # noqa: E402
     detect_spikes,
     resolve_date_range,
 )
+from creatoriq_dashboard.storage import get_engine, get_sync_status_map  # noqa: E402
 
 DATA_CACHE_TTL_SECONDS = 300
 
@@ -181,23 +183,49 @@ def render_sidebar_controls() -> dict:
     }
 
 
-def get_bundle() -> dict:
-    """Computes every derived table every page needs from the current
-    sidebar controls. Cheap on demo/mock-sized data, so this recomputes
-    fresh on every rerun rather than caching (caching would need the
-    date-range + threshold controls in the cache key anyway).
-    """
-    controls = render_sidebar_controls()
-    raw, sync_status = get_raw_data()
+def get_settings_context() -> dict:
+    """Lightweight data for the Data & Settings page — no full metric recompute."""
+    render_sidebar_controls()
+    config = get_config()
+    if config.is_demo:
+        raw, sync_status = get_raw_data()
+        controls = {
+            "range_start": pd.Timestamp.now(tz="UTC") - pd.Timedelta(days=30),
+            "range_end": pd.Timestamp.now(tz="UTC"),
+        }
+        summary = build_creator_summary(raw, controls["range_start"], controls["range_end"])
+        data_quality = compute_data_quality(raw, summary, is_live=False)
+        return {"sync_status": sync_status, "data_quality": data_quality}
 
-    range_start, range_end = controls["range_start"], controls["range_end"]
+    engine = get_engine(config.db_path)
+    return {
+        "sync_status": get_sync_status_map(engine),
+        "data_quality": compute_data_quality_from_db(engine, is_live=True),
+    }
+
+
+@st.cache_data(ttl=DATA_CACHE_TTL_SECONDS, show_spinner="Computing dashboard metrics...")
+def _compute_bundle(
+    _config_mode: str,
+    range_start_iso: str,
+    range_end_iso: str,
+    active_days: int,
+    went_dark_days: int,
+    sync_key: tuple[tuple[str, str], ...],
+) -> dict:
+    del sync_key  # bust cache when underlying sync timestamps change
+    config = get_config()
+    raw, sync_status = get_raw_data()
+    range_start = pd.Timestamp(range_start_iso)
+    range_end = pd.Timestamp(range_end_iso)
+
     summary = build_creator_summary(raw, range_start, range_end)
     events = build_activity_events(raw.posts, raw.links)
     classified = classify_creators(
         summary,
         events,
-        active_days=controls["active_days"],
-        went_dark_days=controls["went_dark_days"],
+        active_days=active_days,
+        went_dark_days=went_dark_days,
         range_start=range_start,
         range_end=range_end,
     )
@@ -207,7 +235,6 @@ def get_bundle() -> dict:
         links_in_range_total=int(summary["links_in_range"].sum()) if not summary.empty else 0,
     )
 
-    config = get_config()
     momentum_cfg = config.settings.get("momentum", default={}) or {}
     momentum = compute_momentum(
         raw,
@@ -241,17 +268,24 @@ def get_bundle() -> dict:
     struggle_segments = compute_struggle_segments(
         enriched,
         classified,
-        active_days=controls["active_days"],
-        went_dark_days=controls["went_dark_days"],
+        active_days=active_days,
+        went_dark_days=went_dark_days,
     )
     outreach_queue = build_outreach_queue(enriched, classified)
     activation_ctx = ActivationContext(
         summary=summary,
         classified=classified,
-        active_days=controls["active_days"],
-        went_dark_days=controls["went_dark_days"],
+        active_days=active_days,
+        went_dark_days=went_dark_days,
     )
     data_quality = compute_data_quality(raw, summary, is_live=not config.is_demo)
+
+    controls = {
+        "range_start": range_start,
+        "range_end": range_end,
+        "active_days": active_days,
+        "went_dark_days": went_dark_days,
+    }
 
     return {
         "controls": controls,
@@ -276,6 +310,25 @@ def get_bundle() -> dict:
         "timeline": timeline,
         "spikes": spikes,
     }
+
+
+def get_bundle() -> dict:
+    """Computes every derived table every page needs from the current
+    sidebar controls. Results are cached for a few minutes so 40k+ creator
+    datasets don't recompute on every sidebar interaction.
+    """
+    controls = render_sidebar_controls()
+    config = get_config()
+    _, sync_status = get_raw_data()
+    sync_key = tuple(sorted((k, v or "") for k, v in sync_status.items()))
+    return _compute_bundle(
+        config.mode,
+        controls["range_start"].isoformat(),
+        controls["range_end"].isoformat(),
+        controls["active_days"],
+        controls["went_dark_days"],
+        sync_key,
+    )
 
 
 def creator_display_columns(df: pd.DataFrame, columns: list[str]) -> pd.DataFrame:

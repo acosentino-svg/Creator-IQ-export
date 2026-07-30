@@ -130,3 +130,78 @@ def get_last_synced_at(engine: Engine, resource_name: str) -> str | None:
         return row[0] if row else None
     except Exception:  # noqa: BLE001 - table doesn't exist on first run
         return None
+
+
+SYNC_RESOURCES = (
+    "creators",
+    "campaigns",
+    "posts",
+    "links",
+    "link_clicks",
+    "email_events",
+    "active_member_links",
+)
+
+
+def get_sync_status_map(engine: Engine) -> dict[str, str | None]:
+    """Read last-sync timestamps without loading any data tables."""
+    return {name: get_last_synced_at(engine, name) for name in SYNC_RESOURCES}
+
+
+def count_table_rows(engine: Engine, table_name: str) -> int:
+    if table_name not in TABLES:
+        return 0
+    try:
+        with engine.begin() as conn:
+            row = conn.execute(text(f"SELECT COUNT(*) FROM {table_name}")).fetchone()
+        return int(row[0]) if row else 0
+    except Exception:  # noqa: BLE001 - table may not exist yet
+        return 0
+
+
+def count_distinct_column(engine: Engine, table_name: str, column: str) -> int:
+    if table_name not in TABLES:
+        return 0
+    try:
+        with engine.begin() as conn:
+            row = conn.execute(
+                text(f"SELECT COUNT(DISTINCT {column}) FROM {table_name} WHERE {column} IS NOT NULL")
+            ).fetchone()
+        return int(row[0]) if row else 0
+    except Exception:  # noqa: BLE001
+        return 0
+
+
+def count_enrolled_creators_with_posts(engine: Engine) -> int:
+    try:
+        with engine.begin() as conn:
+            row = conn.execute(
+                text(
+                    "SELECT COUNT(DISTINCT c.creator_id) FROM creators c "
+                    "INNER JOIN posts p ON c.creator_id = p.creator_id"
+                )
+            ).fetchone()
+        return int(row[0]) if row else 0
+    except Exception:  # noqa: BLE001
+        return 0
+
+
+def count_posted_without_link_creation(engine: Engine) -> int:
+    try:
+        with engine.begin() as conn:
+            row = conn.execute(
+                text(
+                    "SELECT COUNT(DISTINCT c.creator_id) FROM creators c "
+                    "INNER JOIN posts p ON c.creator_id = p.creator_id "
+                    "WHERE NOT EXISTS ("
+                    "  SELECT 1 FROM links l "
+                    "  WHERE l.creator_id = c.creator_id AND l.created_at IS NOT NULL"
+                    ") AND NOT EXISTS ("
+                    "  SELECT 1 FROM active_member_links aml "
+                    "  WHERE aml.creator_id = c.creator_id AND aml.last_link IS NOT NULL"
+                    ")"
+                )
+            ).fetchone()
+        return int(row[0]) if row else 0
+    except Exception:  # noqa: BLE001
+        return 0

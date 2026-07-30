@@ -15,7 +15,7 @@ import streamlit as st  # noqa: E402
 
 import pandas as pd  # noqa: E402
 
-from common import get_bundle, get_config  # noqa: E402
+from common import get_config, get_settings_context  # noqa: E402
 from creatoriq_dashboard.active_members import (  # noqa: E402
     merge_active_member_link_frames,
     parse_active_members_csv,
@@ -52,11 +52,11 @@ else:
     st.write(f"**API base URL:** `{config.base_url}`")
 
 st.subheader("Sync freshness")
-bundle = get_bundle()
-sync_status = bundle["sync_status"]
+settings_ctx = get_settings_context()
+sync_status = settings_ctx["sync_status"]
 st.table({"resource": list(sync_status.keys()), "last_synced_at": list(sync_status.values())})
 
-dq = bundle.get("data_quality", {})
+dq = settings_ctx.get("data_quality", {})
 if not config.is_demo:
     st.subheader("Data coverage (live)")
     st.markdown(
