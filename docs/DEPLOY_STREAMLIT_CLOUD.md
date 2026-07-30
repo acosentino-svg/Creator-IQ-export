@@ -29,8 +29,8 @@ Click **Sign in** → sign in with **GitHub** (same account that can see the rep
 
 1. Click **Create app** (or **New app**).
 2. **Repository:** `acosentino-svg/Creator-IQ-export`
-3. **Branch:** `cursor/internal-activation-dashboard-4859`
-4. **Main file path:** `app/streamlit_app.py`
+3. **Branch:** `main` (recommended) or `cursor/internal-activation-dashboard-4859`
+4. **Main file path:** `streamlit_app.py` (repo root) **or** `app/streamlit_app.py` — both work
 5. Click **Deploy**.
 
 Wait 2–5 minutes while it builds.
