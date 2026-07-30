@@ -1,0 +1,95 @@
+# Tunable business rules for the activation dashboard.
+#
+# `activation.active_days` and `activation.went_dark_days` are also exposed
+# as live controls in the app's sidebar (see app/common.py) so a program
+# manager can adjust them without touching a config file -- these YAML
+# values are just the defaults used the first time the app loads.
+
+activation:
+  # A creator counts as "Active" if they posted or created a trackable link
+  # within this many days.
+  active_days: 30
+  # A creator who previously had activity but has been quiet for at least
+  # this many days is flagged "Went Dark".
+  went_dark_days: 60
+  # Rolling window (days) used to decide whether a creator's *first-ever*
+  # post/link falls inside the selected date range for "Newly Activated".
+  # (The date range itself is chosen live in the sidebar; this is just a
+  # fallback for pages that don't use the global date range.)
+  default_lookback_days: 30
+
+momentum:
+  # "This week" window used on the Momentum page.
+  recent_window_days: 7
+  # Trailing baseline window (days) used to compute each creator's normal
+  # activity level for comparison.
+  baseline_window_days: 28
+  # Minimum absolute count required before a creator/day can be flagged as
+  # a spike (avoids flagging "2 vs 0" as a huge spike for quiet creators).
+  min_count_for_spike: 3
+  # Spike percentage threshold (vs. historical average) to be listed on the
+  # Momentum page.
+  spike_percentage_threshold: 75
+
+email_engagement:
+  # A creator's email engagement is "healthy" if they opened at least one
+  # email in the trailing window below.
+  recent_open_window_days: 30
+
+alerts:
+  # Post a weekly digest (needs-attention creators + spikes) to Slack if
+  # SLACK_WEBHOOK_URL is configured.
+  weekly_digest_enabled: true
+
+live_sync:
+  # Safety limits for pulling from the real CreatorIQ API (see
+  # src/creatoriq_dashboard/etl.py), used once CREATORIQ_DASHBOARD_MODE is
+  # switched from "demo" to "live". CreatorIQ accounts can have hundreds of
+  # campaigns and each one requires its own API calls (roster + posts), so
+  # start small.
+  #
+  # Only sync campaigns matching these statuses (set to [] to sync all).
+  campaign_status_filter: ["Active"]
+  # Cap how many campaigns get synced per run (null = all matching campaigns).
+  # Was 10 for safety during first connect — raise or set null for full post coverage.
+  max_campaigns: null
+  # When max_campaigns is set, campaigns whose names contain these terms sync first
+  # (e.g. affiliate program posts).
+  priority_campaign_name_contains:
+    - affiliate
+    - Affiliate
+  # Program enrollment in CreatorIQ = publishers with this Status (~42k Active).
+  enrolled_status_filter: "Active"
+  # Pages of /publishers to pull (100 creators/page). 450 pages ≈ 45k enrolled.
+  max_publisher_pages: 450
+  # Whether to resolve each creator's NetworkPublisherId via an extra
+  # /publishers?filter= lookup when it wasn't already available from a post
+  # (needed to fetch that creator's email/messages). Costs one extra API
+  # call per creator who hasn't posted yet.
+  resolve_missing_network_ids: true
+  # Cap on total per-creator email/message lookups per run (each is 1-2 API
+  # calls: optional ID resolution + the messages fetch). null = no cap.
+  max_email_lookups: 300
+  # Per-creator lookups for trackable link *creation* events (Link Generator).
+  # Requires publisher_trackable_links in config/endpoints.yaml — ask CreatorIQ
+  # for the correct path for your account. 0 = skip (link-creation metrics unavailable).
+  max_link_lookups: 0
+  # Pull Active Members / Creators report via CRM API (apis.creatoriq.com) for
+  # last link created dates. Uses same CREATORIQ_API_KEY with x-api-key header.
+  active_members_report:
+    enabled: false
+    # Tried in order until one returns rows with link dates.
+    view_candidates:
+      - Reports/ActiveMembers
+      - Reports/ActiveMembersReport
+      - Reports/Creators
+      - Reports/GetCreatorsReport
+    page_size: 500
+    max_pages: 20
+    poll_interval_seconds: 3
+    poll_timeout_seconds: 120
+  # Used by scripts/refresh_data.py --quick (Streamlit Cloud button).
+  cloud_safe:
+    max_campaigns: 5
+    max_publisher_pages: 5
+    max_email_lookups: 50

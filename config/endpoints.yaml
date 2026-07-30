@@ -1,0 +1,89 @@
+# CreatorIQ REST endpoint configuration.
+#
+# Verified live against a real CreatorIQ account (2026-07). CreatorIQ's own
+# API reference (https://apidocs.creatoriq.com) is gated behind an account
+# login, and its resources are genuinely inconsistent in shape (some list
+# endpoints return a JSON array, others return an object keyed by string
+# indices; pagination metadata lives in different places depending on the
+# resource). The paths/keys below match what a live account actually
+# returned -- if your account differs, this is the file to edit (the client
+# in src/creatoriq_dashboard/api_client.py reads these, no Python changes
+# needed).
+#
+# Set CREATORIQ_BASE_URL=https://api.creatoriq.com/api in .env (note the
+# /api suffix -- that's where this account's real endpoints live).
+
+pagination:
+  # Used by the three "flat, top-level list" resources below (publishers,
+  # campaigns, publisher_messages): a {count, total, page, "<Key>": [...]}
+  # envelope, paginated by incrementing ?page= until a short/empty page.
+  # NOTE: the page-size query param is confirmed to be `size` on this
+  # account (not the more common `page_size`/`limit`/`per_page` -- all of
+  # which are silently ignored and fall back to a default page size of 20).
+  style: page
+  page_param: page
+  page_size_param: size
+  page_size: 100
+  total_pages_path: total_pages # present on /campaigns; absent (silently ignored) elsewhere -- generic stop-when-short-page logic covers those
+
+resources:
+  # --- Flat, top-level list resources (generic page-until-short pagination) ---
+
+  publishers:
+    description: "Search/list creators in CreatorIQ's Publisher CRM (your roster + prospects)."
+    path: /publishers
+    method: GET
+    results_path: PublisherCollection
+    item_unwrap_key: Publisher # each item is {"type":"Publisher","href":"...","Publisher": {...fields}}
+
+  campaigns:
+    description: "Campaigns / activations creators are briefed on."
+    path: /campaigns
+    method: GET
+    results_path: CampaignCollection
+    item_unwrap_key: Campaign
+
+  publisher_messages:
+    description: "CreatorIQ in-platform Message Center thread for one creator (per NetworkPublisherId)."
+    path: /publisher/{network_publisher_id}/messages
+    method: GET
+    results_path: MessagesCollection
+    item_unwrap_key: Message
+
+  # --- Nested-pagination resource: pagination metadata lives *inside* the
+  # response wrapper instead of at the top level. ---
+
+  campaign_activity:
+    description: "Social posts + their metrics for one campaign (per CampaignId). This is the 'posts' source of truth."
+    path: /campaign/{campaign_id}/activity
+    method: GET
+    wrapper_key: CampaignActivity
+    items_key: items
+    pagination_key: pagination
+    page_param: page
+    page_size_param: size
+    page_size: 100
+
+  # --- Single-fetch resources: no real pagination (either the endpoint
+  # ignores ?page= and always returns everything, or it's a single object). ---
+
+  campaign_publishers:
+    description: "Roster of creators briefed/accepted/applied to one campaign, with per-creator campaign status."
+    path: /campaign/{campaign_id}/publishers
+    method: GET
+    results_path: CampaignPublisher # object keyed by string indices ("0","1",...), not a JSON array
+
+  publisher_summary:
+    description: "Single creator's full CRM profile, including email address and contact/demographic fields."
+    path: /publisher/{network_publisher_id}/summary
+    method: GET
+    result_key: Summary
+
+  # Optional — confirm the path with CreatorIQ before enabling max_link_lookups.
+  # Used for "posted but never linked" / link-creation activation metrics.
+  # publisher_trackable_links:
+  #   description: "Trackable/affiliate links a creator generated via Link Generator."
+  #   path: /publisher/{network_publisher_id}/trackablelinks
+  #   method: GET
+  #   results_path: TrackableLinkCollection
+  #   item_unwrap_key: TrackableLink
