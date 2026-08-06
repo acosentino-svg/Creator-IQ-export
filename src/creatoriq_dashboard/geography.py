@@ -129,7 +129,7 @@ def normalize_us_state(value: object) -> str | None:
     return None
 
 
-def enrich_creator_locations(creators: pd.DataFrame) -> pd.DataFrame:
+def enrich_creator_locations(creators: pd.DataFrame, us_only_program: bool = False) -> pd.DataFrame:
     """Add normalized country/state columns used by geography charts."""
     if creators.empty:
         return creators.copy()
@@ -138,26 +138,51 @@ def enrich_creator_locations(creators: pd.DataFrame) -> pd.DataFrame:
     state_src = out["state"] if "state" in out.columns else pd.Series([None] * len(out), index=out.index)
     out["country_normalized"] = country_src.map(normalize_country)
     out["state_normalized"] = state_src.map(normalize_us_state)
+    if us_only_program:
+        missing_country = out["country_normalized"].isna()
+        out.loc[missing_country, "country_normalized"] = "United States"
     return out
 
 
-def location_coverage(creators: pd.DataFrame) -> dict[str, int]:
-    enriched = enrich_creator_locations(creators)
+def is_us_only_program(creators: pd.DataFrame, us_only_program: bool = False) -> bool:
+    """True when config says US-only or data shows only US (or blank) countries."""
+    if us_only_program:
+        return True
+    enriched = enrich_creator_locations(creators, us_only_program=False)
+    with_country = enriched["country_normalized"].dropna()
+    if with_country.empty:
+        return False
+    non_us = with_country[with_country != "United States"]
+    return len(non_us) == 0
+
+
+def location_coverage(creators: pd.DataFrame, us_only_program: bool = False) -> dict[str, int]:
+    enriched = enrich_creator_locations(creators, us_only_program=us_only_program)
     total = len(enriched)
     with_country = int(enriched["country_normalized"].notna().sum()) if total else 0
     us_mask = enriched["country_normalized"] == "United States" if total else pd.Series(dtype=bool)
     us_total = int(us_mask.sum()) if total else 0
-    with_state = int(enriched.loc[us_mask, "state_normalized"].notna().sum()) if us_total else 0
+    if us_only_program and total:
+        us_total = total
+    with_state = int(enriched["state_normalized"].notna().sum()) if total else 0
+    if us_only_program and total:
+        with_state_us = with_state
+        missing_state_us = total - with_state
+    else:
+        with_state_us = int(enriched.loc[us_mask, "state_normalized"].notna().sum()) if us_total else 0
+        missing_state_us = us_total - with_state_us
     with_city = 0
     if total and "city" in enriched.columns:
         with_city = int(enriched["city"].map(_clean_text).notna().sum())
     return {
         "total": total,
         "with_country": with_country,
-        "with_state_us": with_state,
+        "with_state_us": with_state_us,
         "with_city": with_city,
         "us_creators": us_total,
         "missing_country": total - with_country,
+        "missing_state_us": missing_state_us,
+        "us_only": is_us_only_program(creators, us_only_program=us_only_program),
     }
 
 
@@ -175,13 +200,16 @@ def aggregate_by_country(creators: pd.DataFrame) -> pd.DataFrame:
     return grouped.reset_index(drop=True)
 
 
-def aggregate_by_us_state(creators: pd.DataFrame) -> pd.DataFrame:
-    enriched = enrich_creator_locations(creators)
+def aggregate_by_us_state(creators: pd.DataFrame, us_only_program: bool = False) -> pd.DataFrame:
+    enriched = enrich_creator_locations(creators, us_only_program=us_only_program)
     if enriched.empty:
         return pd.DataFrame(columns=["state", "creators"])
-    us = enriched[enriched["country_normalized"] == "United States"].copy()
+    if us_only_program or is_us_only_program(creators, us_only_program=False):
+        pool = enriched
+    else:
+        pool = enriched[enriched["country_normalized"] == "United States"].copy()
     grouped = (
-        us.dropna(subset=["state_normalized"])
+        pool.dropna(subset=["state_normalized"])
         .groupby("state_normalized", as_index=False)
         .size()
         .rename(columns={"state_normalized": "state", "size": "creators"})

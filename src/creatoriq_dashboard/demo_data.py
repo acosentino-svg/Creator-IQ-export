@@ -19,19 +19,6 @@ PLATFORMS = ["Instagram", "TikTok", "YouTube", "Pinterest"]
 POST_TYPES = ["Reel", "Static Post", "Story", "Video"]
 STATUSES = ["Accepted", "Applied", "Pending"]
 
-DEMO_COUNTRIES = [
-    ("United States", 0.72),
-    ("Canada", 0.08),
-    ("United Kingdom", 0.06),
-    ("Australia", 0.04),
-    ("Germany", 0.03),
-    ("France", 0.02),
-    ("Mexico", 0.02),
-    ("India", 0.02),
-    ("Brazil", 0.02),
-    ("Other", 0.03),
-]
-
 DEMO_US_STATES = [
     ("CA", 0.12),
     ("TX", 0.10),
@@ -195,22 +182,8 @@ def generate_demo_data(n_creators: int = 220, days_of_history: int = 150, seed: 
         name = f"{first} {last}"
         n_tags = rng.integers(1, 4)
         tags = sorted(set(rng.choice(TAG_POOL, size=n_tags, replace=False).tolist()))
-        country = _weighted_choice(rng, DEMO_COUNTRIES)
-        if country == "Other":
-            country = rng.choice(["Spain", "Italy", "Netherlands", "Philippines", "Japan"])
-        state = ""
-        city = ""
-        if country == "United States":
-            state = _weighted_choice(rng, DEMO_US_STATES)
-            city = rng.choice(DEMO_CITIES.get(state, ["Springfield", "Riverside", "Franklin"]))
-        elif country == "Canada":
-            state = rng.choice(["ON", "BC", "AB", "QC"])
-            city = rng.choice(["Toronto", "Vancouver", "Calgary", "Montreal"])
-        elif country == "United Kingdom":
-            city = rng.choice(["London", "Manchester", "Birmingham", "Leeds"])
-        elif country == "Australia":
-            state = rng.choice(["NSW", "VIC", "QLD", "WA"])
-            city = rng.choice(["Sydney", "Melbourne", "Brisbane", "Perth"])
+        state = _weighted_choice(rng, DEMO_US_STATES)
+        city = rng.choice(DEMO_CITIES.get(state, ["Springfield", "Riverside", "Franklin"]))
         creator_rows.append(
             {
                 "creator_id": f"cr_{i:04d}",
@@ -221,7 +194,7 @@ def generate_demo_data(n_creators: int = 220, days_of_history: int = 150, seed: 
                 "tier": tiers[i],
                 "tags": ", ".join(tags),
                 "joined_date": now - pd.Timedelta(days=int(joined_offsets[i])),
-                "country": country,
+                "country": "United States",
                 "state": state,
                 "city": city,
                 "_archetype": archetypes[i],

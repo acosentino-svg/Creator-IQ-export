@@ -41,6 +41,11 @@ alerts:
   # SLACK_WEBHOOK_URL is configured.
   weekly_digest_enabled: true
 
+geography:
+  # US-only creator program — geography page defaults to state map and counts
+  # all enrolled creators as US (even when Country is blank in CRM).
+  us_only_program: true
+
 live_sync:
   # Safety limits for pulling from the real CreatorIQ API (see
   # src/creatoriq_dashboard/etl.py), used once CREATORIQ_DASHBOARD_MODE is

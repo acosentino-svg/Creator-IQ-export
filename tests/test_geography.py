@@ -5,6 +5,7 @@ import pandas as pd
 from creatoriq_dashboard.geography import (
     aggregate_by_country,
     aggregate_by_us_state,
+    is_us_only_program,
     location_coverage,
     normalize_country,
     normalize_us_state,
@@ -56,3 +57,28 @@ def test_location_coverage():
     assert cov["us_creators"] == 2
     assert cov["with_state_us"] == 1
     assert cov["with_city"] == 1
+
+    cov_us = location_coverage(creators, us_only_program=True)
+    assert cov_us["us_creators"] == 3
+    assert cov_us["us_only"] is True
+    assert cov_us["missing_state_us"] == 2
+
+
+def test_us_only_state_aggregation_includes_blank_country():
+    creators = pd.DataFrame(
+        [
+            {"country": "", "state": "CA", "city": "LA"},
+            {"country": "United States", "state": "TX", "city": "Dallas"},
+        ]
+    )
+    counts = aggregate_by_us_state(creators, us_only_program=True)
+    assert counts["creators"].sum() == 2
+    assert set(counts["state"]) == {"CA", "TX"}
+
+
+def test_is_us_only_program_detection():
+    us_only = pd.DataFrame([{"country": "US", "state": "CA"}, {"country": "United States", "state": "TX"}])
+    mixed = pd.DataFrame([{"country": "US", "state": "CA"}, {"country": "Canada", "state": "ON"}])
+    assert is_us_only_program(us_only) is True
+    assert is_us_only_program(mixed) is False
+    assert is_us_only_program(mixed, us_only_program=True) is True
