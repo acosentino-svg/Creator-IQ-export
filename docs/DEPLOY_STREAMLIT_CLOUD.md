@@ -35,6 +35,8 @@ Click **Sign in** → sign in with **GitHub** (same account that can see the rep
 
 Wait 2–5 minutes while it builds.
 
+**Important:** In app **Settings → General**, set **Python version** to **3.12** (not 3.14). Wrong Python versions can cause `ModuleNotFoundError: plotly` on deploy.
+
 ---
 
 ### 3. You get a link
@@ -86,16 +88,9 @@ Then set up a scheduled job to refresh data (ask someone technical, or we can ad
 
 ## If deploy fails or a page spins forever
 
-1. Confirm branch is **`cursor/internal-activation-dashboard-4859`** (or **`main`** after PR #7 is merged).
-2. Confirm main file is **`app/streamlit_app.py`** exactly.
-3. **Reboot the app:** Streamlit Cloud → lower-right **Manage app** → **Reboot app** (clears a stuck sync).
-4. On **Data & Settings**, use **Quick sync** first — **not** Full sync. A full ~42k pull can run for **many hours** and looks like the page is frozen.
-5. Check the build log on Streamlit for red errors — send a screenshot to your technical contact or this chat.
-
----
-
-## Optional: merge the PR first
-
-If you **merge PR #7** on GitHub into `main`, you can deploy from branch **`main`** instead so you don't need the long branch name.
-
-PR: https://github.com/acosentino-svg/Creator-IQ-export/pull/7
+1. Confirm branch is **`main`** (after PR #8 merge).
+2. Confirm main file is **`streamlit_app.py`** (repo root) or **`app/streamlit_app.py`**.
+3. **Settings → General → Python version = 3.12** (not 3.14 — fixes many `ModuleNotFoundError` including plotly).
+4. **Manage app → Reboot app** (or **Clear cache and reboot**).
+5. If you see **`ModuleNotFoundError: plotly`**, merge the latest `main` (includes `requirements.txt` fix) and reboot again.
+6. On **Data & Settings**, use **Quick sync** or **GitHub Actions + warehouse.db upload** — not a full browser sync for 43k.
