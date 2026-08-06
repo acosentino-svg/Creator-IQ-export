@@ -28,7 +28,7 @@ function extractSpreadsheetId_(urlOrId) {
 
 /**
  * The Names tab lives in this spreadsheet, or in EXTERNAL_NAMES_SHEET_ID if set.
- * Returns null (never throws) if the tab doesn't exist yet.
+ * Returns null (never throws) if the tab does not exist yet.
  */
 function getNamesLookupSheet_() {
   try {
@@ -36,7 +36,8 @@ function getNamesLookupSheet_() {
     const local = ss.getSheetByName(NAMES_LOOKUP_SHEET_NAME);
     if (local) return local;
     if (EXTERNAL_NAMES_SHEET_ID) {
-      ss = SpreadsheetApp.openById(extractSpreadsheetId_(EXTERNAL_NAMES_SHEET_ID));
+      const namesFileId = extractSpreadsheetId_(EXTERNAL_NAMES_SHEET_ID);
+      ss = SpreadsheetApp.openById(namesFileId);
       return ss.getSheetByName(NAMES_LOOKUP_SHEET_NAME) || null;
     }
     return null;
