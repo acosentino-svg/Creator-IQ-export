@@ -14,7 +14,9 @@ This is **not** the activation dashboard. It only shows:
 4. **Main file path:** `app/geography_standalone/streamlit_app.py`
    - Do **not** use `streamlit_app.py` (that is the activation dashboard)
 5. Python version: **3.12**
-6. Secrets (same as activation app):
+6. After deploy: **Manage app → Reboot app** if you see a plotly error
+
+If the app still errors on plotly, open **Logs** and confirm the build installed `plotly==5.24.1`. The app also auto-installs plotly on first load as a fallback.
 
 ```toml
 CREATORIQ_DASHBOARD_MODE = "live"

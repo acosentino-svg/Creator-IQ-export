@@ -11,6 +11,10 @@ for path in (str(APP_DIR), str(REPO_ROOT / "app"), str(SRC_DIR)):
     if path not in sys.path:
         sys.path.insert(0, path)
 
+from creatoriq_dashboard.bootstrap import ensure_plotly  # noqa: E402
+
+ensure_plotly()
+
 import plotly.express as px  # noqa: E402
 import streamlit as st  # noqa: E402
 
