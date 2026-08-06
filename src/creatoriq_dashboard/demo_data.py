@@ -19,6 +19,86 @@ PLATFORMS = ["Instagram", "TikTok", "YouTube", "Pinterest"]
 POST_TYPES = ["Reel", "Static Post", "Story", "Video"]
 STATUSES = ["Accepted", "Applied", "Pending"]
 
+DEMO_COUNTRIES = [
+    ("United States", 0.72),
+    ("Canada", 0.08),
+    ("United Kingdom", 0.06),
+    ("Australia", 0.04),
+    ("Germany", 0.03),
+    ("France", 0.02),
+    ("Mexico", 0.02),
+    ("India", 0.02),
+    ("Brazil", 0.02),
+    ("Other", 0.03),
+]
+
+DEMO_US_STATES = [
+    ("CA", 0.12),
+    ("TX", 0.10),
+    ("NY", 0.09),
+    ("FL", 0.08),
+    ("IL", 0.05),
+    ("PA", 0.05),
+    ("OH", 0.04),
+    ("GA", 0.04),
+    ("NC", 0.04),
+    ("MI", 0.03),
+    ("NJ", 0.03),
+    ("VA", 0.03),
+    ("WA", 0.03),
+    ("AZ", 0.03),
+    ("MA", 0.03),
+    ("CO", 0.02),
+    ("TN", 0.02),
+    ("IN", 0.02),
+    ("MO", 0.02),
+    ("MD", 0.02),
+    ("WI", 0.02),
+    ("MN", 0.02),
+    ("SC", 0.02),
+    ("AL", 0.01),
+    ("LA", 0.01),
+    ("KY", 0.01),
+    ("OR", 0.01),
+    ("OK", 0.01),
+    ("CT", 0.01),
+    ("UT", 0.01),
+    ("IA", 0.01),
+    ("NV", 0.01),
+    ("AR", 0.01),
+    ("MS", 0.01),
+    ("KS", 0.01),
+    ("NM", 0.01),
+    ("NE", 0.01),
+    ("ID", 0.01),
+    ("WV", 0.01),
+    ("HI", 0.01),
+    ("NH", 0.01),
+    ("ME", 0.01),
+    ("MT", 0.01),
+    ("RI", 0.01),
+    ("DE", 0.01),
+    ("SD", 0.01),
+    ("ND", 0.01),
+    ("AK", 0.01),
+    ("VT", 0.01),
+    ("WY", 0.01),
+    ("DC", 0.01),
+]
+
+DEMO_CITIES = {
+    "CA": ["Los Angeles", "San Francisco", "San Diego", "Sacramento"],
+    "TX": ["Houston", "Dallas", "Austin", "San Antonio"],
+    "NY": ["New York", "Buffalo", "Rochester", "Albany"],
+    "FL": ["Miami", "Tampa", "Orlando", "Jacksonville"],
+    "IL": ["Chicago", "Springfield", "Naperville"],
+    "PA": ["Philadelphia", "Pittsburgh", "Harrisburg"],
+    "OH": ["Columbus", "Cleveland", "Cincinnati"],
+    "GA": ["Atlanta", "Savannah", "Augusta"],
+    "NC": ["Charlotte", "Raleigh", "Durham"],
+    "MI": ["Detroit", "Grand Rapids", "Ann Arbor"],
+}
+
 TAG_POOL = [
     "Home & Garden",
     "Beauty",
@@ -79,6 +159,13 @@ def _slugify(name: str, idx: int) -> str:
     return f"@{base}{idx % 97}"
 
 
+def _weighted_choice(rng: np.random.Generator, options: list[tuple[str, float]]) -> str:
+    labels = [label for label, _ in options]
+    weights = np.array([weight for _, weight in options], dtype=float)
+    weights = weights / weights.sum()
+    return labels[int(rng.choice(len(labels), p=weights))]
+
+
 def generate_demo_data(n_creators: int = 220, days_of_history: int = 150, seed: int = 42) -> DemoData:
     rng = np.random.default_rng(seed)
     now = pd.Timestamp.now(tz="UTC").normalize()
@@ -108,6 +195,22 @@ def generate_demo_data(n_creators: int = 220, days_of_history: int = 150, seed: 
         name = f"{first} {last}"
         n_tags = rng.integers(1, 4)
         tags = sorted(set(rng.choice(TAG_POOL, size=n_tags, replace=False).tolist()))
+        country = _weighted_choice(rng, DEMO_COUNTRIES)
+        if country == "Other":
+            country = rng.choice(["Spain", "Italy", "Netherlands", "Philippines", "Japan"])
+        state = ""
+        city = ""
+        if country == "United States":
+            state = _weighted_choice(rng, DEMO_US_STATES)
+            city = rng.choice(DEMO_CITIES.get(state, ["Springfield", "Riverside", "Franklin"]))
+        elif country == "Canada":
+            state = rng.choice(["ON", "BC", "AB", "QC"])
+            city = rng.choice(["Toronto", "Vancouver", "Calgary", "Montreal"])
+        elif country == "United Kingdom":
+            city = rng.choice(["London", "Manchester", "Birmingham", "Leeds"])
+        elif country == "Australia":
+            state = rng.choice(["NSW", "VIC", "QLD", "WA"])
+            city = rng.choice(["Sydney", "Melbourne", "Brisbane", "Perth"])
         creator_rows.append(
             {
                 "creator_id": f"cr_{i:04d}",
@@ -118,6 +221,9 @@ def generate_demo_data(n_creators: int = 220, days_of_history: int = 150, seed: 
                 "tier": tiers[i],
                 "tags": ", ".join(tags),
                 "joined_date": now - pd.Timedelta(days=int(joined_offsets[i])),
+                "country": country,
+                "state": state,
+                "city": city,
                 "_archetype": archetypes[i],
             }
         )
