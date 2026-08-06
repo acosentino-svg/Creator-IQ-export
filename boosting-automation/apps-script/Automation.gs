@@ -1,58 +1,51 @@
 /**
  * Automation.gs
- * Menu + the five process steps from the walkthrough, translated into code.
- * Run these from the "Boosting Automation" menu that appears when the
- * spreadsheet opens (see onOpen below).
- *
- * How a brand-new creator's info flows through the sheets:
- *   1. First time seen -> a row appears in the New Boosted Creators sheet
- *      (Handle, Name if CreatorIQ has it, Pieces, Amount, blank Email, Links).
- *      Nothing is written to the Gift Card Tracker yet.
- *   2. More content from the same still-unconfirmed creator, before you have
- *      an email -> that SAME row's pieces/amount/links get updated in place
- *      (no duplicate row), and its draft message is cleared so it gets
- *      redrafted with the new numbers.
- *   3. You type their confirmed email into that row's Email Address cell.
- *   4. Next sync (or the next automatic hourly run) notices the email,
- *      copies that row into the Gift Card Tracker as a real, final row, and
- *      marks it "Added to Tracker?" so it's never copied twice.
- *   5. Any further content from that creator this month is now a normal
- *      follow-up, updating their real tracker row directly.
+ * Menu + boosting workflow. New content flows:
+ *   Boosting Tracker -> Outreach Queue (draft emails) -> CreatorIQ send ->
+ *   confirmed email entered -> Gift Card month tab.
  */
 
 function onOpen() {
   SpreadsheetApp.getUi()
     .createMenu('Boosting Automation')
-    .addItem('1. Start new month (Step 0)', 'startNewMonth')
+    .addItem('Monday check (queue + draft emails)', 'mondayCheck')
+    .addItem('Promote confirmed emails to Gift Card Tracker', 'promoteConfirmedNewCreators_')
     .addSeparator()
-    .addItem('2. Sync new content -> gift card tracker + message sheets (Steps 2 & 4)', 'syncBoostingTracker')
-    .addItem('2b. Promote confirmed emails to Gift Card Tracker', 'promoteConfirmedNewCreators_')
+    .addItem('1. Start new month (gift card tab)', 'startNewMonth')
+    .addItem('2. End-of-month export (Step 5)', 'exportEndOfMonth')
     .addSeparator()
-    .addItem('3a. Draft messages: New Creators sheet', 'draftNewCreatorMessages')
-    .addItem('3b. Draft messages: Follow-Up sheet', 'draftFollowUpMessages')
-    .addSeparator()
-    .addItem('4. End-of-month export + completeness check (Step 5)', 'exportEndOfMonth')
-    .addSeparator()
-    .addItem('Run sync + draft now and email me a summary', 'runScheduledSync')
-    .addItem('Turn ON automatic hourly sync (replaces "checking daily")', 'enableAutoSync')
+    .addItem('Redraft outreach queue', 'draftOutreachMessages')
+    .addItem('Turn ON automatic weekly sync', 'enableAutoSync')
     .addItem('Turn OFF automatic sync', 'disableAutoSync')
     .addSeparator()
-    .addItem('Setup: Set Gemini API key (optional, polish only)', 'setGeminiApiKey_')
-    .addItem('Setup: Set CreatorIQ API key', 'setCreatorIQApiKey_')
-    .addItem('Setup: Test CreatorIQ connection (diagnostic)', 'testCreatorIQConnection_')
     .addItem('Setup: Test Names lookup (diagnostic)', 'testNameLookup_')
     .addItem('Setup: Test draft readiness (diagnostic)', 'testDraftReadiness_')
-    .addItem('Setup: Fill missing names from "Names" tab (one-time)', 'fillMissingNamesFromLookup')
+    .addItem('Setup: Fill missing names from "Names" tab', 'fillMissingNamesFromLookup')
     .addItem('Setup: Choose active gift card month', 'chooseActiveGiftCardMonth_')
     .addToUi();
+}
+
+/** One click: scan tracker, fill Outreach Queue, draft all emails, open that tab. */
+function mondayCheck() {
+  const summary = syncBoostingTracker(true);
+  draftOutreachMessages(true);
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const queue = ss.getSheetByName(SHEET_NAMES.OUTREACH_QUEUE);
+  if (queue) ss.setActiveSheet(queue);
+  if (!summary) return;
+  toast_(
+    'Monday check done: ' + summary.queued + ' video(s) queued, ' +
+    summary.outreachRows + ' email(s) on Outreach Queue, ' +
+    summary.promoted + ' promoted to gift card tracker.'
+  );
 }
 
 const AUTO_SYNC_HANDLER = 'runScheduledSync';
 
 function enableAutoSync() {
   disableAutoSync();
-  ScriptApp.newTrigger(AUTO_SYNC_HANDLER).timeBased().everyHours(1).create();
-  SpreadsheetApp.getUi().alert('Automatic hourly sync is ON. You will get an email summary whenever there is something new to review.');
+  ScriptApp.newTrigger(AUTO_SYNC_HANDLER).timeBased().onWeekDay(ScriptApp.WeekDay.MONDAY).atHour(8).create();
+  SpreadsheetApp.getUi().alert('Automatic Monday 8am sync is ON. Run Monday check from the menu anytime.');
 }
 
 function disableAutoSync() {
@@ -62,26 +55,7 @@ function disableAutoSync() {
 }
 
 function runScheduledSync() {
-  const summary = syncBoostingTracker(true);
-  draftNewCreatorMessages();
-  draftFollowUpMessages();
-
-  if (!summary) return;
-  const nothingHappened = summary.queued === 0 && summary.dupesFixed === 0 && summary.promoted === 0;
-  if (nothingHappened) return;
-
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
-  const body =
-    'Boosting Tracker sync just ran automatically:\n\n' +
-    '- ' + summary.newCreators + ' brand-new/updated creator row(s) in the New Boosted Creators sheet\n' +
-    '- ' + summary.followUps + ' follow-up piece(s) queued (Follow-Up sheet)\n' +
-    '- ' + summary.promoted + ' creator(s) moved into the Gift Card Tracker (their email was confirmed)\n' +
-    '- ' + summary.dupesFixed + ' dupe(s) auto-filled from the original entry (worth a quick Ctrl+F spot-check)\n\n' +
-    'Messages have been drafted in both message sheets - review and send from CreatorIQ, ' +
-    'then check "Sent?" on each row.\n\n' +
-    'Open the tracker: ' + ss.getUrl();
-
-  MailApp.sendEmail(Session.getActiveUser().getEmail(), 'Boosting Tracker: new content ready to review', body);
+  mondayCheck();
 }
 
 function startNewMonth() {
@@ -157,20 +131,22 @@ function chooseActiveGiftCardMonth_() {
 }
 
 /**
- * Looks at the New Boosted Creators sheet for any row that now has an email
- * address but hasn't been copied into the Gift Card Tracker yet, and copies
- * it over as a real, final row there. This is the ONLY thing that ever adds
- * a brand-new creator to the tracker - it happens because a human filled in
- * an email, never just because new content showed up.
+ * Copies Outreach Queue rows (Type = New) with a confirmed email into the
+ * active gift card month tab. This is the only way a brand-new creator lands
+ * on the gift card tracker.
  */
 function promoteConfirmedNewCreators_(showToast) {
-  if (showToast === undefined) showToast = true; // default true when run from the menu directly
-  const msgSheet = getSheet_(SHEET_NAMES.NEW_CREATORS_MSG);
-  ensureColumn_(msgSheet, HEADER_ROW.NEW_CREATORS_MSG, PROMOTED_COLUMN_HEADER);
+  if (showToast === undefined) showToast = true;
+  const queueSheet = getOutreachQueueSheet_();
   const promotedKey = normalizeHeader_(PROMOTED_COLUMN_HEADER);
-  const read = readFlatSheetRows_(msgSheet, HEADER_ROW.NEW_CREATORS_MSG);
+  const typeKey = normalizeHeader_(TYPE_COLUMN_HEADER);
+  const read = readFlatSheetRows_(queueSheet, HEADER_ROW.OUTREACH_QUEUE);
 
-  const toPromote = read.rows.filter((r) => String(r['email address'] || '').trim() !== '' && !r[promotedKey]);
+  const toPromote = read.rows.filter((r) =>
+    String(r[typeKey] || '').trim() === OUTREACH_TYPE_NEW &&
+    String(r['email address'] || '').trim() !== '' &&
+    !r[promotedKey]
+  );
   if (!toPromote.length) {
     if (showToast) toast_('No newly-confirmed emails to promote yet.');
     return { promoted: 0 };
@@ -197,8 +173,7 @@ function promoteConfirmedNewCreators_(showToast) {
   toPromote.forEach((r) => {
     const handleKey = normalizeHandle_(r['creator handle']);
     if (existingHandles[handleKey]) {
-      // Already has a real row somehow (e.g. added by hand) - don't duplicate, just mark it done.
-      msgSheet.getRange(r._sheetRow, read.headerIndex[promotedKey] + 1).setValue(true);
+      queueSheet.getRange(r._sheetRow, read.headerIndex[promotedKey] + 1).setValue(true);
       return;
     }
     const targetRow = nextEmptyRow++;
@@ -208,7 +183,7 @@ function promoteConfirmedNewCreators_(showToast) {
     giftSheet.getRange(targetRow, newPiecesCol).setValue(r['new pieces of content used']);
     if (emailCol !== -1) giftSheet.getRange(targetRow, emailCol).setValue(r['email address']);
     existingHandles[handleKey] = true;
-    msgSheet.getRange(r._sheetRow, read.headerIndex[promotedKey] + 1).setValue(true);
+    queueSheet.getRange(r._sheetRow, read.headerIndex[promotedKey] + 1).setValue(true);
     promotedCount++;
   });
 
@@ -219,11 +194,8 @@ function promoteConfirmedNewCreators_(showToast) {
 }
 
 /**
- * Steps 2 & 4: scan the Boosting Tracker once, classify each unhandled row.
- * The Gift Card Tracker is the FINAL, confirmed record - the only way a
- * creator ends up there is through promoteConfirmedNewCreators_ above, once
- * a human has typed in their email. Everything about a brand-new,
- * not-yet-confirmed creator lives in the New Boosted Creators sheet instead.
+ * Scans Boosting Tracker for new videos, skips dupes, queues emails on
+ * Outreach Queue, and updates gift card rows for confirmed creators.
  */
 function syncBoostingTracker(silent) {
   const promotion = promoteConfirmedNewCreators_(false);
@@ -238,7 +210,7 @@ function syncBoostingTracker(silent) {
 
   const firstDataRow = HEADER_ROW.BOOSTING_TRACKER + 1;
   const numRows = lastRow - HEADER_ROW.BOOSTING_TRACKER;
-  if (numRows <= 0) { toast_('No rows in ' + SHEET_NAMES.BOOSTING_TRACKER); return; }
+  if (numRows <= 0) { if (!silent) toast_('No rows in ' + SHEET_NAMES.BOOSTING_TRACKER); return; }
   const values = trackerSheet.getRange(firstDataRow, 1, numRows, lastCol).getValues();
 
   const ctx = getGiftCardContext_();
@@ -248,38 +220,32 @@ function syncBoostingTracker(silent) {
 
   const blockRows = readGiftCardRows_(ctx);
   const handleToBlockRow = {};
-  let nextEmptyRow = findNextEmptyGiftCardRow_(ctx, blockRows);
   blockRows.forEach((r) => {
     const h = normalizeHandle_(r[nameKey]);
     if (h) handleToBlockRow[h] = r;
   });
 
-  // Creators already sitting in the New Boosted Creators sheet, still unconfirmed
-  // (no email yet, not promoted, and not already sent - if it was already sent, treat
-  // any further content as a fresh row rather than silently changing a sent message).
-  const newMsgSheet = getSheet_(SHEET_NAMES.NEW_CREATORS_MSG);
-  ensureColumn_(newMsgSheet, HEADER_ROW.NEW_CREATORS_MSG, DRAFT_COLUMN_HEADER);
-  ensureColumn_(newMsgSheet, HEADER_ROW.NEW_CREATORS_MSG, SENT_CHECKBOX_HEADER);
-  ensureColumn_(newMsgSheet, HEADER_ROW.NEW_CREATORS_MSG, PROMOTED_COLUMN_HEADER);
-  ensureColumn_(newMsgSheet, HEADER_ROW.NEW_CREATORS_MSG, PLATFORM_COLUMN_HEADER);
+  const queueSheet = getOutreachQueueSheet_();
   const promotedKey = normalizeHeader_(PROMOTED_COLUMN_HEADER);
   const sentKey = normalizeHeader_(SENT_CHECKBOX_HEADER);
   const draftKey = normalizeHeader_(DRAFT_COLUMN_HEADER);
-  const newMsgRead = readFlatSheetRows_(newMsgSheet, HEADER_ROW.NEW_CREATORS_MSG);
-  const nameLookup = buildNameLookup_(); // handle -> {firstName, lastName}, from the "Names" tab - no API needed
-  const pendingByHandle = {};
-  newMsgRead.rows.forEach((r) => {
+  const typeKey = normalizeHeader_(TYPE_COLUMN_HEADER);
+  const queueRead = readFlatSheetRows_(queueSheet, HEADER_ROW.OUTREACH_QUEUE);
+  const nameLookup = buildNameLookup_();
+  const pendingNewByHandle = {};
+  queueRead.rows.forEach((r) => {
+    if (String(r[typeKey] || '').trim() !== OUTREACH_TYPE_NEW) return;
     const email = String(r['email address'] || '').trim();
     if (email !== '' || r[promotedKey] || r[sentKey]) return;
     const hk = normalizeHandle_(r['creator handle']);
-    if (hk) pendingByHandle[hk] = r;
+    if (hk) pendingNewByHandle[hk] = r;
   });
 
   const followUpRows = [];
-  const piecesUpdates = []; // real, already-confirmed rows: { row, value }
-  const trackerMarkerUpdates = []; // { row, value }
-  const virtualNewCreators = {}; // brand-new this run, not yet in the sheet at all
-  let dupesFixed = 0, queued = 0;
+  const piecesUpdates = [];
+  const trackerMarkerUpdates = [];
+  const virtualNewCreators = {};
+  let dupesFixed = 0, queued = 0, outreachRows = 0;
 
   for (let i = 0; i < values.length; i++) {
     const row = values[i];
@@ -320,8 +286,8 @@ function syncBoostingTracker(silent) {
         newPieces: 1, totalPieces: newTotal,
         email: existing['email address'] || '', links: links, platform: platform,
       });
-    } else if (pendingByHandle[handleKey]) {
-      const p = pendingByHandle[handleKey];
+    } else if (pendingNewByHandle[handleKey]) {
+      const p = pendingNewByHandle[handleKey];
       p._pendingDelta = (p._pendingDelta || 0) + 1;
       p._newLinks = p._newLinks || [];
       p._newLinks.push(links);
@@ -354,53 +320,39 @@ function syncBoostingTracker(silent) {
     r.amount = formatAmount_(calculateGiftCardAmount_(r.totalPieces));
   });
 
-  // Compute gift card amounts for pending + brand-new creators.
-  const pendingList = Object.keys(pendingByHandle).map((k) => pendingByHandle[k]).filter((p) => p._pendingDelta);
+  const pendingList = Object.keys(pendingNewByHandle).map((k) => pendingNewByHandle[k]).filter((p) => p._pendingDelta);
   const virtualList = Object.keys(virtualNewCreators).map((k) => virtualNewCreators[k]);
-  const scratchNeeded = pendingList.length + virtualList.length;
-  if (scratchNeeded) {
-    const piecesCol = newPiecesCol;
-    let scratchRow = nextEmptyRow;
-    pendingList.forEach((p) => {
-      p._scratchRow = scratchRow++;
-      p._newTotalPieces = (Number(p['new pieces of content used']) || 0) + p._pendingDelta;
-    });
-    virtualList.forEach((v) => { v._scratchRow = scratchRow++; });
 
-    pendingList.forEach((p) => { giftSheet.getRange(p._scratchRow, piecesCol).setValue(p._newTotalPieces); });
-    virtualList.forEach((v) => { giftSheet.getRange(v._scratchRow, piecesCol).setValue(v.totalPieces); });
-    SpreadsheetApp.flush();
-
-    pendingList.forEach((p) => { p._newAmount = formatAmount_(calculateGiftCardAmount_(p._newTotalPieces)); });
-    virtualList.forEach((v) => { v.amount = formatAmount_(calculateGiftCardAmount_(v.totalPieces)); });
-
-    giftSheet.getRange(nextEmptyRow, piecesCol, scratchNeeded, 1).clearContent();
-  }
-
-  // Apply updates to already-pending rows in the New Boosted Creators sheet in place.
   pendingList.forEach((p) => {
-    const piecesCol1 = newMsgRead.headerIndex['new pieces of content used'] + 1;
-    const amountCol1 = newMsgRead.headerIndex['gift card amount'] + 1;
-    const linksCol1 = newMsgRead.headerIndex['links'] + 1;
-    const platformKey = normalizeHeader_(PLATFORM_COLUMN_HEADER);
-    const platformCol1 = newMsgRead.headerIndex[platformKey] != null ? newMsgRead.headerIndex[platformKey] + 1 : null;
-    newMsgSheet.getRange(p._sheetRow, piecesCol1).setValue(p._newTotalPieces);
-    newMsgSheet.getRange(p._sheetRow, amountCol1).setValue(p._newAmount);
-    const combinedLinks = (String(p['links'] || '').trim() ? p['links'] + ', ' : '') + p._newLinks.join(', ');
-    newMsgSheet.getRange(p._sheetRow, linksCol1).setValue(combinedLinks);
-    if (platformCol1 && p._platforms && p._platforms.length) {
-      const existingPlatform = String(p[platformKey] || p['platform (auto)'] || '').trim();
-      newMsgSheet.getRange(p._sheetRow, platformCol1).setValue(mergePlatformLabels_(existingPlatform, p._platforms.join(', ')));
-    }
-    newMsgSheet.getRange(p._sheetRow, newMsgRead.headerIndex[draftKey] + 1).clearContent(); // force a redraft with the new totals
+    p._newTotalPieces = (Number(p['new pieces of content used']) || 0) + p._pendingDelta;
+    p._newAmount = formatAmount_(calculateGiftCardAmount_(p._newTotalPieces));
+  });
+  virtualList.forEach((v) => {
+    v.amount = formatAmount_(calculateGiftCardAmount_(v.totalPieces));
+  });
 
-    // Backfill name if it's still blank and the Names tab has since caught up.
+  pendingList.forEach((p) => {
+    const piecesCol1 = queueRead.headerIndex['new pieces of content used'] + 1;
+    const amountCol1 = queueRead.headerIndex['gift card amount'] + 1;
+    const linksCol1 = queueRead.headerIndex['links'] + 1;
+    const platformKey = normalizeHeader_(PLATFORM_COLUMN_HEADER);
+    const platformCol1 = queueRead.headerIndex[platformKey] != null ? queueRead.headerIndex[platformKey] + 1 : null;
+    queueSheet.getRange(p._sheetRow, piecesCol1).setValue(p._newTotalPieces);
+    queueSheet.getRange(p._sheetRow, amountCol1).setValue(p._newAmount);
+    const combinedLinks = (String(p['links'] || '').trim() ? p['links'] + ', ' : '') + p._newLinks.join(', ');
+    queueSheet.getRange(p._sheetRow, linksCol1).setValue(combinedLinks);
+    if (platformCol1 && p._platforms && p._platforms.length) {
+      const existingPlatform = String(p[platformKey] || '').trim();
+      queueSheet.getRange(p._sheetRow, platformCol1).setValue(mergePlatformLabels_(existingPlatform, p._platforms.join(', ')));
+    }
+    queueSheet.getRange(p._sheetRow, queueRead.headerIndex[draftKey] + 1).clearContent();
+
     if (!String(p['first name'] || '').trim()) {
       const found = nameLookup[normalizeHandle_(p['creator handle'])];
       if (found) {
-        newMsgSheet.getRange(p._sheetRow, newMsgRead.headerIndex['first name'] + 1).setValue(found.firstName);
-        if (newMsgRead.headerIndex['last name'] != null) {
-          newMsgSheet.getRange(p._sheetRow, newMsgRead.headerIndex['last name'] + 1).setValue(found.lastName);
+        queueSheet.getRange(p._sheetRow, queueRead.headerIndex['first name'] + 1).setValue(found.firstName);
+        if (queueRead.headerIndex['last name'] != null) {
+          queueSheet.getRange(p._sheetRow, queueRead.headerIndex['last name'] + 1).setValue(found.lastName);
         }
       }
     }
@@ -416,21 +368,25 @@ function syncBoostingTracker(silent) {
     links: v.links.join(', '),
     platform: (v.platforms || []).filter(Boolean).join(', '),
   }));
-  appendToMessageSheet_(SHEET_NAMES.NEW_CREATORS_MSG, newRows);
-  appendToMessageSheet_(SHEET_NAMES.FOLLOWUP_MSG, followUpRows);
 
-  const totalNewCreatorActivity = newRows.length + pendingList.length;
+  outreachRows += appendToOutreachQueue_(OUTREACH_TYPE_NEW, newRows);
+  outreachRows += appendToOutreachQueue_(OUTREACH_TYPE_FOLLOWUP, followUpRows);
+  outreachRows += pendingList.length;
+
   if (!silent) {
     toast_(
-      'Queued ' + queued + ' row(s) [' + totalNewCreatorActivity + ' new-creator update(s), ' + followUpRows.length + ' follow-up], ' +
-      'auto-filled ' + dupesFixed + ' dupe(s), promoted ' + promotion.promoted + ' confirmed creator(s) to the tracker. ' +
-      'Now run step 3a/3b to draft messages.'
+      'Queued ' + queued + ' video(s), ' + outreachRows + ' email(s) on Outreach Queue, ' +
+      'promoted ' + promotion.promoted + ' to gift card tracker.'
     );
   }
 
   return {
-    queued: queued, newCreators: totalNewCreatorActivity, followUps: followUpRows.length,
-    dupesFixed: dupesFixed, promoted: promotion.promoted,
+    queued: queued,
+    outreachRows: outreachRows,
+    newCreators: newRows.length + pendingList.length,
+    followUps: followUpRows.length,
+    dupesFixed: dupesFixed,
+    promoted: promotion.promoted,
   };
 }
 
@@ -448,7 +404,7 @@ function testNameLookup_() {
 
   const rows = [['Check', 'Result']];
   rows.push(['NAMES_LOOKUP_SHEET_NAME configured as', NAMES_LOOKUP_SHEET_NAME]);
-  rows.push(['EXTERNAL_SHEET_IDS.NEW_CREATORS_MSG set?', EXTERNAL_SHEET_IDS.NEW_CREATORS_MSG ? 'yes - looking in that external file' : 'no - looking in this active spreadsheet']);
+  rows.push(['EXTERNAL_NAMES_SHEET_ID set?', EXTERNAL_NAMES_SHEET_ID ? 'yes - also checking that file' : 'no - looking in this active spreadsheet only']);
 
   let namesSheet = null;
   try {
@@ -458,7 +414,7 @@ function testNameLookup_() {
   }
 
   if (!namesSheet) {
-    rows.push(['Names tab found?', 'NO - no tab named "' + NAMES_LOOKUP_SHEET_NAME + '" was found. Check the exact tab name/spelling, and confirm it is a tab inside the SAME file as the New Boosted Creators sheet.']);
+    rows.push(['Names tab found?', 'NO - no tab named "' + NAMES_LOOKUP_SHEET_NAME + '" was found in this spreadsheet' + (EXTERNAL_NAMES_SHEET_ID ? ' or the external Names file' : '') + '.']);
   } else {
     rows.push(['Names tab found?', 'YES']);
     rows.push(['Names tab actual name', namesSheet.getName()]);
@@ -487,14 +443,15 @@ function testDraftReadiness_() {
   if (existing) ss.deleteSheet(existing);
   const debugSheet = ss.insertSheet('Draft Readiness Debug');
 
-  const sheet = getSheet_(SHEET_NAMES.NEW_CREATORS_MSG);
-  const read = readFlatSheetRows_(sheet, HEADER_ROW.NEW_CREATORS_MSG);
+  const sheet = getOutreachQueueSheet_();
+  const read = readFlatSheetRows_(sheet, HEADER_ROW.OUTREACH_QUEUE);
   const draftKey = normalizeHeader_(DRAFT_COLUMN_HEADER);
   const sentKey = normalizeHeader_(SENT_CHECKBOX_HEADER);
 
-  const out = [['Row', 'Creator Handle', 'First Name', 'Platform', 'Needs links?', 'Links found?', 'Pieces (used/default)', 'Amount (used/default)', 'Ready?', 'Why skipped']];
+  const out = [['Row', 'Type', 'Creator Handle', 'First Name', 'Platform', 'Needs links?', 'Links found?', 'Pieces', 'Amount', 'Ready?', 'Why skipped']];
   read.rows.forEach((row) => {
     const handle = String(row['creator handle'] || '').trim();
+    const rowType = String(row[normalizeHeader_(TYPE_COLUMN_HEADER)] || '').trim();
     const firstName = String(row['first name'] || '').trim();
     const displayName = firstName || (handle ? handle.replace(/^@/, '').split(/[._]/)[0] : '');
     const platform = String(row[normalizeHeader_(PLATFORM_COLUMN_HEADER)] || row['platform (auto)'] || row['platform'] || '').trim()
@@ -521,6 +478,7 @@ function testDraftReadiness_() {
 
     out.push([
       row._sheetRow,
+      rowType || '(blank)',
       handle,
       firstName || '(blank)',
       platform || '(blank)',
@@ -581,20 +539,21 @@ function fillDupeLinks_(sheet, headerIndex, values, i, sheetRow) {
   return false;
 }
 
-function appendToMessageSheet_(sheetName, rows) {
-  if (!rows.length) return;
-  const sheet = getSheet_(sheetName);
-  const headerRowNum = HEADER_ROW[sheetName === SHEET_NAMES.NEW_CREATORS_MSG ? 'NEW_CREATORS_MSG' : 'FOLLOWUP_MSG'];
-  ensureColumn_(sheet, headerRowNum, PLATFORM_COLUMN_HEADER);
+function appendToOutreachQueue_(type, rows) {
+  if (!rows.length) return 0;
+  const sheet = getOutreachQueueSheet_();
+  const headerRowNum = HEADER_ROW.OUTREACH_QUEUE;
   const lastCol = sheet.getLastColumn();
   const headers = sheet.getRange(headerRowNum, 1, 1, lastCol).getValues()[0];
   const headerIndex = buildHeaderIndex_(headers);
+  const typeKey = normalizeHeader_(TYPE_COLUMN_HEADER);
   ['creator handle', 'first name', 'new pieces of content used', 'gift card amount', 'email address', 'links'].forEach((h) => colIndex_(headerIndex, h, true));
   const platformIdx = colIndex_(headerIndex, PLATFORM_COLUMN_HEADER, false);
 
   const startRow = sheet.getLastRow() + 1;
   const out = rows.map((r) => {
     const arr = new Array(lastCol).fill('');
+    arr[headerIndex[typeKey]] = type;
     arr[headerIndex['creator handle']] = r.handle;
     arr[headerIndex['first name']] = r.firstName || '';
     if ('last name' in headerIndex) arr[headerIndex['last name']] = r.lastName || '';
@@ -606,71 +565,43 @@ function appendToMessageSheet_(sheetName, rows) {
     return arr;
   });
   sheet.getRange(startRow, 1, out.length, lastCol).setValues(out);
+  return out.length;
 }
 
-function draftNewCreatorMessages() {
-  draftMessagesForSheet_(SHEET_NAMES.NEW_CREATORS_MSG);
-}
-function draftFollowUpMessages() {
-  draftMessagesForSheet_(SHEET_NAMES.FOLLOWUP_MSG);
-}
-
-/** Pick the first non-empty cell from a row using several possible header names. */
-function pickRowValue_(row, headerIndex, headerNames) {
-  for (let i = 0; i < headerNames.length; i++) {
-    const idx = headerIndex[normalizeHeader_(headerNames[i])];
-    if (idx == null) continue;
-    const val = String(row[idx] || '').trim();
-    if (val) return val;
-  }
-  return '';
-}
-
-function draftMessagesForSheet_(sheetName) {
-  const sheet = getSheet_(sheetName);
-  const isFollowUpSheet = sheetName === SHEET_NAMES.FOLLOWUP_MSG;
-  ensureColumn_(sheet, 1, DRAFT_COLUMN_HEADER);
-  ensureColumn_(sheet, 1, SENT_CHECKBOX_HEADER);
-  ensureColumn_(sheet, 1, PLATFORM_COLUMN_HEADER);
-  const lastRow = sheet.getLastRow();
-  const lastCol = sheet.getLastColumn();
-  const numRows = lastRow - 1;
-  if (numRows <= 0) { toast_('No rows in ' + sheetName); return; }
-
-  const headers = sheet.getRange(1, 1, 1, lastCol).getValues()[0];
-  const headerIndex = buildHeaderIndex_(headers);
-  const values = sheet.getRange(2, 1, numRows, lastCol).getValues();
-  const draftIdx = headerIndex[normalizeHeader_(DRAFT_COLUMN_HEADER)];
-  const sentIdx = headerIndex[normalizeHeader_(SENT_CHECKBOX_HEADER)];
+/** Drafts all undrafted, unsent rows on the Outreach Queue tab. */
+function draftOutreachMessages(silent) {
+  const sheet = getOutreachQueueSheet_();
+  const read = readFlatSheetRows_(sheet, HEADER_ROW.OUTREACH_QUEUE);
+  const draftKey = normalizeHeader_(DRAFT_COLUMN_HEADER);
+  const sentKey = normalizeHeader_(SENT_CHECKBOX_HEADER);
+  const typeKey = normalizeHeader_(TYPE_COLUMN_HEADER);
+  const draftCol = read.headerIndex[draftKey] + 1;
 
   let drafted = 0, skipped = 0, skippedNoName = 0, skippedNoLinks = 0;
-  values.forEach((row, i) => {
-    if (row[draftIdx] || row[sentIdx]) return;
+  read.rows.forEach((row) => {
+    if (row[draftKey] || row[sentKey]) return;
 
-    const firstName = pickRowValue_(row, headerIndex, ['first name']);
-    const handle = pickRowValue_(row, headerIndex, ['creator handle', 'creator name']);
+    const firstName = String(row['first name'] || '').trim();
+    const handle = String(row['creator handle'] || '').trim();
     const displayName = firstName || (handle ? capitalizeFirst_(handle.replace(/^@/, '').split(/[._]/)[0]) : '');
+    const rowType = String(row[typeKey] || '').trim();
+    const isFollowUp = rowType === OUTREACH_TYPE_FOLLOWUP;
 
-    const platform = pickRowValue_(row, headerIndex, [
-      PLATFORM_COLUMN_HEADER, 'platform (auto)', 'platform', 'platform(s) for usage',
-    ]) || lookupPlatformsForHandleFromTracker_(handle);
+    const platform = String(row[normalizeHeader_(PLATFORM_COLUMN_HEADER)] || '').trim()
+      || lookupPlatformsForHandleFromTracker_(handle);
     const needsLinks = needsProductLinksForPlatforms_(platform);
-
-    const links = pickRowValue_(row, headerIndex, [
-      'links', 'link', 'video link', 'video links', 'content link', 'content links', 'content used',
-    ]);
+    const links = String(row['links'] || '').trim();
 
     if (!displayName) { skipped++; skippedNoName++; return; }
     if (needsLinks && !links) { skipped++; skippedNoLinks++; return; }
 
-    let newPieces = Number(pickRowValue_(row, headerIndex, ['new pieces of content used']));
-    if (!newPieces || newPieces < 1) newPieces = 1;
-
-    let amount = pickRowValue_(row, headerIndex, ['gift card amount']);
+    let newPieces = Number(row['new pieces of content used']) || 1;
+    if (newPieces < 1) newPieces = 1;
+    let amount = String(row['gift card amount'] || '').trim();
     if (!amount) amount = formatAmount_(calculateGiftCardAmount_(newPieces));
 
     const filled = buildDraftMessage_({
-      isFollowUp: isFollowUpSheet,
+      isFollowUp: isFollowUp,
       handle: handle,
       firstName: displayName,
       pieces: newPieces,
@@ -679,20 +610,23 @@ function draftMessagesForSheet_(sheetName) {
       links: links,
       needsLinks: needsLinks,
     });
-    sheet.getRange(2 + i, draftIdx + 1).setValue(filled);
+    sheet.getRange(row._sheetRow, draftCol).setValue(filled);
     drafted++;
   });
 
-  let msg = 'Drafted ' + drafted + ' message(s) in "' + sheetName + '".';
-  if (skipped) {
-    msg += ' ' + skipped + ' skipped';
-    const reasons = [];
-    if (skippedNoName) reasons.push(skippedNoName + ' missing a name');
-    if (skippedNoLinks) reasons.push(skippedNoLinks + ' missing a link');
-    if (reasons.length) msg += ' (' + reasons.join(', ') + ')';
-    msg += '.';
+  if (!silent) {
+    let msg = 'Drafted ' + drafted + ' message(s) on Outreach Queue.';
+    if (skipped) {
+      msg += ' ' + skipped + ' skipped';
+      const reasons = [];
+      if (skippedNoName) reasons.push(skippedNoName + ' missing a name');
+      if (skippedNoLinks) reasons.push(skippedNoLinks + ' missing a link');
+      if (reasons.length) msg += ' (' + reasons.join(', ') + ')';
+      msg += '.';
+    }
+    toast_(msg);
   }
-  toast_(msg);
+  return drafted;
 }
 
 /**
@@ -705,7 +639,7 @@ function onEditMarkSent(e) {
   if (!e || !e.range) return;
   const sheet = e.range.getSheet();
   const sheetName = sheet.getName();
-  if (sheetName !== SHEET_NAMES.NEW_CREATORS_MSG && sheetName !== SHEET_NAMES.FOLLOWUP_MSG) return;
+  if (sheetName !== SHEET_NAMES.OUTREACH_QUEUE) return;
 
   const headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
   const headerIndex = buildHeaderIndex_(headers);

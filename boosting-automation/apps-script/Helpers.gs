@@ -7,15 +7,9 @@
  */
 
 function getSheet_(name) {
-  if (name === SHEET_NAMES.NEW_CREATORS_MSG && EXTERNAL_SHEET_IDS.NEW_CREATORS_MSG) {
-    return getExternalSheet_(EXTERNAL_SHEET_IDS.NEW_CREATORS_MSG);
-  }
-  if (name === SHEET_NAMES.FOLLOWUP_MSG && EXTERNAL_SHEET_IDS.FOLLOWUP_MSG) {
-    return getExternalSheet_(EXTERNAL_SHEET_IDS.FOLLOWUP_MSG);
-  }
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   const sheet = ss.getSheetByName(name);
-  if (!sheet) throw new Error('Tab not found: "' + name + '". Check SHEET_NAMES / EXTERNAL_SHEET_IDS in Config.gs.');
+  if (!sheet) throw new Error('Tab not found: "' + name + '". Check SHEET_NAMES in Config.gs.');
   return sheet;
 }
 
@@ -33,21 +27,19 @@ function extractSpreadsheetId_(urlOrId) {
 }
 
 /**
- * The Names lookup tab lives alongside wherever the New Boosted Creators
- * sheet lives (same file, different tab) - so reuse EXTERNAL_SHEET_IDS if
- * that sheet is external, or fall back to the currently active spreadsheet
- * if it's just a tab in this same file. Returns null (never throws) if the
- * tab doesn't exist yet, so name-lookup is always optional/best-effort.
+ * The Names tab lives in this spreadsheet, or in EXTERNAL_NAMES_SHEET_ID if set.
+ * Returns null (never throws) if the tab doesn't exist yet.
  */
 function getNamesLookupSheet_() {
   try {
-    let ss;
-    if (EXTERNAL_SHEET_IDS.NEW_CREATORS_MSG) {
-      ss = SpreadsheetApp.openById(extractSpreadsheetId_(EXTERNAL_SHEET_IDS.NEW_CREATORS_MSG));
-    } else {
-      ss = SpreadsheetApp.getActiveSpreadsheet();
+    let ss = SpreadsheetApp.getActiveSpreadsheet();
+    const local = ss.getSheetByName(NAMES_LOOKUP_SHEET_NAME);
+    if (local) return local;
+    if (EXTERNAL_NAMES_SHEET_ID) {
+      ss = SpreadsheetApp.openById(extractSpreadsheetId_(EXTERNAL_NAMES_SHEET_ID));
+      return ss.getSheetByName(NAMES_LOOKUP_SHEET_NAME) || null;
     }
-    return ss.getSheetByName(NAMES_LOOKUP_SHEET_NAME) || null;
+    return null;
   } catch (e) {
     console.warn('getNamesLookupSheet_ failed: ' + e);
     return null;
@@ -181,10 +173,15 @@ function isAlreadyBoostedThisMonth_(handle) {
   } catch (e) { /* optional */ }
 
   try {
-    const msgSheet = getSheet_(SHEET_NAMES.NEW_CREATORS_MSG);
-    const read = readFlatSheetRows_(msgSheet, HEADER_ROW.NEW_CREATORS_MSG);
+    const msgSheet = getOutreachQueueSheet_();
+    const read = readFlatSheetRows_(msgSheet, HEADER_ROW.OUTREACH_QUEUE);
     const sentKey = normalizeHeader_(SENT_CHECKBOX_HEADER);
-    if (read.rows.some((r) => normalizeHandle_(r['creator handle']) === handleKey && r[sentKey])) {
+    const typeKey = normalizeHeader_(TYPE_COLUMN_HEADER);
+    if (read.rows.some((r) =>
+      normalizeHandle_(r['creator handle']) === handleKey &&
+      r[sentKey] &&
+      String(r[typeKey] || '').trim() === OUTREACH_TYPE_NEW
+    )) {
       return true;
     }
   } catch (e) { /* optional */ }
@@ -595,6 +592,20 @@ function ensureColumn_(sheet, headerRowNum, headerText) {
   const newCol = lastCol + 1;
   sheet.getRange(headerRowNum, newCol).setValue(headerText);
   return newCol;
+}
+
+// --- Outreach Queue (one tab in this spreadsheet; one row per email to send) ---
+
+function getOutreachQueueSheet_() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  let sheet = ss.getSheetByName(SHEET_NAMES.OUTREACH_QUEUE);
+  if (!sheet) {
+    sheet = ss.insertSheet(SHEET_NAMES.OUTREACH_QUEUE);
+    sheet.getRange(1, 1, 1, OUTREACH_QUEUE_HEADERS.length).setValues([OUTREACH_QUEUE_HEADERS]);
+    sheet.getRange(1, 1, 1, OUTREACH_QUEUE_HEADERS.length).setFontWeight('bold');
+    sheet.setFrozenRows(1);
+  }
+  return sheet;
 }
 
 function toast_(msg) {

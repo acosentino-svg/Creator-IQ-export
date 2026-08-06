@@ -5,15 +5,15 @@
  * name you already entered yourself.
  */
 function fillMissingNamesFromLookup() {
-  const sheet = getSheet_(SHEET_NAMES.NEW_CREATORS_MSG);
-  const read = readFlatSheetRows_(sheet, HEADER_ROW.NEW_CREATORS_MSG);
+  const sheet = getOutreachQueueSheet_();
+  const read = readFlatSheetRows_(sheet, HEADER_ROW.OUTREACH_QUEUE);
   const lookup = buildNameLookup_();
 
   const firstNameCol = read.headerIndex['first name'];
   const lastNameCol = read.headerIndex['last name'];
   const handleCol = read.headerIndex['creator handle'];
   if (firstNameCol == null || lastNameCol == null || handleCol == null) {
-    throw new Error('The New Boosted Creators sheet must have Creator Handle, First Name, and Last Name columns.');
+    throw new Error('Outreach Queue must have Creator Handle, First Name, and Last Name columns.');
   }
 
   let filled = 0;

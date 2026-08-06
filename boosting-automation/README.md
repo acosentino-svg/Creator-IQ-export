@@ -86,7 +86,9 @@ Automated Message**, and **Follow-Up Boosted Creators Automated Message** as
 separate items — they're actually three separate Google Sheets files, not
 tabs inside one spreadsheet. The script is attached to (bound to) the
 Tracker, so to reach the other two it needs to be told their exact address —
-that's what `EXTERNAL_SHEET_IDS` in `Config.gs` is for. Paste each file's URL
+Message drafts and send tracking live on the **Outreach Queue** tab inside the
+Boosting Program Tracker spreadsheet (one row per email). If your **Names** tab
+lives in a different file, set `EXTERNAL_NAMES_SHEET_ID` in `Config.gs`.
 in there once and the rest of the project doesn't need to know the
 difference between "a tab in this file" and "a tab in a different file."
 
