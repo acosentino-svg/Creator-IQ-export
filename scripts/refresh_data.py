@@ -18,7 +18,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
 from creatoriq_dashboard.config import load_config  # noqa: E402
-from creatoriq_dashboard.etl import sync_all  # noqa: E402
+from creatoriq_dashboard.etl import sync_all, sync_enrolled_creators  # noqa: E402
 from creatoriq_dashboard.storage import ensure_performance_indexes, get_engine  # noqa: E402
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
@@ -34,6 +34,11 @@ def main() -> int:
         "--quick",
         action="store_true",
         help="Use live_sync.cloud_safe limits (few campaigns/pages) — for Streamlit Cloud.",
+    )
+    parser.add_argument(
+        "--enrolled-only",
+        action="store_true",
+        help="Sync enrolled /publishers only (geography map) — skips campaigns, posts, and email.",
     )
     args = parser.parse_args()
 
@@ -54,7 +59,11 @@ def main() -> int:
 
     logger.info("Starting CreatorIQ sync against %s ...", config.base_url)
     ensure_performance_indexes(get_engine(config.db_path))
-    counts = sync_all(config)
+    if args.enrolled_only:
+        logger.info("Mode: enrolled creators only (geography / location fields)")
+        counts = sync_enrolled_creators(config)
+    else:
+        counts = sync_all(config)
     for resource, count in counts.items():
         logger.info("  %-14s %d records", resource, count)
     logger.info("Sync complete. Warehouse: %s", config.db_path)

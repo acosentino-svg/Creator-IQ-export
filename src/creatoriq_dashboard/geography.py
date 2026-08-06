@@ -129,6 +129,13 @@ def normalize_us_state(value: object) -> str | None:
     return None
 
 
+def normalize_city(value: object) -> str | None:
+    text = _clean_text(value)
+    if not text:
+        return None
+    return " ".join(part.capitalize() for part in text.split())
+
+
 def enrich_creator_locations(creators: pd.DataFrame, us_only_program: bool = False) -> pd.DataFrame:
     """Add normalized country/state columns used by geography charts."""
     if creators.empty:
@@ -136,8 +143,10 @@ def enrich_creator_locations(creators: pd.DataFrame, us_only_program: bool = Fal
     out = creators.copy()
     country_src = out["country"] if "country" in out.columns else pd.Series([None] * len(out), index=out.index)
     state_src = out["state"] if "state" in out.columns else pd.Series([None] * len(out), index=out.index)
+    city_src = out["city"] if "city" in out.columns else pd.Series([None] * len(out), index=out.index)
     out["country_normalized"] = country_src.map(normalize_country)
     out["state_normalized"] = state_src.map(normalize_us_state)
+    out["city_normalized"] = city_src.map(normalize_city)
     if us_only_program:
         missing_country = out["country_normalized"].isna()
         out.loc[missing_country, "country_normalized"] = "United States"
@@ -200,14 +209,43 @@ def aggregate_by_country(creators: pd.DataFrame) -> pd.DataFrame:
     return grouped.reset_index(drop=True)
 
 
-def aggregate_by_us_state(creators: pd.DataFrame, us_only_program: bool = False) -> pd.DataFrame:
+def _location_pool(creators: pd.DataFrame, us_only_program: bool = False) -> pd.DataFrame:
     enriched = enrich_creator_locations(creators, us_only_program=us_only_program)
     if enriched.empty:
-        return pd.DataFrame(columns=["state", "creators"])
+        return enriched
     if us_only_program or is_us_only_program(creators, us_only_program=False):
-        pool = enriched
-    else:
-        pool = enriched[enriched["country_normalized"] == "United States"].copy()
+        return enriched
+    return enriched[enriched["country_normalized"] == "United States"].copy()
+
+
+def aggregate_by_city(creators: pd.DataFrame, us_only_program: bool = False) -> pd.DataFrame:
+    pool = _location_pool(creators, us_only_program=us_only_program)
+    if pool.empty:
+        return pd.DataFrame(columns=["city", "state", "creators", "location_label"])
+    with_city = pool.dropna(subset=["city_normalized"]).copy()
+    if with_city.empty:
+        return pd.DataFrame(columns=["city", "state", "creators", "location_label"])
+    grouped = (
+        with_city.groupby(["city_normalized", "state_normalized"], dropna=False, as_index=False)
+        .size()
+        .rename(columns={"city_normalized": "city", "state_normalized": "state", "size": "creators"})
+        .sort_values("creators", ascending=False)
+    )
+    grouped["location_label"] = grouped.apply(
+        lambda row: (
+            f"{row['city']}, {row['state']}"
+            if row["state"] and not pd.isna(row["state"])
+            else str(row["city"])
+        ),
+        axis=1,
+    )
+    return grouped.reset_index(drop=True)
+
+
+def aggregate_by_us_state(creators: pd.DataFrame, us_only_program: bool = False) -> pd.DataFrame:
+    pool = _location_pool(creators, us_only_program=us_only_program)
+    if pool.empty:
+        return pd.DataFrame(columns=["state", "creators"])
     grouped = (
         pool.dropna(subset=["state_normalized"])
         .groupby("state_normalized", as_index=False)

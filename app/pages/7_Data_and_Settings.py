@@ -24,6 +24,7 @@ from creatoriq_dashboard.storage import get_engine, read_table, record_sync, wri
 from datetime import datetime, timezone  # noqa: E402
 
 SYNC_TIMEOUT_SECONDS = 900  # 15 minutes — Streamlit Cloud will kill longer runs anyway
+ENROLLED_SYNC_TIMEOUT_SECONDS = 7200  # 2 hours for ~43k publisher pages (local / long-running host)
 
 st.set_page_config(page_title="Data & Settings", page_icon="⚙️", layout="wide")
 config = get_config()
@@ -101,39 +102,64 @@ if not config.is_demo:
 
 if not config.is_demo:
     st.caption("Data is served from the local SQLite cache on this server.")
-    col_quick, col_full = st.columns(2)
+    st.markdown(
+        "**For the geography map (43k+ creators):** use **Sync creators only** — pulls location "
+        "fields via the API with no 20k CSV export limit. Skips campaigns and posts (faster than full sync)."
+    )
+    col_quick, col_geo, col_full = st.columns(3)
     with col_quick:
         run_quick = st.button(
             "Quick sync (~500 creators)",
+            help="Sample only — not the full program",
+        )
+    with col_geo:
+        run_geo = st.button(
+            "Sync creators only (geography)",
             type="primary",
-            help="5 publisher pages (~500 enrolled creators) — safe on Streamlit Cloud",
+            help="All Active /publishers with Country/State/City — for map + top cities/states pages",
         )
     with col_full:
         run_full = st.button(
-            "Full sync (43k+ — hours, local only)",
-            help="All Active publishers until API ends. Not recommended in the browser on Streamlit Cloud.",
+            "Full sync (everything)",
+            help="Creators + all campaigns, posts, email — hours, local machine recommended",
         )
 
-    if run_quick or run_full:
+    if run_quick or run_full or run_geo:
         cmd = [sys.executable, str(REPO_ROOT / "scripts" / "refresh_data.py")]
         if run_quick:
             cmd.append("--quick")
-        elif on_cloud:
-            st.warning("Full sync on Streamlit Cloud will likely time out. Run locally: python3 scripts/refresh_data.py")
-        label = "Quick sync" if "--quick" in cmd else "Full sync"
-        with st.spinner(f"{label} in progress (max {SYNC_TIMEOUT_SECONDS // 60} minutes)..."):
+            label = "Quick sync"
+            timeout = SYNC_TIMEOUT_SECONDS
+        elif run_geo:
+            cmd.append("--enrolled-only")
+            label = "Creators-only sync (geography)"
+            timeout = ENROLLED_SYNC_TIMEOUT_SECONDS
+            if on_cloud:
+                st.warning(
+                    "Creators-only sync for 43k+ may exceed Streamlit Cloud limits. "
+                    "Prefer: `python3 scripts/refresh_data.py --enrolled-only` on your Mac."
+                )
+        else:
+            label = "Full sync"
+            timeout = ENROLLED_SYNC_TIMEOUT_SECONDS
+            if on_cloud:
+                st.warning(
+                    "Full sync on Streamlit Cloud will likely time out. "
+                    "Run locally: python3 scripts/refresh_data.py"
+                )
+        with st.spinner(f"{label} in progress (max {timeout // 60} minutes)..."):
             try:
                 result = subprocess.run(
                     cmd,
                     capture_output=True,
                     text=True,
                     cwd=str(REPO_ROOT),
-                    timeout=SYNC_TIMEOUT_SECONDS,
+                    timeout=timeout,
                 )
             except subprocess.TimeoutExpired:
                 st.error(
-                    f"{label} timed out after {SYNC_TIMEOUT_SECONDS // 60} minutes. "
-                    "Use Quick sync, or run `python scripts/refresh_data.py` on a machine that can stay on for hours."
+                    f"{label} timed out after {timeout // 60} minutes. "
+                    "Run `python3 scripts/refresh_data.py --enrolled-only` on a machine that can stay on for hours."
                 )
             else:
                 if result.returncode == 0:

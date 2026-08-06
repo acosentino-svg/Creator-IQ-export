@@ -34,7 +34,8 @@ us_only_cfg = bool(config.settings.get("geography", "us_only_program", default=F
 st.title("🌍 Creator Geography")
 st.caption(
     "Where enrolled creators are located based on CreatorIQ CRM fields (Country / State / City). "
-    "This is creator home location, not audience geography."
+    "This is creator home location, not audience geography. "
+    "See **Top States & Cities** for ranked lists."
 )
 
 bundle = get_bundle()

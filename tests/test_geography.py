@@ -3,6 +3,7 @@ from __future__ import annotations
 import pandas as pd
 
 from creatoriq_dashboard.geography import (
+    aggregate_by_city,
     aggregate_by_country,
     aggregate_by_us_state,
     is_us_only_program,
@@ -82,3 +83,18 @@ def test_is_us_only_program_detection():
     assert is_us_only_program(us_only) is True
     assert is_us_only_program(mixed) is False
     assert is_us_only_program(mixed, us_only_program=True) is True
+
+
+def test_aggregate_by_city_groups_state_and_city():
+    creators = pd.DataFrame(
+        [
+            {"country": "US", "state": "CA", "city": "los angeles"},
+            {"country": "US", "state": "CA", "city": "Los Angeles"},
+            {"country": "US", "state": "TX", "city": "Dallas"},
+        ]
+    )
+    cities = aggregate_by_city(creators, us_only_program=True)
+    assert cities["creators"].sum() == 3
+    assert cities.iloc[0]["creators"] == 2
+    assert cities.iloc[0]["city"] == "Los Angeles"
+    assert cities.iloc[0]["state"] == "CA"
