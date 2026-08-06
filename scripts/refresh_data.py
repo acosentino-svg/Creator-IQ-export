@@ -39,7 +39,9 @@ def main() -> int:
 
     if args.quick:
         os.environ["CREATORIQ_SYNC_PROFILE"] = "cloud_safe"
-        logger.info("Quick sync profile: live_sync.cloud_safe limits")
+        logger.info(
+            "Quick sync profile: live_sync.cloud_safe limits (~500 enrolled creators, not full program)"
+        )
 
     config = load_config()
     if config.is_demo:

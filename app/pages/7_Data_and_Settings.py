@@ -33,8 +33,9 @@ st.title("⚙️ Data & Settings")
 
 if on_cloud:
     st.info(
-        "**Streamlit Cloud note:** A full sync of ~42k creators can take **many hours** and will "
-        "look like this page is stuck. Use **Quick sync** below first (a few minutes). "
+        "**Streamlit Cloud note:** A full sync of ~43k+ creators can take **many hours** and will "
+        "look like this page is stuck. Use **Quick sync** below for a **~500-creator sample** only. "
+        "For the full program, run `python3 scripts/refresh_data.py` on a laptop or server. "
         "If the app has been spinning for a long time, open **Manage app → Reboot app** in the "
         "lower-right corner of Streamlit Cloud."
     )
@@ -59,9 +60,18 @@ if not config.is_demo:
     st.subheader("Data coverage (live)")
     if dq.get("enrolled", 0) == 0:
         st.warning(
-            "**No creator data in the cache yet.** Click **Quick sync** below (or run "
-            "`python scripts/refresh_data.py --quick` locally). "
-            "A full ~42k sync should be run on a server with a long timeout, not in the browser."
+            "**No creator data in the cache yet.** Click **Quick sync** below for a small sample (~500 creators), "
+            "or run `python3 scripts/refresh_data.py` locally for the full ~43k+ program."
+        )
+    expected_min = config.settings.get("live_sync", "expected_enrolled_min", default=43000)
+    try:
+        expected_min = int(expected_min)
+    except (TypeError, ValueError):
+        expected_min = 43000
+    if expected_min > 0 and dq.get("enrolled", 0) < expected_min:
+        st.error(
+            f"**Only {dq.get('enrolled', 0):,} enrolled creators in cache** — expected at least "
+            f"**{expected_min:,}**. Quick sync is capped; run a full sync locally without `--quick`."
         )
     st.markdown(
         "All pages read from the **same cached dataset** — if a number looks wrong here, "
@@ -93,17 +103,23 @@ if not config.is_demo:
     st.caption("Data is served from the local SQLite cache on this server.")
     col_quick, col_full = st.columns(2)
     with col_quick:
-        run_quick = st.button("Quick sync (~5 min)", type="primary", help="5 campaigns, 5 publisher pages — safe on Streamlit Cloud")
+        run_quick = st.button(
+            "Quick sync (~500 creators)",
+            type="primary",
+            help="5 publisher pages (~500 enrolled creators) — safe on Streamlit Cloud",
+        )
     with col_full:
         run_full = st.button(
-            "Full sync (hours — not recommended on Streamlit Cloud)",
-            help="Pulls all campaigns and up to 45k enrolled creators",
+            "Full sync (43k+ — hours, local only)",
+            help="All Active publishers until API ends. Not recommended in the browser on Streamlit Cloud.",
         )
 
     if run_quick or run_full:
         cmd = [sys.executable, str(REPO_ROOT / "scripts" / "refresh_data.py")]
-        if run_quick or on_cloud:
+        if run_quick:
             cmd.append("--quick")
+        elif on_cloud:
+            st.warning("Full sync on Streamlit Cloud will likely time out. Run locally: python3 scripts/refresh_data.py")
         label = "Quick sync" if "--quick" in cmd else "Full sync"
         with st.spinner(f"{label} in progress (max {SYNC_TIMEOUT_SECONDS // 60} minutes)..."):
             try:
@@ -134,7 +150,7 @@ st.markdown(
     If your **Active Members** export includes **when each creator last created a link**, upload it here.
     The dashboard will use that for **Last Link Date**, **Posted only (no link)**, and **Went dark**.
 
-    **Can't export all ~42k at once?** Upload partial CSVs (we merge them), **or** click
+    **Can't export all ~43k at once?** Upload partial CSVs (we merge them), **or** click
     **Pull from CreatorIQ API** below — uses the CRM Reports API (same family as Daily Campaign Posts).
 
     We auto-detect columns like `Publisher Id` and `Last Link Created`.

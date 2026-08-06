@@ -19,9 +19,16 @@ from creatoriq_dashboard.geography import (  # noqa: E402
     enrich_creator_locations,
     location_coverage,
 )
-from common import get_bundle  # noqa: E402
+from common import get_bundle, get_config  # noqa: E402
 
 st.set_page_config(page_title="Creator Geography", page_icon="🌍", layout="wide")
+
+config = get_config()
+expected_min = config.settings.get("live_sync", "expected_enrolled_min", default=43000)
+try:
+    expected_min = int(expected_min)
+except (TypeError, ValueError):
+    expected_min = 43000
 
 st.title("🌍 Creator Geography")
 st.caption(
@@ -36,6 +43,17 @@ coverage = location_coverage(creators)
 if coverage["total"] == 0:
     st.info("No enrolled creators in the cache yet. Run a data refresh in live mode or use demo mode.")
     st.stop()
+
+if not config.is_demo and expected_min > 0 and coverage["total"] < expected_min:
+    st.error(
+        f"**Only {coverage['total']:,} enrolled creators in the cache — you expect at least "
+        f"**{expected_min:,}**. The geography map is incomplete.\n\n"
+        "**Quick sync** pulls only ~500 creators (5 API pages). For the full program, run a "
+        "**full sync** on your computer:\n\n"
+        "`python3 scripts/refresh_data.py` *(no `--quick` flag)*\n\n"
+        "That paginates through all Active `/publishers` until the API has no more rows (~43k+). "
+        "It can take **hours** — do not use the Streamlit Cloud Quick sync button for this."
+    )
 
 if coverage["with_country"] == 0:
     st.warning(
@@ -82,6 +100,11 @@ if level == "Country":
     st.subheader("Creators by country")
     display = counts.rename(columns={"country": "Country", "creators": "Creators"})
     display["% of located"] = (display["Creators"] / display["Creators"].sum() * 100).round(1)
+    st.caption(
+        f"Map/table totals sum to **{display['Creators'].sum():,}** creators with a known country "
+        f"(of **{coverage['total']:,}** enrolled in cache). "
+        f"**{coverage['missing_country']:,}** enrolled creators have no country on file."
+    )
     st.dataframe(display, use_container_width=True, hide_index=True)
     st.download_button(
         "Download country counts (CSV)",
