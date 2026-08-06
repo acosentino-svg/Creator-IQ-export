@@ -288,6 +288,32 @@ if geo_uploaded:
         st.caption("Tip: export CSV from CreatorIQ or **Save As → CSV** from Excel.")
 
 st.divider()
+st.subheader("Import API sync from GitHub (no Mac Terminal)")
+st.markdown(
+    """
+    If CreatorIQ CSV export is capped and you cannot run Python on your laptop:
+
+    1. Add `CREATORIQ_API_KEY` (and `CREATORIQ_BASE_URL`) to **GitHub repo → Settings → Secrets → Actions**
+    2. GitHub → **Actions** → **Sync enrolled creators (API geography)** → **Run workflow**
+    3. When the job finishes (~30–90+ min), download the **warehouse-db** artifact
+    4. Upload `warehouse.db` below
+    """
+)
+
+db_upload = st.file_uploader("Upload warehouse.db (from GitHub Actions artifact)", type=["db"])
+if db_upload is not None:
+    st.caption(f"Will replace cache at `{config.db_path}` ({len(db_upload.getvalue()) / 1_000_000:.1f} MB)")
+    if st.button("Import warehouse.db into this app"):
+        config.db_path.parent.mkdir(parents=True, exist_ok=True)
+        config.db_path.write_bytes(db_upload.getvalue())
+        record_sync(get_engine(config.db_path), "creators", datetime.now(timezone.utc))
+        st.cache_data.clear()
+        st.success(
+            f"Database imported ({len(db_upload.getvalue()) / 1_000_000:.1f} MB). "
+            "Open **Creator Geography** and **Top States & Cities**."
+        )
+
+st.divider()
 st.subheader("Where the rest of the config lives")
 st.markdown(
     """
