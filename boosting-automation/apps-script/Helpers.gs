@@ -22,7 +22,7 @@ function getExternalSheet_(urlOrId) {
 
 function extractSpreadsheetId_(urlOrId) {
   const match = String(urlOrId).match(/[-\w]{25,}/);
-  if (!match) throw new Error('Could not find a spreadsheet ID inside "' + urlOrId + '". Paste the full URL or just the long ID from it.');
+  if (!match) throw new Error('Could not find a spreadsheet ID in: ' + urlOrId);
   return match[0];
 }
 
