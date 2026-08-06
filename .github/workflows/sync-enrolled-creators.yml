@@ -1,25 +1,38 @@
 # Pull all enrolled Active publishers from CreatorIQ API (geography fields).
 # Trigger manually from GitHub → Actions → "Sync enrolled creators" → Run workflow.
-# No Mac Terminal required — runs on GitHub's servers (~30–90+ minutes for 43k+).
+# No Mac Terminal required — runs on GitHub's servers.
+#
+# Sync is split into sequential chunks (~25 API pages each) so each job stays
+# under common 15-minute org workflow limits. One click runs every chunk; wait
+# for the full workflow to finish (green checkmark on the workflow, not just
+# the first job).
 #
 # Setup (one time):
 #   Repo Settings → Secrets and variables → Actions → add:
 #     CREATORIQ_API_KEY
 #     CREATORIQ_BASE_URL  (e.g. https://api.creatoriq.com/api)
-#     CREATORIQ_ORG_ID    (optional, empty if not used)
+#     CREATORIQ_ORG_ID    (optional)
 #
-# After the job finishes:
-#   Download the "warehouse-db" artifact → upload in Streamlit Data & Settings.
+# After the workflow finishes:
+#   Download the "warehouse-db" artifact → upload in Streamlit Load Data.
 
 name: Sync enrolled creators (API geography)
 
 on:
   workflow_dispatch:
 
+env:
+  PAGES_PER_CHUNK: 25
+
 jobs:
-  sync-enrolled:
+  sync-chunks:
     runs-on: ubuntu-latest
-    timeout-minutes: 360
+    timeout-minutes: 20
+    strategy:
+      # One chunk at a time — each job downloads the DB from the previous chunk.
+      max-parallel: 1
+      matrix:
+        chunk: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18]
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -34,7 +47,14 @@ jobs:
           pip install -r requirements.txt
           pip install -e .
 
-      - name: Sync enrolled creators via CreatorIQ API
+      - name: Download warehouse from previous chunk
+        uses: actions/download-artifact@v4
+        with:
+          name: warehouse-db
+          path: data
+        continue-on-error: true
+
+      - name: Sync enrolled creators chunk ${{ matrix.chunk }}
         env:
           CREATORIQ_DASHBOARD_MODE: live
           CREATORIQ_BASE_URL: ${{ secrets.CREATORIQ_BASE_URL }}
@@ -42,7 +62,9 @@ jobs:
           CREATORIQ_ORG_ID: ${{ secrets.CREATORIQ_ORG_ID }}
         run: |
           mkdir -p data
-          python scripts/refresh_data.py --enrolled-only
+          START=$(( (${{ matrix.chunk }} - 1) * ${{ env.PAGES_PER_CHUNK }} + 1 ))
+          echo "Chunk ${{ matrix.chunk }}: pages $START .. $(( START + ${{ env.PAGES_PER_CHUNK }} - 1 ))"
+          python scripts/refresh_data.py --enrolled-only --start-page "$START" --max-pages ${{ env.PAGES_PER_CHUNK }}
 
       - name: Upload warehouse database
         uses: actions/upload-artifact@v4
