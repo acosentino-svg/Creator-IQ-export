@@ -27,7 +27,9 @@ function onOpen() {
 
 /** One click: scan tracker, fill Outreach Queue, draft all emails, open that tab. */
 function mondayCheck() {
+  toast_('Monday check: scanning Boosting Tracker...');
   const summary = syncBoostingTracker(true);
+  toast_('Monday check: drafting outreach emails...');
   draftOutreachMessages(true);
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   const queue = ss.getSheetByName(SHEET_NAMES.OUTREACH_QUEUE);
@@ -308,12 +310,8 @@ function syncBoostingTracker(silent) {
     queued++;
   }
 
-  piecesUpdates.forEach((u) => {
-    giftSheet.getRange(u.row, newPiecesCol).setValue(u.value);
-  });
-  trackerMarkerUpdates.forEach((u) => {
-    trackerSheet.getRange(u.row, headerIndex['creator notified'] + 1).setValue(u.value);
-  });
+  batchSetColumnValues_(giftSheet, newPiecesCol, piecesUpdates);
+  batchSetColumnValues_(trackerSheet, headerIndex['creator notified'] + 1, trackerMarkerUpdates);
   if (piecesUpdates.length) SpreadsheetApp.flush();
 
   followUpRows.forEach((r) => {
@@ -331,32 +329,41 @@ function syncBoostingTracker(silent) {
     v.amount = formatAmount_(calculateGiftCardAmount_(v.totalPieces));
   });
 
-  pendingList.forEach((p) => {
-    const piecesCol1 = queueRead.headerIndex['new pieces of content used'] + 1;
-    const amountCol1 = queueRead.headerIndex['gift card amount'] + 1;
-    const linksCol1 = queueRead.headerIndex['links'] + 1;
+  if (pendingList.length) {
+    const queueStartRow = HEADER_ROW.OUTREACH_QUEUE + 1;
+    const queueLastRow = queueSheet.getLastRow();
+    const queueLastCol = queueSheet.getLastColumn();
+    const queueValues = queueSheet.getRange(queueStartRow, 1, queueLastRow - queueStartRow + 1, queueLastCol).getValues();
     const platformKey = normalizeHeader_(PLATFORM_COLUMN_HEADER);
-    const platformCol1 = queueRead.headerIndex[platformKey] != null ? queueRead.headerIndex[platformKey] + 1 : null;
-    queueSheet.getRange(p._sheetRow, piecesCol1).setValue(p._newTotalPieces);
-    queueSheet.getRange(p._sheetRow, amountCol1).setValue(p._newAmount);
-    const combinedLinks = (String(p['links'] || '').trim() ? p['links'] + ', ' : '') + p._newLinks.join(', ');
-    queueSheet.getRange(p._sheetRow, linksCol1).setValue(combinedLinks);
-    if (platformCol1 && p._platforms && p._platforms.length) {
-      const existingPlatform = String(p[platformKey] || '').trim();
-      queueSheet.getRange(p._sheetRow, platformCol1).setValue(mergePlatformLabels_(existingPlatform, p._platforms.join(', ')));
-    }
-    queueSheet.getRange(p._sheetRow, queueRead.headerIndex[draftKey] + 1).clearContent();
+    const piecesIdx = queueRead.headerIndex['new pieces of content used'];
+    const amountIdx = queueRead.headerIndex['gift card amount'];
+    const linksIdx = queueRead.headerIndex['links'];
+    const draftIdx = queueRead.headerIndex[draftKey];
+    const platformIdx = queueRead.headerIndex[platformKey];
+    const firstNameIdx = queueRead.headerIndex['first name'];
+    const lastNameIdx = queueRead.headerIndex['last name'];
 
-    if (!String(p['first name'] || '').trim()) {
-      const found = nameLookup[normalizeHandle_(p['creator handle'])];
-      if (found) {
-        queueSheet.getRange(p._sheetRow, queueRead.headerIndex['first name'] + 1).setValue(found.firstName);
-        if (queueRead.headerIndex['last name'] != null) {
-          queueSheet.getRange(p._sheetRow, queueRead.headerIndex['last name'] + 1).setValue(found.lastName);
+    pendingList.forEach((p) => {
+      const rowIdx = p._sheetRow - queueStartRow;
+      const rowVals = queueValues[rowIdx];
+      rowVals[piecesIdx] = p._newTotalPieces;
+      rowVals[amountIdx] = p._newAmount;
+      rowVals[linksIdx] = (String(p['links'] || '').trim() ? p['links'] + ', ' : '') + p._newLinks.join(', ');
+      if (platformIdx != null && p._platforms && p._platforms.length) {
+        rowVals[platformIdx] = mergePlatformLabels_(String(p[platformKey] || '').trim(), p._platforms.join(', '));
+      }
+      rowVals[draftIdx] = '';
+
+      if (!String(p['first name'] || '').trim()) {
+        const found = nameLookup[normalizeHandle_(p['creator handle'])];
+        if (found) {
+          rowVals[firstNameIdx] = found.firstName;
+          if (lastNameIdx != null) rowVals[lastNameIdx] = found.lastName;
         }
       }
-    }
-  });
+    });
+    queueSheet.getRange(queueStartRow, 1, queueLastRow - queueStartRow + 1, queueLastCol).setValues(queueValues);
+  }
 
   const newRows = virtualList.map((v) => ({
     handle: v.handle,
@@ -519,15 +526,16 @@ function fillDupeLinks_(sheet, headerIndex, values, i, sheetRow) {
       fieldsToCopy.forEach((f) => {
         const idx = headerIndex[f];
         if (idx == null) return;
-        const destCell = sheet.getRange(sheetRow, idx + 1);
-        const destEmpty = String(destCell.getValue() || '').trim() === '';
+        const destEmpty = String(values[i][idx] || '').trim() === '';
         const srcVal = values[j][idx];
         if (destEmpty && String(srcVal || '').trim() !== '') {
-          destCell.setValue(srcVal);
+          values[i][idx] = srcVal;
           filledAny = true;
         }
       });
       if (filledAny) {
+        const lastCol = sheet.getLastColumn();
+        sheet.getRange(sheetRow, 1, 1, lastCol).setValues([values[i]]);
         sheet.getRange(sheetRow, headerIndex['creator notified'] + 1).setNote(
           'Auto-filled from row ' + (HEADER_ROW.BOOSTING_TRACKER + 1 + j) + ' (matching Unique Identifier "' + uid + '"). ' +
           'Please spot-check with Ctrl+F before trusting - dupe-detection formulas have broken before.'
@@ -576,6 +584,9 @@ function draftOutreachMessages(silent) {
   const sentKey = normalizeHeader_(SENT_CHECKBOX_HEADER);
   const typeKey = normalizeHeader_(TYPE_COLUMN_HEADER);
   const draftCol = read.headerIndex[draftKey] + 1;
+  const platformKey = normalizeHeader_(PLATFORM_COLUMN_HEADER);
+  const platformLookup = buildPlatformLookupFromTracker_();
+  const draftUpdates = [];
 
   let drafted = 0, skipped = 0, skippedNoName = 0, skippedNoLinks = 0;
   read.rows.forEach((row) => {
@@ -587,8 +598,8 @@ function draftOutreachMessages(silent) {
     const rowType = String(row[typeKey] || '').trim();
     const isFollowUp = rowType === OUTREACH_TYPE_FOLLOWUP;
 
-    const platform = String(row[normalizeHeader_(PLATFORM_COLUMN_HEADER)] || '').trim()
-      || lookupPlatformsForHandleFromTracker_(handle);
+    const platform = String(row[platformKey] || '').trim()
+      || lookupPlatformsForHandleFromTracker_(handle, platformLookup);
     const needsLinks = needsProductLinksForPlatforms_(platform);
     const links = String(row['links'] || '').trim();
 
@@ -610,9 +621,11 @@ function draftOutreachMessages(silent) {
       links: links,
       needsLinks: needsLinks,
     });
-    sheet.getRange(row._sheetRow, draftCol).setValue(filled);
+    draftUpdates.push({ row: row._sheetRow, value: filled });
     drafted++;
   });
+
+  batchSetColumnValues_(sheet, draftCol, draftUpdates);
 
   if (!silent) {
     let msg = 'Drafted ' + drafted + ' message(s) on Outreach Queue.';

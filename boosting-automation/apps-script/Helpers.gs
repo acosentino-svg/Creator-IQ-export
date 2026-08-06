@@ -202,7 +202,9 @@ function buildDraftMessage_(opts) {
   const linkList = splitLinks_(links);
   const linkCount = linkList.length || (links ? 1 : 0);
   const needsLinks = opts.needsLinks !== false;
-  const isFollowUp = !!opts.isFollowUp || isAlreadyBoostedThisMonth_(opts.handle);
+  const isFollowUp = opts.isFollowUp != null
+    ? !!opts.isFollowUp
+    : isAlreadyBoostedThisMonth_(opts.handle);
 
   let amount = opts.amount;
   if (!amount) {
@@ -237,28 +239,52 @@ function buildDraftMessage_(opts) {
   return fillTemplate_(template, values);
 }
 
-/** Fallback for message rows synced before Platform (auto) existed. */
-function lookupPlatformsForHandleFromTracker_(handle) {
+/** Reads Boosting Tracker once and returns handle -> merged platform labels. */
+function buildPlatformLookupFromTracker_() {
   const trackerSheet = getSheet_(SHEET_NAMES.BOOSTING_TRACKER);
   const lastRow = trackerSheet.getLastRow();
   const lastCol = trackerSheet.getLastColumn();
-  if (lastRow < HEADER_ROW.BOOSTING_TRACKER + 1) return '';
+  const lookup = {};
+  if (lastRow < HEADER_ROW.BOOSTING_TRACKER + 1) return lookup;
 
   const headers = trackerSheet.getRange(HEADER_ROW.BOOSTING_TRACKER, 1, 1, lastCol).getValues()[0];
   const headerIndex = buildHeaderIndex_(headers);
   const nameIdx = colIndex_(headerIndex, 'creator name', false);
   const platformIdx = colIndex_(headerIndex, 'platform(s) for usage', false);
-  if (nameIdx === -1 || platformIdx === -1) return '';
+  if (nameIdx === -1 || platformIdx === -1) return lookup;
 
-  const handleKey = normalizeHandle_(handle);
   const values = trackerSheet.getRange(HEADER_ROW.BOOSTING_TRACKER + 1, 1, lastRow - HEADER_ROW.BOOSTING_TRACKER, lastCol).getValues();
-  const platforms = [];
   values.forEach((row) => {
-    if (normalizeHandle_(row[nameIdx]) !== handleKey) return;
+    const handleKey = normalizeHandle_(row[nameIdx]);
     const platform = String(row[platformIdx] || '').trim();
-    if (platform) platforms.push(platform);
+    if (!handleKey || !platform) return;
+    lookup[handleKey] = mergePlatformLabels_(lookup[handleKey] || '', platform);
   });
-  return mergePlatformLabels_('', platforms.join(', '));
+  return lookup;
+}
+
+/** Fallback for message rows synced before Platform (auto) existed. */
+function lookupPlatformsForHandleFromTracker_(handle, platformLookup) {
+  const handleKey = normalizeHandle_(handle);
+  if (!handleKey) return '';
+  if (platformLookup) return platformLookup[handleKey] || '';
+  return (buildPlatformLookupFromTracker_()[handleKey]) || '';
+}
+
+/** Batch-writes one column from [{ row: 1-based sheet row, value }]. */
+function batchSetColumnValues_(sheet, col1Based, updates) {
+  if (!updates.length) return;
+  const rowNums = updates.map((u) => u.row);
+  const minRow = Math.min.apply(null, rowNums);
+  const maxRow = Math.max.apply(null, rowNums);
+  const range = sheet.getRange(minRow, col1Based, maxRow - minRow + 1, 1);
+  const values = range.getValues();
+  const valueByRow = {};
+  updates.forEach((u) => { valueByRow[u.row] = u.value; });
+  for (let r = minRow; r <= maxRow; r++) {
+    if (valueByRow[r] !== undefined) values[r - minRow][0] = valueByRow[r];
+  }
+  range.setValues(values);
 }
 
 /**
