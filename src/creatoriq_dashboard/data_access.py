@@ -18,7 +18,19 @@ from .tiers import extract_tier_from_tags
 # (zero columns) breaks every downstream merge/groupby that expects
 # `creator_id` etc. to exist, even on an empty dataset.
 _EMPTY_TABLE_COLUMNS: dict[str, list[str]] = {
-    "creators": ["creator_id", "name", "handle", "email", "status", "tier", "tags", "joined_date"],
+    "creators": [
+        "creator_id",
+        "name",
+        "handle",
+        "email",
+        "status",
+        "tier",
+        "tags",
+        "joined_date",
+        "country",
+        "state",
+        "city",
+    ],
     "campaigns": ["campaign_id", "campaign_name", "status", "start_date", "end_date"],
     "posts": ["post_id", "creator_id", "campaign_id", "campaign_name", "platform", "post_type", "posted_at"],
     "links": ["link_id", "creator_id", "label", "destination_url", "created_at", "campaign_id"],
@@ -30,7 +42,19 @@ _EMPTY_TABLE_COLUMNS: dict[str, list[str]] = {
 
 def normalize_creators_df(df: pd.DataFrame) -> pd.DataFrame:
     """Ensure live CreatorIQ rows always have tier/tags/handle columns."""
-    required = ["creator_id", "name", "handle", "email", "status", "tier", "tags", "joined_date"]
+    required = [
+        "creator_id",
+        "name",
+        "handle",
+        "email",
+        "status",
+        "tier",
+        "tags",
+        "joined_date",
+        "country",
+        "state",
+        "city",
+    ]
     if df.empty and df.columns.empty:
         return pd.DataFrame(columns=required)
     out = df.copy()
@@ -41,8 +65,9 @@ def normalize_creators_df(df: pd.DataFrame) -> pd.DataFrame:
         out["tier"] = out["tags"].apply(extract_tier_from_tags)
     else:
         out["tier"] = out["tier"].fillna(out["tags"].apply(extract_tier_from_tags))
-    for col in ("name", "handle", "email", "tags"):
-        out[col] = out[col].fillna("").astype(str)
+    for col in ("name", "handle", "email", "tags", "country", "state", "city"):
+        if col in out.columns:
+            out[col] = out[col].fillna("").astype(str)
     return out
 
 

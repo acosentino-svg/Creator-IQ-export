@@ -19,11 +19,17 @@ from creatoriq_dashboard.active_members import (  # noqa: E402
     parse_active_members_csv,
     parse_active_members_csv_preview,
 )
+from creatoriq_dashboard.creator_geography_upload import (  # noqa: E402
+    merge_geography_creator_frames,
+    merge_geography_into_creators,
+    parse_creator_geography_csv,
+)
 from creatoriq_dashboard.runtime import is_streamlit_cloud  # noqa: E402
 from creatoriq_dashboard.storage import get_engine, read_table, record_sync, write_table  # noqa: E402
 from datetime import datetime, timezone  # noqa: E402
 
 SYNC_TIMEOUT_SECONDS = 900  # 15 minutes — Streamlit Cloud will kill longer runs anyway
+ENROLLED_SYNC_TIMEOUT_SECONDS = 7200  # 2 hours for ~43k publisher pages (local / long-running host)
 
 st.set_page_config(page_title="Data & Settings", page_icon="⚙️", layout="wide")
 config = get_config()
@@ -33,8 +39,9 @@ st.title("⚙️ Data & Settings")
 
 if on_cloud:
     st.info(
-        "**Streamlit Cloud note:** A full sync of ~42k creators can take **many hours** and will "
-        "look like this page is stuck. Use **Quick sync** below first (a few minutes). "
+        "**Streamlit Cloud note:** A full sync of ~43k+ creators can take **many hours** and will "
+        "look like this page is stuck. Use **Quick sync** below for a **~500-creator sample** only. "
+        "For the full program, run `python3 scripts/refresh_data.py` on a laptop or server. "
         "If the app has been spinning for a long time, open **Manage app → Reboot app** in the "
         "lower-right corner of Streamlit Cloud."
     )
@@ -59,9 +66,18 @@ if not config.is_demo:
     st.subheader("Data coverage (live)")
     if dq.get("enrolled", 0) == 0:
         st.warning(
-            "**No creator data in the cache yet.** Click **Quick sync** below (or run "
-            "`python scripts/refresh_data.py --quick` locally). "
-            "A full ~42k sync should be run on a server with a long timeout, not in the browser."
+            "**No creator data in the cache yet.** Click **Quick sync** below for a small sample (~500 creators), "
+            "or run `python3 scripts/refresh_data.py` locally for the full ~43k+ program."
+        )
+    expected_min = config.settings.get("live_sync", "expected_enrolled_min", default=43000)
+    try:
+        expected_min = int(expected_min)
+    except (TypeError, ValueError):
+        expected_min = 43000
+    if expected_min > 0 and dq.get("enrolled", 0) < expected_min:
+        st.error(
+            f"**Only {dq.get('enrolled', 0):,} enrolled creators in cache** — expected at least "
+            f"**{expected_min:,}**. Quick sync is capped; run a full sync locally without `--quick`."
         )
     st.markdown(
         "All pages read from the **same cached dataset** — if a number looks wrong here, "
@@ -91,33 +107,64 @@ if not config.is_demo:
 
 if not config.is_demo:
     st.caption("Data is served from the local SQLite cache on this server.")
-    col_quick, col_full = st.columns(2)
+    st.markdown(
+        "**For the geography map (43k+ creators):** use **Sync creators only** — pulls location "
+        "fields via the API with no 20k CSV export limit. Skips campaigns and posts (faster than full sync)."
+    )
+    col_quick, col_geo, col_full = st.columns(3)
     with col_quick:
-        run_quick = st.button("Quick sync (~5 min)", type="primary", help="5 campaigns, 5 publisher pages — safe on Streamlit Cloud")
+        run_quick = st.button(
+            "Quick sync (~500 creators)",
+            help="Sample only — not the full program",
+        )
+    with col_geo:
+        run_geo = st.button(
+            "Sync creators only (geography)",
+            type="primary",
+            help="All Active /publishers with Country/State/City — for map + top cities/states pages",
+        )
     with col_full:
         run_full = st.button(
-            "Full sync (hours — not recommended on Streamlit Cloud)",
-            help="Pulls all campaigns and up to 45k enrolled creators",
+            "Full sync (everything)",
+            help="Creators + all campaigns, posts, email — hours, local machine recommended",
         )
 
-    if run_quick or run_full:
+    if run_quick or run_full or run_geo:
         cmd = [sys.executable, str(REPO_ROOT / "scripts" / "refresh_data.py")]
-        if run_quick or on_cloud:
+        if run_quick:
             cmd.append("--quick")
-        label = "Quick sync" if "--quick" in cmd else "Full sync"
-        with st.spinner(f"{label} in progress (max {SYNC_TIMEOUT_SECONDS // 60} minutes)..."):
+            label = "Quick sync"
+            timeout = SYNC_TIMEOUT_SECONDS
+        elif run_geo:
+            cmd.append("--enrolled-only")
+            label = "Creators-only sync (geography)"
+            timeout = ENROLLED_SYNC_TIMEOUT_SECONDS
+            if on_cloud:
+                st.warning(
+                    "Creators-only sync for 43k+ may exceed Streamlit Cloud limits. "
+                    "Prefer: `python3 scripts/refresh_data.py --enrolled-only` on your Mac."
+                )
+        else:
+            label = "Full sync"
+            timeout = ENROLLED_SYNC_TIMEOUT_SECONDS
+            if on_cloud:
+                st.warning(
+                    "Full sync on Streamlit Cloud will likely time out. "
+                    "Run locally: python3 scripts/refresh_data.py"
+                )
+        with st.spinner(f"{label} in progress (max {timeout // 60} minutes)..."):
             try:
                 result = subprocess.run(
                     cmd,
                     capture_output=True,
                     text=True,
                     cwd=str(REPO_ROOT),
-                    timeout=SYNC_TIMEOUT_SECONDS,
+                    timeout=timeout,
                 )
             except subprocess.TimeoutExpired:
                 st.error(
-                    f"{label} timed out after {SYNC_TIMEOUT_SECONDS // 60} minutes. "
-                    "Use Quick sync, or run `python scripts/refresh_data.py` on a machine that can stay on for hours."
+                    f"{label} timed out after {timeout // 60} minutes. "
+                    "Run `python3 scripts/refresh_data.py --enrolled-only` on a machine that can stay on for hours."
                 )
             else:
                 if result.returncode == 0:
@@ -134,7 +181,7 @@ st.markdown(
     If your **Active Members** export includes **when each creator last created a link**, upload it here.
     The dashboard will use that for **Last Link Date**, **Posted only (no link)**, and **Went dark**.
 
-    **Can't export all ~42k at once?** Upload partial CSVs (we merge them), **or** click
+    **Can't export all ~43k at once?** Upload partial CSVs (we merge them), **or** click
     **Pull from CreatorIQ API** below — uses the CRM Reports API (same family as Daily Campaign Posts).
 
     We auto-detect columns like `Publisher Id` and `Last Link Created`.
@@ -185,6 +232,86 @@ if uploaded is not None:
     except ValueError as exc:
         st.error(str(exc))
         st.caption("Send a screenshot of your CSV column headers if auto-detect fails — we'll add your column names.")
+
+st.divider()
+st.subheader("Creator geography (State / City map)")
+st.markdown(
+    """
+    **No Terminal required.** Export creators from CreatorIQ (CSV), or save from Excel as CSV, then upload here.
+
+    - CreatorIQ limits exports to ~20,000 rows — **upload multiple files**; we merge them.
+    - Needs columns like **State**, **City**, **Country** (and ideally **Publisher Id**).
+    - Powers **Creator Geography** and **Top States & Cities**.
+    """
+)
+
+if config.is_demo:
+    st.caption("Switch to `CREATORIQ_DASHBOARD_MODE=live` in secrets to persist uploads on Streamlit Cloud.")
+
+geo_uploaded = st.file_uploader(
+    "Creators / Publishers CSV (location fields)",
+    type=["csv"],
+    key="geography_csv_upload",
+    accept_multiple_files=True,
+)
+if geo_uploaded:
+    try:
+        parsed_batches = []
+        for file in geo_uploaded:
+            parsed_batches.append(parse_creator_geography_csv(file.getvalue()))
+        combined_new = parsed_batches[0]
+        for batch in parsed_batches[1:]:
+            combined_new = merge_geography_creator_frames(combined_new, batch)
+        preview = {
+            "rows": len(combined_new),
+            "with_state": int((combined_new["state"].astype(str).str.strip() != "").sum()),
+            "with_city": int((combined_new["city"].astype(str).str.strip() != "").sum()),
+        }
+        st.write(
+            f"Ready to import **{preview['rows']:,}** creators · "
+            f"**{preview['with_state']:,}** with state · **{preview['with_city']:,}** with city."
+        )
+        st.dataframe(combined_new.head(5), use_container_width=True, hide_index=True)
+        if st.button("Import location data from these file(s)", type="primary"):
+            engine = get_engine(config.db_path)
+            existing = read_table(engine, "creators")
+            merged_creators = merge_geography_into_creators(existing, combined_new)
+            write_table(engine, "creators", merged_creators)
+            record_sync(engine, "creators", datetime.now(timezone.utc))
+            st.cache_data.clear()
+            st.success(
+                f"Imported **{len(combined_new):,}** rows from file(s). "
+                f"**{len(merged_creators):,}** creators now in cache. Open **Creator Geography**."
+            )
+    except ValueError as exc:
+        st.error(str(exc))
+        st.caption("Tip: export CSV from CreatorIQ or **Save As → CSV** from Excel.")
+
+st.divider()
+st.subheader("Import API sync from GitHub (no Mac Terminal)")
+st.markdown(
+    """
+    If CreatorIQ CSV export is capped and you cannot run Python on your laptop:
+
+    1. Add `CREATORIQ_API_KEY` (and `CREATORIQ_BASE_URL`) to **GitHub repo → Settings → Secrets → Actions**
+    2. GitHub → **Actions** → **Sync enrolled creators (API geography)** → **Run workflow**
+    3. When the job finishes (~30–90+ min), download the **warehouse-db** artifact
+    4. Upload `warehouse.db` below
+    """
+)
+
+db_upload = st.file_uploader("Upload warehouse.db (from GitHub Actions artifact)", type=["db"])
+if db_upload is not None:
+    st.caption(f"Will replace cache at `{config.db_path}` ({len(db_upload.getvalue()) / 1_000_000:.1f} MB)")
+    if st.button("Import warehouse.db into this app"):
+        config.db_path.parent.mkdir(parents=True, exist_ok=True)
+        config.db_path.write_bytes(db_upload.getvalue())
+        record_sync(get_engine(config.db_path), "creators", datetime.now(timezone.utc))
+        st.cache_data.clear()
+        st.success(
+            f"Database imported ({len(db_upload.getvalue()) / 1_000_000:.1f} MB). "
+            "Open **Creator Geography** and **Top States & Cities**."
+        )
 
 st.divider()
 st.subheader("Where the rest of the config lives")

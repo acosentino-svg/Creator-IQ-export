@@ -33,6 +33,9 @@ publishers:
   joined_date: DateRecruitingStarted
   tags: Tags
   email: Email
+  country: Country
+  state: State
+  city: City
 
 campaigns:
   campaign_id: CampaignId

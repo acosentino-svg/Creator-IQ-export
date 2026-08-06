@@ -155,10 +155,10 @@ def _resolve_network_publisher_ids(
 
 
 def _fetch_enrolled_creators(config: AppConfig, client: CreatorIQClient) -> pd.DataFrame:
-    """All program enrollees: CreatorIQ publishers with Status=Active (~42k)."""
+    """All program enrollees: CreatorIQ publishers with Status=Active (~43k+)."""
     mapping = config.field_mappings.get("publishers", {})
     status = config.settings.get("live_sync", "enrolled_status_filter", default="Active")
-    max_pages = _live_sync_limit(config, "max_publisher_pages", default=450)
+    max_pages = _live_sync_limit(config, "max_publisher_pages", default=None)
     rows: list[dict] = []
     for record in client.iter_resource(
         "publishers",
@@ -321,6 +321,42 @@ def _fetch_link_creations(
     return df.reset_index(drop=True)
 
 
+def sync_enrolled_creators(config: AppConfig) -> dict[str, int]:
+    """Pull enrolled /publishers only (location + roster) — no campaigns/posts/email.
+
+    Use this for geography maps when CreatorIQ CSV exports are capped (~20k rows).
+    Still paginates through the full Active publisher list via the API (~43k+).
+    """
+    client = CreatorIQClient(config)
+    engine = get_engine(config.db_path)
+    now = datetime.now(timezone.utc)
+
+    logger.info(
+        "Creators-only sync (Status=%s)...",
+        config.settings.get("live_sync", "enrolled_status_filter", default="Active"),
+    )
+    roster_df = _fetch_enrolled_creators(config, client)
+    expected_min = config.settings.get("live_sync", "expected_enrolled_min", default=43000)
+    try:
+        expected_min = int(expected_min)
+    except (TypeError, ValueError):
+        expected_min = 43000
+    if expected_min > 0 and len(roster_df) < expected_min:
+        logger.warning(
+            "Fetched %d enrolled creators but expected at least %d. "
+            "If you used Quick sync or CREATORIQ_SYNC_PROFILE=cloud_safe, only ~500 rows are pulled. "
+            "Run: python3 scripts/refresh_data.py --enrolled-only (no --quick).",
+            len(roster_df),
+            expected_min,
+        )
+    logger.info("Fetched %d enrolled creators", len(roster_df))
+
+    write_table(engine, "creators", roster_df)
+    record_sync(engine, "creators", now)
+
+    return {"creators": len(roster_df)}
+
+
 def sync_all(config: AppConfig) -> dict[str, int]:
     client = CreatorIQClient(config)
     engine = get_engine(config.db_path)
@@ -332,6 +368,19 @@ def sync_all(config: AppConfig) -> dict[str, int]:
 
     logger.info("Syncing enrolled creators (Status=%s)...", config.settings.get("live_sync", "enrolled_status_filter", default="Active"))
     roster_df = _fetch_enrolled_creators(config, client)
+    expected_min = config.settings.get("live_sync", "expected_enrolled_min", default=43000)
+    try:
+        expected_min = int(expected_min)
+    except (TypeError, ValueError):
+        expected_min = 43000
+    if expected_min > 0 and len(roster_df) < expected_min:
+        logger.warning(
+            "Fetched %d enrolled creators but expected at least %d. "
+            "If you used Quick sync or CREATORIQ_SYNC_PROFILE=cloud_safe, only ~500 rows are pulled. "
+            "Run a full sync locally: python3 scripts/refresh_data.py (no --quick).",
+            len(roster_df),
+            expected_min,
+        )
     logger.info("Fetched %d enrolled creators", len(roster_df))
 
     max_campaigns = _live_sync_limit(config, "max_campaigns", default=None)

@@ -41,6 +41,11 @@ alerts:
   # SLACK_WEBHOOK_URL is configured.
   weekly_digest_enabled: true
 
+geography:
+  # US-only creator program — geography page defaults to state map and counts
+  # all enrolled creators as US (even when Country is blank in CRM).
+  us_only_program: true
+
 live_sync:
   # Safety limits for pulling from the real CreatorIQ API (see
   # src/creatoriq_dashboard/etl.py), used once CREATORIQ_DASHBOARD_MODE is
@@ -58,10 +63,14 @@ live_sync:
   priority_campaign_name_contains:
     - affiliate
     - Affiliate
-  # Program enrollment in CreatorIQ = publishers with this Status (~42k Active).
+  # Program enrollment in CreatorIQ = publishers with this Status (~43k+ Active).
   enrolled_status_filter: "Active"
-  # Pages of /publishers to pull (100 creators/page). 450 pages ≈ 45k enrolled.
-  max_publisher_pages: 450
+  # Minimum enrolled creators you expect after a full /publishers sync. Dashboard
+  # pages warn when the cache is below this (usually incomplete sync).
+  expected_enrolled_min: 43000
+  # Pages of /publishers to pull (100 creators/page). null = no cap — paginate until
+  # the API returns a short/empty page (~430+ pages for 43k creators).
+  max_publisher_pages: null
   # Whether to resolve each creator's NetworkPublisherId via an extra
   # /publishers?filter= lookup when it wasn't already available from a post
   # (needed to fetch that creator's email/messages). Costs one extra API

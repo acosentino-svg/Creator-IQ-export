@@ -1,0 +1,53 @@
+# Pull all enrolled Active publishers from CreatorIQ API (geography fields).
+# Trigger manually from GitHub → Actions → "Sync enrolled creators" → Run workflow.
+# No Mac Terminal required — runs on GitHub's servers (~30–90+ minutes for 43k+).
+#
+# Setup (one time):
+#   Repo Settings → Secrets and variables → Actions → add:
+#     CREATORIQ_API_KEY
+#     CREATORIQ_BASE_URL  (e.g. https://api.creatoriq.com/api)
+#     CREATORIQ_ORG_ID    (optional, empty if not used)
+#
+# After the job finishes:
+#   Download the "warehouse-db" artifact → upload in Streamlit Data & Settings.
+
+name: Sync enrolled creators (API geography)
+
+on:
+  workflow_dispatch:
+
+jobs:
+  sync-enrolled:
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+          pip install -e .
+
+      - name: Sync enrolled creators via CreatorIQ API
+        env:
+          CREATORIQ_DASHBOARD_MODE: live
+          CREATORIQ_BASE_URL: ${{ secrets.CREATORIQ_BASE_URL }}
+          CREATORIQ_API_KEY: ${{ secrets.CREATORIQ_API_KEY }}
+          CREATORIQ_ORG_ID: ${{ secrets.CREATORIQ_ORG_ID }}
+        run: |
+          mkdir -p data
+          python scripts/refresh_data.py --enrolled-only
+
+      - name: Upload warehouse database
+        uses: actions/upload-artifact@v4
+        with:
+          name: warehouse-db
+          path: data/warehouse.db
+          if-no-files-found: error
+          retention-days: 14
