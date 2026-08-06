@@ -19,6 +19,11 @@ from creatoriq_dashboard.active_members import (  # noqa: E402
     parse_active_members_csv,
     parse_active_members_csv_preview,
 )
+from creatoriq_dashboard.creator_geography_upload import (  # noqa: E402
+    merge_geography_creator_frames,
+    merge_geography_into_creators,
+    parse_creator_geography_csv,
+)
 from creatoriq_dashboard.runtime import is_streamlit_cloud  # noqa: E402
 from creatoriq_dashboard.storage import get_engine, read_table, record_sync, write_table  # noqa: E402
 from datetime import datetime, timezone  # noqa: E402
@@ -227,6 +232,60 @@ if uploaded is not None:
     except ValueError as exc:
         st.error(str(exc))
         st.caption("Send a screenshot of your CSV column headers if auto-detect fails — we'll add your column names.")
+
+st.divider()
+st.subheader("Creator geography (State / City map)")
+st.markdown(
+    """
+    **No Terminal required.** Export creators from CreatorIQ (CSV), or save from Excel as CSV, then upload here.
+
+    - CreatorIQ limits exports to ~20,000 rows — **upload multiple files**; we merge them.
+    - Needs columns like **State**, **City**, **Country** (and ideally **Publisher Id**).
+    - Powers **Creator Geography** and **Top States & Cities**.
+    """
+)
+
+if config.is_demo:
+    st.caption("Switch to `CREATORIQ_DASHBOARD_MODE=live` in secrets to persist uploads on Streamlit Cloud.")
+
+geo_uploaded = st.file_uploader(
+    "Creators / Publishers CSV (location fields)",
+    type=["csv"],
+    key="geography_csv_upload",
+    accept_multiple_files=True,
+)
+if geo_uploaded:
+    try:
+        parsed_batches = []
+        for file in geo_uploaded:
+            parsed_batches.append(parse_creator_geography_csv(file.getvalue()))
+        combined_new = parsed_batches[0]
+        for batch in parsed_batches[1:]:
+            combined_new = merge_geography_creator_frames(combined_new, batch)
+        preview = {
+            "rows": len(combined_new),
+            "with_state": int((combined_new["state"].astype(str).str.strip() != "").sum()),
+            "with_city": int((combined_new["city"].astype(str).str.strip() != "").sum()),
+        }
+        st.write(
+            f"Ready to import **{preview['rows']:,}** creators · "
+            f"**{preview['with_state']:,}** with state · **{preview['with_city']:,}** with city."
+        )
+        st.dataframe(combined_new.head(5), use_container_width=True, hide_index=True)
+        if st.button("Import location data from these file(s)", type="primary"):
+            engine = get_engine(config.db_path)
+            existing = read_table(engine, "creators")
+            merged_creators = merge_geography_into_creators(existing, combined_new)
+            write_table(engine, "creators", merged_creators)
+            record_sync(engine, "creators", datetime.now(timezone.utc))
+            st.cache_data.clear()
+            st.success(
+                f"Imported **{len(combined_new):,}** rows from file(s). "
+                f"**{len(merged_creators):,}** creators now in cache. Open **Creator Geography**."
+            )
+    except ValueError as exc:
+        st.error(str(exc))
+        st.caption("Tip: export CSV from CreatorIQ or **Save As → CSV** from Excel.")
 
 st.divider()
 st.subheader("Where the rest of the config lives")
