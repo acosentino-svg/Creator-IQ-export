@@ -30,16 +30,25 @@ function mondayCheck() {
   toast_('Monday check: scanning Boosting Tracker...');
   const summary = syncBoostingTracker(true);
   toast_('Monday check: drafting outreach emails...');
-  draftOutreachMessages(true);
+  const draftResult = draftOutreachMessages(true);
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   const queue = ss.getSheetByName(SHEET_NAMES.OUTREACH_QUEUE);
   if (queue) ss.setActiveSheet(queue);
   if (!summary) return;
-  toast_(
-    'Monday check done: ' + summary.queued + ' video(s) queued, ' +
-    summary.outreachRows + ' email(s) on Outreach Queue, ' +
-    summary.promoted + ' promoted to gift card tracker.'
-  );
+
+  let msg = 'Monday check done: ' + summary.queued + ' video(s) from tracker';
+  if (summary.skippedDupes) msg += ' (' + summary.skippedDupes + ' dupes skipped)';
+  msg += ' -> ' + summary.emailRows + ' email row(s). Drafted ' + draftResult.drafted;
+  if (summary.queued > summary.emailRows) {
+    msg += ' (grouped by creator — multiple videos = one email)';
+  }
+  if (draftResult.skipped) {
+    msg += '. ' + draftResult.skipped + ' row(s) still need a name or link';
+    writeDraftReadinessDebug_(true);
+    msg += ' — see "Draft Readiness Debug" tab';
+  }
+  msg += '.';
+  toast_(msg);
 }
 
 const AUTO_SYNC_HANDLER = 'runScheduledSync';
@@ -243,11 +252,11 @@ function syncBoostingTracker(silent) {
     if (hk) pendingNewByHandle[hk] = r;
   });
 
-  const followUpRows = [];
+  const followUpByHandle = {};
   const piecesUpdates = [];
   const trackerMarkerUpdates = [];
   const virtualNewCreators = {};
-  let dupesFixed = 0, queued = 0, outreachRows = 0;
+  let dupesFixed = 0, queued = 0, outreachRows = 0, skippedDupes = 0;
 
   for (let i = 0; i < values.length; i++) {
     const row = values[i];
@@ -265,6 +274,7 @@ function syncBoostingTracker(silent) {
 
     const isDupe = DUPE_MARKERS.some((m) => notifiedNorm.indexOf(m) !== -1);
     if (isDupe) {
+      skippedDupes++;
       if (fillDupeLinks_(trackerSheet, headerIndex, values, i, sheetRow)) dupesFixed++;
       continue;
     }
@@ -282,12 +292,24 @@ function syncBoostingTracker(silent) {
       const newTotal = currentPieces + 1;
       existing._pendingDelta = (existing._pendingDelta || 0) + 1;
       piecesUpdates.push({ row: existing._sheetRow, value: newTotal });
-      followUpRows.push({
-        handle: handle, blockRow: existing._sheetRow,
-        firstName: existing['first name'] || '', lastName: existing['last name'] || '',
-        newPieces: 1, totalPieces: newTotal,
-        email: existing['email address'] || '', links: links, platform: platform,
-      });
+
+      let followUp = followUpByHandle[handleKey];
+      if (!followUp) {
+        followUp = followUpByHandle[handleKey] = {
+          handle: handle,
+          firstName: existing['first name'] || '',
+          lastName: existing['last name'] || '',
+          newPieces: 0,
+          totalPieces: newTotal,
+          email: existing['email address'] || '',
+          links: [],
+          platforms: [],
+        };
+      }
+      followUp.newPieces++;
+      followUp.totalPieces = newTotal;
+      followUp.links.push(links);
+      if (platform) followUp.platforms.push(platform);
     } else if (pendingNewByHandle[handleKey]) {
       const p = pendingNewByHandle[handleKey];
       p._pendingDelta = (p._pendingDelta || 0) + 1;
@@ -314,8 +336,19 @@ function syncBoostingTracker(silent) {
   batchSetColumnValues_(trackerSheet, headerIndex['creator notified'] + 1, trackerMarkerUpdates);
   if (piecesUpdates.length) SpreadsheetApp.flush();
 
-  followUpRows.forEach((r) => {
-    r.amount = formatAmount_(calculateGiftCardAmount_(r.totalPieces));
+  const followUpRows = Object.keys(followUpByHandle).map((handleKey) => {
+    const r = followUpByHandle[handleKey];
+    return {
+      handle: r.handle,
+      firstName: r.firstName,
+      lastName: r.lastName,
+      newPieces: r.newPieces,
+      totalPieces: r.totalPieces,
+      email: r.email,
+      links: r.links.filter((l) => String(l || '').trim()).join(', '),
+      platform: mergePlatformLabels_('', r.platforms.join(', ')),
+      amount: formatAmount_(calculateGiftCardAmount_(r.totalPieces)),
+    };
   });
 
   const pendingList = Object.keys(pendingNewByHandle).map((k) => pendingNewByHandle[k]).filter((p) => p._pendingDelta);
@@ -380,9 +413,11 @@ function syncBoostingTracker(silent) {
   outreachRows += appendToOutreachQueue_(OUTREACH_TYPE_FOLLOWUP, followUpRows);
   outreachRows += pendingList.length;
 
+  const emailRows = newRows.length + followUpRows.length + pendingList.length;
+
   if (!silent) {
     toast_(
-      'Queued ' + queued + ' video(s), ' + outreachRows + ' email(s) on Outreach Queue, ' +
+      'Queued ' + queued + ' video(s) -> ' + emailRows + ' email row(s) on Outreach Queue, ' +
       'promoted ' + promotion.promoted + ' to gift card tracker.'
     );
   }
@@ -390,9 +425,11 @@ function syncBoostingTracker(silent) {
   return {
     queued: queued,
     outreachRows: outreachRows,
+    emailRows: emailRows,
     newCreators: newRows.length + pendingList.length,
     followUps: followUpRows.length,
     dupesFixed: dupesFixed,
+    skippedDupes: skippedDupes,
     promoted: promotion.promoted,
   };
 }
@@ -442,18 +479,22 @@ function testNameLookup_() {
 }
 
 /**
- * Diagnostic: shows per-row why step 3a would draft or skip each creator.
+ * Diagnostic: shows per-row why outreach would draft or skip each creator.
+ * @param {boolean} silent When true, writes the tab without a popup (used by Monday check).
  */
-function testDraftReadiness_() {
+function writeDraftReadinessDebug_(silent) {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
-  const existing = ss.getSheetByName('Draft Readiness Debug');
+  const tabName = 'Draft Readiness Debug';
+  const existing = ss.getSheetByName(tabName);
   if (existing) ss.deleteSheet(existing);
-  const debugSheet = ss.insertSheet('Draft Readiness Debug');
+  const debugSheet = ss.insertSheet(tabName);
 
   const sheet = getOutreachQueueSheet_();
   const read = readFlatSheetRows_(sheet, HEADER_ROW.OUTREACH_QUEUE);
   const draftKey = normalizeHeader_(DRAFT_COLUMN_HEADER);
   const sentKey = normalizeHeader_(SENT_CHECKBOX_HEADER);
+  const platformLookup = buildPlatformLookupFromTracker_();
+  const linksLookup = buildLinksLookupFromTracker_();
 
   const out = [['Row', 'Type', 'Creator Handle', 'First Name', 'Platform', 'Needs links?', 'Links found?', 'Pieces', 'Amount', 'Ready?', 'Why skipped']];
   read.rows.forEach((row) => {
@@ -462,10 +503,9 @@ function testDraftReadiness_() {
     const firstName = String(row['first name'] || '').trim();
     const displayName = firstName || (handle ? handle.replace(/^@/, '').split(/[._]/)[0] : '');
     const platform = String(row[normalizeHeader_(PLATFORM_COLUMN_HEADER)] || row['platform (auto)'] || row['platform'] || '').trim()
-      || lookupPlatformsForHandleFromTracker_(handle);
+      || lookupPlatformsForHandleFromTracker_(handle, platformLookup);
     const needsLinks = needsProductLinksForPlatforms_(platform);
-    const linksFromRow = ['links', 'link', 'video link', 'video links', 'content link', 'content links', 'content used']
-      .map((k) => String(row[k] || '').trim()).find((v) => v) || '';
+    const linksFromRow = resolveOutreachLinks_(row, handle, linksLookup);
 
     let pieces = Number(String(row['new pieces of content used'] || '').trim());
     if (!pieces || pieces < 1) pieces = 1;
@@ -501,7 +541,13 @@ function testDraftReadiness_() {
   debugSheet.getRange(1, 1, out.length, out[0].length).setValues(out);
   debugSheet.getRange(1, 1, 1, out[0].length).setFontWeight('bold');
   debugSheet.autoResizeColumns(1, out[0].length);
-  SpreadsheetApp.getUi().alert('Done. Open the "Draft Readiness Debug" tab to see which rows are missing a name or link.');
+  if (!silent) {
+    SpreadsheetApp.getUi().alert('Done. Open the "Draft Readiness Debug" tab to see which rows are missing a name or link.');
+  }
+}
+
+function testDraftReadiness_() {
+  writeDraftReadinessDebug_(false);
 }
 
 /**
@@ -586,11 +632,14 @@ function draftOutreachMessages(silent) {
   const draftCol = read.headerIndex[draftKey] + 1;
   const platformKey = normalizeHeader_(PLATFORM_COLUMN_HEADER);
   const platformLookup = buildPlatformLookupFromTracker_();
+  const linksLookup = buildLinksLookupFromTracker_();
   const draftUpdates = [];
 
   let drafted = 0, skipped = 0, skippedNoName = 0, skippedNoLinks = 0;
+  let alreadyDrafted = 0, alreadySent = 0;
   read.rows.forEach((row) => {
-    if (row[draftKey] || row[sentKey]) return;
+    if (row[draftKey]) { alreadyDrafted++; return; }
+    if (row[sentKey]) { alreadySent++; return; }
 
     const firstName = String(row['first name'] || '').trim();
     const handle = String(row['creator handle'] || '').trim();
@@ -601,7 +650,7 @@ function draftOutreachMessages(silent) {
     const platform = String(row[platformKey] || '').trim()
       || lookupPlatformsForHandleFromTracker_(handle, platformLookup);
     const needsLinks = needsProductLinksForPlatforms_(platform);
-    const links = String(row['links'] || '').trim();
+    const links = resolveOutreachLinks_(row, handle, linksLookup);
 
     if (!displayName) { skipped++; skippedNoName++; return; }
     if (needsLinks && !links) { skipped++; skippedNoLinks++; return; }
@@ -627,6 +676,7 @@ function draftOutreachMessages(silent) {
 
   batchSetColumnValues_(sheet, draftCol, draftUpdates);
 
+  const result = { drafted: drafted, skipped: skipped, skippedNoName: skippedNoName, skippedNoLinks: skippedNoLinks, alreadyDrafted: alreadyDrafted, alreadySent: alreadySent };
   if (!silent) {
     let msg = 'Drafted ' + drafted + ' message(s) on Outreach Queue.';
     if (skipped) {
@@ -635,11 +685,11 @@ function draftOutreachMessages(silent) {
       if (skippedNoName) reasons.push(skippedNoName + ' missing a name');
       if (skippedNoLinks) reasons.push(skippedNoLinks + ' missing a link');
       if (reasons.length) msg += ' (' + reasons.join(', ') + ')';
-      msg += '.';
+      msg += '. Run Setup > Test draft readiness for details.';
     }
     toast_(msg);
   }
-  return drafted;
+  return result;
 }
 
 /**

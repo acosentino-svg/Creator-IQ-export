@@ -239,6 +239,57 @@ function buildDraftMessage_(opts) {
   return fillTemplate_(template, values);
 }
 
+function mergeLinkLabels_(existing, incoming) {
+  const set = {};
+  splitLinks_(existing).concat(splitLinks_(incoming)).forEach((link) => {
+    const label = String(link || '').trim();
+    if (label) set[label] = true;
+  });
+  return Object.keys(set).join(', ');
+}
+
+/** Reads Boosting Tracker once and returns handle -> merged link/video URLs. */
+function buildLinksLookupFromTracker_() {
+  const trackerSheet = getSheet_(SHEET_NAMES.BOOSTING_TRACKER);
+  const lastRow = trackerSheet.getLastRow();
+  const lastCol = trackerSheet.getLastColumn();
+  const lookup = {};
+  if (lastRow < HEADER_ROW.BOOSTING_TRACKER + 1) return lookup;
+
+  const headers = trackerSheet.getRange(HEADER_ROW.BOOSTING_TRACKER, 1, 1, lastCol).getValues()[0];
+  const headerIndex = buildHeaderIndex_(headers);
+  const nameIdx = colIndex_(headerIndex, 'creator name', false);
+  const contentIdx = colIndex_(headerIndex, 'content used', false);
+  const linksIdx = colIndex_(headerIndex, 'storefront links provided', false);
+  const favLinksIdx = colIndex_(headerIndex, "fav's list + affiliate links provided", false);
+  if (nameIdx === -1) return lookup;
+
+  const values = trackerSheet.getRange(HEADER_ROW.BOOSTING_TRACKER + 1, 1, lastRow - HEADER_ROW.BOOSTING_TRACKER, lastCol).getValues();
+  values.forEach((row) => {
+    const handleKey = normalizeHandle_(row[nameIdx]);
+    if (!handleKey) return;
+    const parts = [];
+    if (linksIdx !== -1 && row[linksIdx]) parts.push(String(row[linksIdx]).trim());
+    if (favLinksIdx !== -1 && row[favLinksIdx]) parts.push(String(row[favLinksIdx]).trim());
+    if (contentIdx !== -1 && row[contentIdx]) parts.push(String(row[contentIdx]).trim());
+    if (!parts.length) return;
+    lookup[handleKey] = mergeLinkLabels_(lookup[handleKey] || '', parts.join(', '));
+  });
+  return lookup;
+}
+
+/** Uses queue Links column first, then falls back to Boosting Tracker URLs for that handle. */
+function resolveOutreachLinks_(row, handle, linksLookup) {
+  const fromRow = ['links', 'link', 'video link', 'video links', 'content link', 'content links', 'content used']
+    .map((k) => String(row[k] || '').trim())
+    .find((v) => v);
+  if (fromRow) return fromRow;
+  const handleKey = normalizeHandle_(handle);
+  if (!handleKey) return '';
+  if (linksLookup) return linksLookup[handleKey] || '';
+  return buildLinksLookupFromTracker_()[handleKey] || '';
+}
+
 /** Reads Boosting Tracker once and returns handle -> merged platform labels. */
 function buildPlatformLookupFromTracker_() {
   const trackerSheet = getSheet_(SHEET_NAMES.BOOSTING_TRACKER);
