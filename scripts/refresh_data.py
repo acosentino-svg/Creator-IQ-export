@@ -40,6 +40,18 @@ def main() -> int:
         action="store_true",
         help="Sync enrolled /publishers only (geography map) — skips campaigns, posts, and email.",
     )
+    parser.add_argument(
+        "--start-page",
+        type=int,
+        default=1,
+        help="Publisher API page to start from (1-based). Use with --max-pages for chunked GitHub sync.",
+    )
+    parser.add_argument(
+        "--max-pages",
+        type=int,
+        default=None,
+        help="Max publisher API pages to fetch this run. Omit for full sync (all pages).",
+    )
     args = parser.parse_args()
 
     if args.quick:
@@ -61,11 +73,18 @@ def main() -> int:
     ensure_performance_indexes(get_engine(config.db_path))
     if args.enrolled_only:
         logger.info("Mode: enrolled creators only (geography / location fields)")
-        counts = sync_enrolled_creators(config)
+        counts = sync_enrolled_creators(
+            config,
+            start_page=max(1, args.start_page),
+            max_pages=args.max_pages,
+        )
     else:
         counts = sync_all(config)
     for resource, count in counts.items():
-        logger.info("  %-14s %d records", resource, count)
+        if isinstance(count, bool):
+            logger.info("  %-14s %s", resource, count)
+        else:
+            logger.info("  %-14s %d records", resource, count)
     logger.info("Sync complete. Warehouse: %s", config.db_path)
     return 0
 

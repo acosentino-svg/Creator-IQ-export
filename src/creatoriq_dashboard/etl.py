@@ -38,7 +38,9 @@ from .storage import (
     append_link_click_snapshot,
     derive_link_click_deltas,
     get_engine,
+    read_table,
     record_sync,
+    upsert_rows,
     write_table,
 )
 
@@ -154,16 +156,31 @@ def _resolve_network_publisher_ids(
     return known
 
 
-def _fetch_enrolled_creators(config: AppConfig, client: CreatorIQClient) -> pd.DataFrame:
-    """All program enrollees: CreatorIQ publishers with Status=Active (~43k+)."""
+def _fetch_enrolled_creators(
+    config: AppConfig,
+    client: CreatorIQClient,
+    start_page: int = 1,
+    max_pages: int | None = None,
+) -> tuple[pd.DataFrame, bool]:
+    """All program enrollees: CreatorIQ publishers with Status=Active (~43k+).
+
+    Returns (dataframe, completed) where completed is True when the API list
+    ended within this chunk (no more pages after this batch).
+    """
     mapping = config.field_mappings.get("publishers", {})
     status = config.settings.get("live_sync", "enrolled_status_filter", default="Active")
-    max_pages = _live_sync_limit(config, "max_publisher_pages", default=None)
+    if max_pages is None:
+        max_pages = _live_sync_limit(config, "max_publisher_pages", default=None)
+    page_size = client._resource_cfg("publishers").get(
+        "page_size",
+        client.config.endpoints.get("pagination", {}).get("page_size", 100),
+    )
     rows: list[dict] = []
     for record in client.iter_resource(
         "publishers",
         extra_params={"filter": f"Status={status}"},
         max_pages=max_pages,
+        start_page=start_page,
     ):
         pub = record.get("Publisher", record) if isinstance(record, dict) else record
         if not isinstance(pub, dict):
@@ -176,7 +193,25 @@ def _fetch_enrolled_creators(config: AppConfig, client: CreatorIQClient) -> pd.D
     df = clean_id_columns(pd.DataFrame(rows), ["creator_id", "network_publisher_id"])
     if not df.empty and "joined_date" in df.columns:
         df["joined_date"] = pd.to_datetime(df["joined_date"], utc=True, errors="coerce")
-    return df.reset_index(drop=True)
+    df = df.reset_index(drop=True)
+
+    if max_pages is None:
+        completed = True
+    elif df.empty:
+        completed = True
+    elif len(df) < max_pages * page_size:
+        completed = True
+    else:
+        probe = list(
+            client.iter_resource(
+                "publishers",
+                extra_params={"filter": f"Status={status}"},
+                max_pages=1,
+                start_page=start_page + max_pages,
+            )
+        )
+        completed = len(probe) == 0
+    return df, completed
 
 
 def _fetch_publisher_metadata_index(config: AppConfig, client: CreatorIQClient) -> dict[str, dict[str, str | None]]:
@@ -321,26 +356,62 @@ def _fetch_link_creations(
     return df.reset_index(drop=True)
 
 
-def sync_enrolled_creators(config: AppConfig) -> dict[str, int]:
+def sync_enrolled_creators(
+    config: AppConfig,
+    start_page: int = 1,
+    max_pages: int | None = None,
+) -> dict[str, int | bool]:
     """Pull enrolled /publishers only (location + roster) — no campaigns/posts/email.
 
     Use this for geography maps when CreatorIQ CSV exports are capped (~20k rows).
     Still paginates through the full Active publisher list via the API (~43k+).
+
+    When start_page > 1 or max_pages is set, rows are upserted into the existing
+    warehouse instead of replacing the whole creators table (for GitHub chunk jobs).
     """
     client = CreatorIQClient(config)
     engine = get_engine(config.db_path)
     now = datetime.now(timezone.utc)
+    chunked = start_page > 1 or max_pages is not None
 
     logger.info(
-        "Creators-only sync (Status=%s)...",
+        "Creators-only sync (Status=%s, start_page=%d, max_pages=%s)...",
         config.settings.get("live_sync", "enrolled_status_filter", default="Active"),
+        start_page,
+        max_pages,
     )
-    roster_df = _fetch_enrolled_creators(config, client)
+    roster_df, completed = _fetch_enrolled_creators(
+        config, client, start_page=start_page, max_pages=max_pages
+    )
     expected_min = config.settings.get("live_sync", "expected_enrolled_min", default=43000)
     try:
         expected_min = int(expected_min)
     except (TypeError, ValueError):
         expected_min = 43000
+
+    if chunked:
+        upsert_rows(engine, "creators", roster_df, "creator_id")
+        total = len(read_table(engine, "creators"))
+        if completed:
+            record_sync(engine, "creators", now)
+            if expected_min > 0 and total < expected_min:
+                logger.warning(
+                    "Warehouse has %d enrolled creators but expected at least %d.",
+                    total,
+                    expected_min,
+                )
+        logger.info(
+            "Chunk fetched %d creators (%d total in warehouse, completed=%s)",
+            len(roster_df),
+            total,
+            completed,
+        )
+        return {
+            "creators": total,
+            "chunk_rows": len(roster_df),
+            "completed": completed,
+        }
+
     if expected_min > 0 and len(roster_df) < expected_min:
         logger.warning(
             "Fetched %d enrolled creators but expected at least %d. "
@@ -354,7 +425,7 @@ def sync_enrolled_creators(config: AppConfig) -> dict[str, int]:
     write_table(engine, "creators", roster_df)
     record_sync(engine, "creators", now)
 
-    return {"creators": len(roster_df)}
+    return {"creators": len(roster_df), "completed": True}
 
 
 def sync_all(config: AppConfig) -> dict[str, int]:
@@ -367,7 +438,7 @@ def sync_all(config: AppConfig) -> dict[str, int]:
     record_sync(engine, "campaigns", now)
 
     logger.info("Syncing enrolled creators (Status=%s)...", config.settings.get("live_sync", "enrolled_status_filter", default="Active"))
-    roster_df = _fetch_enrolled_creators(config, client)
+    roster_df, _ = _fetch_enrolled_creators(config, client)
     expected_min = config.settings.get("live_sync", "expected_enrolled_min", default=43000)
     try:
         expected_min = int(expected_min)
