@@ -144,6 +144,7 @@ class CreatorIQClient:
         path_params: dict[str, Any] | None = None,
         extra_params: dict[str, Any] | None = None,
         max_pages: int | None = None,
+        start_page: int = 1,
     ) -> Iterator[dict[str, Any]]:
         """Yield every record from a configured list resource, handling pagination."""
         resource_cfg = self._resource_cfg(resource_name)
@@ -161,8 +162,8 @@ class CreatorIQClient:
         unwrap_key = resource_cfg.get("item_unwrap_key")
         page_size = resource_cfg.get("page_size", pagination_cfg.get("page_size", 100))
 
-        page_number = 1
-        offset = 0
+        page_number = max(1, int(start_page))
+        offset = (page_number - 1) * page_size if style == "offset" else 0
         cursor: str | None = None
         pages_fetched = 0
 
@@ -184,6 +185,13 @@ class CreatorIQClient:
                 yield record
 
             pages_fetched += 1
+            if resource_name == "publishers":
+                logger.info(
+                    "publishers page %d: %d rows (chunk pages fetched: %d)",
+                    page_number,
+                    len(records),
+                    pages_fetched,
+                )
             if max_pages is not None and pages_fetched >= max_pages:
                 break
             if not records:

@@ -1,40 +1,42 @@
-# Pull all enrolled Active publishers from CreatorIQ API (geography fields).
-# Trigger manually from GitHub → Actions → "Sync enrolled creators" → Run workflow.
-# No Mac Terminal required — runs on GitHub's servers (~30–90+ minutes for 43k+).
-#
-# Setup (one time):
-#   Repo Settings → Secrets and variables → Actions → add:
-#     CREATORIQ_API_KEY
-#     CREATORIQ_BASE_URL  (e.g. https://api.creatoriq.com/api)
-#     CREATORIQ_ORG_ID    (optional, empty if not used)
-#
-# After the job finishes:
-#   Download the "warehouse-db" artifact → upload in Streamlit Data & Settings.
+# CreatorIQ API → CSV for Looker Studio / Google Sheets.
+# Actions → Sync enrolled creators (API geography) → Run workflow.
+# Download artifact "creators-geography-csv" after success.
+# See docs/LOOKER_GEOGRAPHY_DASHBOARD.md
 
 name: Sync enrolled creators (API geography)
 
 on:
   workflow_dispatch:
 
-jobs:
-  sync-enrolled:
-    runs-on: ubuntu-latest
-    timeout-minutes: 360
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+env:
+  PAGES_PER_CHUNK: 25
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
+jobs:
+  sync-chunks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      max-parallel: 1
+      matrix:
+        chunk: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
 
       - name: Install dependencies
-        run: |
-          pip install -r requirements.txt
-          pip install -e .
+        run: pip install -r requirements.txt && pip install -e .
 
-      - name: Sync enrolled creators via CreatorIQ API
+      - name: Download warehouse from previous chunk
+        uses: actions/download-artifact@v4
+        with:
+          name: warehouse-db
+          path: data
+        continue-on-error: true
+
+      - name: Sync chunk ${{ matrix.chunk }}
         env:
           CREATORIQ_DASHBOARD_MODE: live
           CREATORIQ_BASE_URL: ${{ secrets.CREATORIQ_BASE_URL }}
@@ -42,12 +44,41 @@ jobs:
           CREATORIQ_ORG_ID: ${{ secrets.CREATORIQ_ORG_ID }}
         run: |
           mkdir -p data
-          python scripts/refresh_data.py --enrolled-only
+          START=$(( (${{ matrix.chunk }} - 1) * ${{ env.PAGES_PER_CHUNK }} + 1 ))
+          python scripts/refresh_data.py --enrolled-only --start-page "$START" --max-pages ${{ env.PAGES_PER_CHUNK }}
 
       - name: Upload warehouse database
         uses: actions/upload-artifact@v4
         with:
           name: warehouse-db
           path: data/warehouse.db
+          if-no-files-found: error
+          retention-days: 14
+
+  export-for-looker:
+    needs: sync-chunks
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - run: pip install -r requirements.txt && pip install -e .
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: warehouse-db
+          path: data
+
+      - name: Export CSV for Looker / Sheets
+        run: python scripts/export_geography_table.py --output data/creators_geography.csv
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: creators-geography-csv
+          path: data/creators_geography.csv
           if-no-files-found: error
           retention-days: 14
