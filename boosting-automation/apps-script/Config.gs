@@ -30,6 +30,8 @@ const BOOSTING_TRACKER_DATE_COL = 4;
 const GIFT_CARD_DATE_COL = 4;
 const BOOSTING_TRACKER_DATE_HEADERS = [
   'date', 'content date', 'video date', 'date added', 'boost date', 'comp date',
+  /** Some trackers label column D "Duration of Usage" but store the comp/add date (e.g. 8/17). */
+  'duration of usage',
 ];
 /** Optional Boosting Tracker column — not required. Use the menu or gift card tab instead. */
 const BOOSTING_TRACKER_EMAIL_HEADERS = [

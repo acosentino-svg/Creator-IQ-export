@@ -478,6 +478,27 @@ function parseMonthYearFromCell_(value) {
     }
   }
 
+  const monthDay = str.match(/^(\d{1,2})[\/\-](\d{1,2})$/);
+  if (monthDay) {
+    const monthIndex = parseInt(monthDay[1], 10) - 1;
+    const day = parseInt(monthDay[2], 10);
+    if (monthIndex >= 0 && monthIndex < 12 && day >= 1 && day <= 31) {
+      const now = new Date();
+      let year = now.getFullYear();
+      let candidate = new Date(year, monthIndex, day);
+      if (candidate.getTime() - now.getTime() > 7 * 86400000) year -= 1;
+      candidate = new Date(year, monthIndex, day);
+      if (!isReasonableGiftCardYear_(year)) return null;
+      return {
+        monthName: GIFT_CARD_MONTH_DISPLAY_NAMES_[monthIndex],
+        year: year,
+        monthIndex: monthIndex,
+        sortKey: monthYearSortKey_(year, monthIndex),
+        date: candidate,
+      };
+    }
+  }
+
   const parsed = new Date(str);
   if (!isNaN(parsed.getTime())) return parseMonthYearFromCell_(parsed);
 
@@ -619,7 +640,8 @@ function currentCalendarMonth_() {
 
 /**
  * Reads column D on rows still in workflow (not Yes, not dupe) and returns the
- * most common month — NOT the single latest date on the whole sheet.
+ * month of the **newest** recent pending date — so a small August batch wins
+ * over many older July rows still marked blank.
  */
 function inferGiftCardMonthFromTracker_() {
   const trackerSheet = getSheet_(SHEET_NAMES.BOOSTING_TRACKER);
@@ -632,30 +654,16 @@ function inferGiftCardMonthFromTracker_() {
   const numRows = lastRow - HEADER_ROW.BOOSTING_TRACKER;
   const values = trackerSheet.getRange(HEADER_ROW.BOOSTING_TRACKER + 1, 1, numRows, lastCol).getValues();
 
-  const counts = {};
+  let latest = null;
   values.forEach((row) => {
     if (!isTrackerRowEligibleForMonthInference_(row, headerIndex)) return;
     if (!isTrackerRowRecentEnoughForDraft_(row, headerIndex)) return;
     const parsed = getTrackerRowDateParsed_(row, headerIndex);
     if (!parsed || !isReasonableGiftCardYear_(parsed.year)) return;
-    const key = String(parsed.sortKey);
-    if (!counts[key]) counts[key] = { parsed: parsed, count: 0 };
-    counts[key].count++;
+    if (!latest || parsed.sortKey > latest.sortKey) latest = parsed;
   });
 
-  if (!Object.keys(counts).length) return currentCalendarMonth_();
-
-  const today = currentCalendarMonth_();
-  let best = null;
-  Object.keys(counts).forEach((key) => {
-    const entry = counts[key];
-    if (!best || entry.count > best.count) {
-      best = entry;
-      return;
-    }
-    if (entry.count === best.count && Number(key) === today.sortKey) best = entry;
-  });
-  return best.parsed;
+  return latest || currentCalendarMonth_();
 }
 
 /** Creates/selects the gift card tab matching the latest tracker date in column D. */

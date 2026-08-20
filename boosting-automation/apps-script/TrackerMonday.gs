@@ -109,6 +109,7 @@ function scanBoostingTrackerForMonday_() {
         productLinkSet: {},
         productLinks: [],
         platforms: [],
+        needsProductLinks: false,
         isFollowUp: !!handleOnGiftCard[handleKey],
       };
     }
@@ -126,7 +127,10 @@ function scanBoostingTrackerForMonday_() {
       creator.productLinkSet[key] = true;
       creator.productLinks.push(link);
     });
-    if (platform) creator.platforms.push(platform);
+    if (platform) {
+      creator.platforms.push(platform);
+      if (needsProductLinksForPlatforms_(platform)) creator.needsProductLinks = true;
+    }
     pending++;
   }
 
@@ -140,7 +144,7 @@ function scanBoostingTrackerForMonday_() {
     const contentUrls = c.contentUrls.join(', ');
     const productLinks = c.productLinks.join(', ');
     const displayName = String(c.firstName || '').trim() || firstNameFromHandle_(c.handle);
-    const needsLinks = needsProductLinksForPlatforms_(platform);
+    const needsLinks = c.needsProductLinks;
     const amount = formatAmount_(calculateGiftCardAmount_(pieces));
     const rowType = c.isFollowUp ? OUTREACH_TYPE_FOLLOWUP : OUTREACH_TYPE_NEW;
 
