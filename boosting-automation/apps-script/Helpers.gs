@@ -300,12 +300,14 @@ function buildPlatformLookupFromTracker_() {
   const headerIndex = buildHeaderIndex_(headers);
   const nameIdx = colIndex_(headerIndex, 'creator name', false);
   const platformIdx = colIndex_(headerIndex, 'platform(s) for usage', false);
-  if (nameIdx === -1 || platformIdx === -1) return lookup;
+  if (nameIdx === -1) return lookup;
+  const platformCol0 = getTrackerPlatformCol0_(headerIndex);
+  if (platformCol0 === -1) return lookup;
 
   const values = trackerSheet.getRange(HEADER_ROW.BOOSTING_TRACKER + 1, 1, lastRow - HEADER_ROW.BOOSTING_TRACKER, lastCol).getValues();
   values.forEach((row) => {
     const handleKey = normalizeHandle_(row[nameIdx]);
-    const platform = String(row[platformIdx] || '').trim();
+    const platform = String(row[platformCol0] || '').trim();
     if (!handleKey || !platform) return;
     lookup[handleKey] = mergePlatformLabels_(lookup[handleKey] || '', platform);
   });
@@ -502,6 +504,26 @@ function getBoostingTrackerDateCol0_(headerIndex) {
   return BOOSTING_TRACKER_DATE_COL - 1;
 }
 
+function getTrackerPlatformCol0_(headerIndex) {
+  for (let i = 0; i < BOOSTING_TRACKER_PLATFORM_HEADERS.length; i++) {
+    const key = BOOSTING_TRACKER_PLATFORM_HEADERS[i];
+    if (headerIndex[key] != null) return headerIndex[key];
+  }
+  return -1;
+}
+
+/** Dupe if Creator Notified or Unique Identifier says dupe (column K formula). */
+function isTrackerDupeRow_(row, headerIndex) {
+  const notifiedNorm = normalizeHeader_(row[headerIndex['creator notified']]);
+  if (DUPE_MARKERS.some((m) => notifiedNorm.indexOf(m) !== -1)) return true;
+  const uidIdx = colIndex_(headerIndex, 'unique identifier', false);
+  if (uidIdx !== -1) {
+    const uidNorm = normalizeHeader_(row[uidIdx]);
+    if (DUPE_MARKERS.some((m) => uidNorm.indexOf(m) !== -1)) return true;
+  }
+  return false;
+}
+
 /** True for tracker rows still in this month's workflow (not done, not dupe). */
 function isTrackerRowEligibleForMonthInference_(row, headerIndex) {
   const creatorName = row[headerIndex['creator name']];
@@ -511,7 +533,7 @@ function isTrackerRowEligibleForMonthInference_(row, headerIndex) {
   if (!contentUsed || String(contentUsed).trim() === '') return false;
   const notifiedNorm = normalizeHeader_(notified);
   if (ALREADY_HANDLED_VALUES.indexOf(notifiedNorm) !== -1) return false;
-  if (DUPE_MARKERS.some((m) => notifiedNorm.indexOf(m) !== -1)) return false;
+  if (isTrackerDupeRow_(row, headerIndex)) return false;
   return true;
 }
 

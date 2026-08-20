@@ -43,6 +43,11 @@ function mondayCheck() {
   if (draftResult.skippedCount) {
     msg += '. ' + draftResult.skippedCount + ' creator(s) need a name or link (see bottom of doc)';
   }
+  if (draftResult.drafted === 0 && draftResult.queued > 0) {
+    msg += '. Found ' + draftResult.queued + ' pending video(s) but wrote 0 emails — see the Google Doc for skipped reasons (name/link fixes).';
+  } else if (draftResult.drafted === 0 && draftResult.queued === 0) {
+    msg += '. No pending rows found — only blank, Yes, or dupe rows remain on the tracker.';
+  }
   msg += '. Gift card tab: ' + getActiveGiftCardSheetName_() + '.';
   toast_(msg);
 }

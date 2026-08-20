@@ -87,6 +87,24 @@ function writeOutreachDraftsGoogleDoc_(collectResult) {
 
   if (!entries.length) {
     body.appendParagraph('No unsent outreach rows are ready to draft yet.').setItalic(true);
+    const queued = collectResult.queued || 0;
+    const skippedDupes = collectResult.skippedDupes || 0;
+    const skippedRepeat = collectResult.skippedRepeatLinks || 0;
+    const skippedFix = collectResult.skippedCount || 0;
+    if (queued || skippedDupes || skippedRepeat || skippedFix) {
+      body.appendParagraph(
+        'Scan: ' + queued + ' pending video(s)' +
+        (skippedDupes ? (', ' + skippedDupes + ' dupe row(s) skipped') : '') +
+        (skippedRepeat ? (', ' + skippedRepeat + ' repeat video(s) ignored') : '') +
+        (skippedFix ? (', ' + skippedFix + ' creator(s) need a name or product link') : '') +
+        '.'
+      );
+    }
+    if (queued > 0 && skippedFix) {
+      body.appendParagraph(
+        'Creators with missing names or non-AppLovin product links are listed at the bottom of this doc. AppLovin rows only need a handle (first name is guessed from the handle if Names tab is empty).'
+      ).setItalic(true);
+    }
   }
 
   entries.forEach((entry, index) => {
@@ -113,44 +131,48 @@ function writeOutreachDraftsGoogleDoc_(collectResult) {
     body.appendParagraph('Fix these on Boosting Tracker, then run Monday check again.').setItalic(true);
     skipped.forEach((s) => {
       body.appendParagraph(
-        'Row ' + s.row + ': ' + s.handle + ' (' + s.type + ', ' + s.pieces + ' piece(s), ' + s.amount + ') — ' + s.reasons
+        s.handle + ' (' + s.type + ', ' + s.pieces + ' piece(s), ' + s.amount + ') — ' + s.reasons
       );
     });
   }
 
   doc.saveAndClose();
-  return { url: doc.getUrl(), id: docId, count: entries.length };
+  const url = doc.getUrl();
+  showOutreachDocLinkTab_(url, title);
+  return { url: url, id: docId, count: entries.length };
+}
+
+/** Puts a clickable doc link on a tab — no popup permissions needed. */
+function showOutreachDocLinkTab_(url, title) {
+  if (!url) return;
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  let sheet = ss.getSheetByName(OUTREACH_DOC_LINKS_TAB);
+  if (!sheet) sheet = ss.insertSheet(OUTREACH_DOC_LINKS_TAB);
+  sheet.clear();
+  sheet.getRange(1, 1).setValue('Latest outreach email drafts').setFontWeight('bold');
+  sheet.getRange(2, 1).setValue(String(title || 'Google Doc'));
+  sheet.getRange(3, 1).setFormula('=HYPERLINK("' + String(url).replace(/"/g, '""') + '","Click here to open the Google Doc")');
+  sheet.getRange(4, 1).setValue(url).setFontSize(9);
+  sheet.setColumnWidth(1, 520);
+  ss.setActiveSheet(sheet);
+  toast_('Emails written to Google Doc — click the link on the "' + OUTREACH_DOC_LINKS_TAB + '" tab.');
 }
 
 function openUrlInNewTab_(url) {
-  if (!url) return;
-  try {
-    const safeUrl = String(url).replace(/\\/g, '\\\\').replace(/"/g, '\\"');
-    const html = HtmlService.createHtmlOutput(
-      '<p style="font-family:sans-serif;font-size:13px">Opening outreach drafts doc…</p>' +
-      '<script>window.open("' + safeUrl + '");google.script.host.close();</script>'
-    ).setWidth(260).setHeight(50);
-    SpreadsheetApp.getUi().showModalDialog(html, 'Opening doc');
-  } catch (e) {
-    SpreadsheetApp.getUi().alert(
-      'Outreach doc ready',
-      'Copy this link into your browser:\n\n' + url,
-      SpreadsheetApp.getUi().ButtonSet.OK
-    );
-  }
+  showOutreachDocLinkTab_(url, formatOutreachDocTitle_());
 }
 
-/** Opens today's outreach doc, or alerts if none exists yet. */
+/** Opens today's outreach doc via the Automation Links tab. */
 function openOutreachDraftsDoc_() {
   const props = PropertiesService.getScriptProperties();
   const docId = props.getProperty(outreachDocPropertyKey_()) || props.getProperty('OUTREACH_DOC_LATEST');
   if (!docId) {
-    SpreadsheetApp.getUi().alert('No outreach doc yet. Run Monday check first.');
+    toast_('No outreach doc yet. Run Monday check first.');
     return;
   }
   try {
-    openUrlInNewTab_(DocumentApp.openById(docId).getUrl());
+    showOutreachDocLinkTab_(DocumentApp.openById(docId).getUrl(), formatOutreachDocTitle_());
   } catch (e) {
-    SpreadsheetApp.getUi().alert('Could not open outreach doc: ' + e);
+    toast_('Could not open outreach doc: ' + e);
   }
 }

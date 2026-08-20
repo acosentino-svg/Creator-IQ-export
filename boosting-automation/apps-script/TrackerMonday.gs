@@ -22,7 +22,7 @@ function scanBoostingTrackerForMonday_() {
 
   const values = trackerSheet.getRange(firstDataRow, 1, numRows, lastCol).getValues();
   const nameLookup = buildNameLookup_();
-  const platformIdx = colIndex_(headerIndex, 'platform(s) for usage', false);
+  const platformCol0 = getTrackerPlatformCol0_(headerIndex);
   const linksIdx = colIndex_(headerIndex, 'storefront links provided', false);
   const favLinksIdx = colIndex_(headerIndex, "fav's list + affiliate links provided", false);
   const uidIdx = colIndex_(headerIndex, 'unique identifier', false);
@@ -57,9 +57,8 @@ function scanBoostingTrackerForMonday_() {
 
     const notifiedNorm = normalizeHeader_(notified);
     if (ALREADY_HANDLED_VALUES.indexOf(notifiedNorm) !== -1) continue;
-    if (notifiedNorm === normalizeHeader_(QUEUED_MARKER)) continue;
 
-    if (DUPE_MARKERS.some((m) => notifiedNorm.indexOf(m) !== -1)) {
+    if (isTrackerDupeRow_(row, headerIndex)) {
       skippedDupes++;
       fillDupeLinks_(trackerSheet, headerIndex, values, i, sheetRow);
       continue;
@@ -87,7 +86,7 @@ function scanBoostingTrackerForMonday_() {
 
     const handle = String(creatorName).trim();
     const handleKey = normalizeHandle_(handle);
-    const platform = platformIdx !== -1 ? String(row[platformIdx] || '').trim() : '';
+    const platform = platformCol0 !== -1 ? String(row[platformCol0] || '').trim() : '';
     const rowLinks = resolveTrackerRowLinks_(row, headerIndex, contentUsed);
 
     let creator = creators[handleKey];
@@ -112,7 +111,9 @@ function scanBoostingTrackerForMonday_() {
     });
     if (platform) creator.platforms.push(platform);
 
-    trackerMarkerUpdates.push({ row: sheetRow, value: QUEUED_MARKER });
+    if (notifiedNorm !== normalizeHeader_(QUEUED_MARKER)) {
+      trackerMarkerUpdates.push({ row: sheetRow, value: QUEUED_MARKER });
+    }
     queued++;
   }
 
@@ -307,7 +308,7 @@ function summarizeQueuedTrackerRowsForHandle_(handleKey, headerIndex, trackerShe
     if (normalizeHandle_(row[headerIndex['creator name']]) !== handleKey) return;
     const notifiedNorm = normalizeHeader_(row[headerIndex['creator notified']]);
     if (ALREADY_HANDLED_VALUES.indexOf(notifiedNorm) !== -1) return;
-    if (DUPE_MARKERS.some((m) => notifiedNorm.indexOf(m) !== -1)) return;
+    if (isTrackerDupeRow_(row, headerIndex)) return;
 
     const contentUsed = row[headerIndex['content used']];
     const rowLinks = resolveTrackerRowLinks_(row, headerIndex, contentUsed);

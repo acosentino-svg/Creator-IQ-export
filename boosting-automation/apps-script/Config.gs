@@ -35,6 +35,9 @@ const BOOSTING_TRACKER_DATE_HEADERS = [
 const BOOSTING_TRACKER_EMAIL_HEADERS = [
   'email address', 'confirmed email', 'gift card email', 'creator email',
 ];
+const BOOSTING_TRACKER_PLATFORM_HEADERS = [
+  'platform(s) for usage', 'platform', 'platform for usage',
+];
 
 /** Optional: URL of a separate file that holds the Names tab. Leave blank if Names is in this spreadsheet. */
 const EXTERNAL_NAMES_SHEET_ID = '';
