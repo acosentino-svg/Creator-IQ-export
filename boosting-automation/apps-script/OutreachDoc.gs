@@ -114,18 +114,9 @@ function writeOutreachDraftsGoogleDoc_(collectResult) {
     if (index > 0) body.appendHorizontalRule();
     body.appendParagraph(entry.handle).setHeading(DocumentApp.ParagraphHeading.HEADING2);
     body.appendParagraph(
-      entry.type + ' · ' + formatPiecesLabel_(entry.pieces) + ' · ' + entry.amount +
+      entry.type + ' · ' + formatPiecesSlashLabel_(entry.pieces) + ' · ' + entry.amount +
       (entry.platform ? (' · ' + entry.platform) : '')
-    );
-    if (entry.contentUrls) {
-      body.appendParagraph('Videos selected').setBold(true);
-      splitLinks_(entry.contentUrls).forEach((link) => body.appendListItem(link));
-    }
-    if (entry.productLinks) {
-      body.appendParagraph('Product links on file (not included in email)').setBold(true).setItalic(true);
-      splitLinks_(entry.productLinks).forEach((link) => body.appendListItem(link));
-    }
-    body.appendParagraph('Message').setBold(true);
+    ).setItalic(true);
     String(entry.message || '').split('\n').forEach((line) => {
       if (line.trim() === '') body.appendParagraph('');
       else body.appendParagraph(line);

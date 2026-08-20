@@ -78,7 +78,7 @@ const GEMINI_MODEL = 'gemini-2.5-flash';
 
 const NEW_CREATOR_PROMPT = `Hi {{FIRST_NAME}},
 
-Exciting news, my team loved your partnership content and would like to use {{PIECES_LABEL}} of it! This means that as of right now you have earned a {{AMOUNT}} Wayfair Gift Card. My team will continue monitoring for content and for every additional piece of your content they use, your gift card amount will be raised by $50.
+Exciting news, my team loved your partnership content and would like to use {{PIECES_SLASH_LABEL}} of it! This means that as of right now you have earned a {{AMOUNT}} Wayfair Gift Card. My team will continue monitoring for content and for every additional piece of your content they use, your gift card amount will be raised by $50.
 
 I will update you if anything else gets selected, and I plan to send gift cards out early next month!
 
@@ -90,7 +90,7 @@ Adriana`;
 
 const NEW_CREATOR_PROMPT_NO_LINKS = `Hi {{FIRST_NAME}},
 
-Exciting news, my team loved your partnership content and would like to use {{PIECES_LABEL}} of it! This means that as of right now you have earned a {{AMOUNT}} Wayfair Gift Card. My team will continue monitoring for content and for every additional piece of your content they use, your gift card amount will be raised by $50.
+Exciting news, my team loved your partnership content and would like to use {{PIECES_SLASH_LABEL}} of it! This means that as of right now you have earned a {{AMOUNT}} Wayfair Gift Card. My team will continue monitoring for content and for every additional piece of your content they use, your gift card amount will be raised by $50.
 
 I will update you if anything else gets selected, and I plan to send gift cards out early next month!
 

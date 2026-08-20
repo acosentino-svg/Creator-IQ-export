@@ -139,10 +139,8 @@ function scanBoostingTrackerForMonday_() {
     const platform = mergePlatformLabels_('', c.platforms.join(', '));
     const contentUrls = c.contentUrls.join(', ');
     const productLinks = c.productLinks.join(', ');
-    const displayName = String(c.firstName || '').trim()
-      || (c.handle ? capitalizeFirst_(c.handle.replace(/^@/, '').split(/[._]/)[0]) : '');
+    const displayName = String(c.firstName || '').trim() || firstNameFromHandle_(c.handle);
     const needsLinks = needsProductLinksForPlatforms_(platform);
-    const hasProductLinks = c.productLinks.length > 0;
     const amount = formatAmount_(calculateGiftCardAmount_(pieces));
     const rowType = c.isFollowUp ? OUTREACH_TYPE_FOLLOWUP : OUTREACH_TYPE_NEW;
 
@@ -176,7 +174,7 @@ function scanBoostingTrackerForMonday_() {
         newPieces: pieces,
         amount: amount,
         needsLinks: needsLinks,
-        hasProductLinks: hasProductLinks,
+        productLinks: productLinks,
       }),
     });
   });

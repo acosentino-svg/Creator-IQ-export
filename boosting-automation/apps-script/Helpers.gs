@@ -139,6 +139,11 @@ function formatPiecesLabel_(pieces) {
   return n + ' pieces';
 }
 
+function formatPiecesSlashLabel_(pieces) {
+  const n = Number(pieces) || 0;
+  return n + ' piece/s';
+}
+
 function formatMorePiecesLabel_(pieces) {
   const n = Number(pieces) || 0;
   if (n === 1) return '1 more piece';
@@ -150,6 +155,15 @@ function capitalizeFirst_(text) {
   if (!t) return t;
   if (t !== t.toLowerCase() && t !== t.toUpperCase()) return t;
   return t.charAt(0).toUpperCase() + t.slice(1).toLowerCase();
+}
+
+/** ashali123_ -> Ashali when Names tab has no match. */
+function firstNameFromHandle_(handle) {
+  const raw = String(handle || '').replace(/^@/, '').trim();
+  if (!raw) return '';
+  const segment = raw.split(/[._]/)[0] || raw;
+  const letters = segment.replace(/[0-9]+/g, '');
+  return capitalizeFirst_(letters || segment);
 }
 
 function splitLinks_(linksText) {
@@ -198,8 +212,8 @@ function buildDraftMessage_(opts) {
   const newPieces = Number(opts.newPieces) || pieces;
   const contentPieces = Number(opts.contentPieces) || pieces;
   const needsLinks = opts.needsLinks !== false;
-  const hasProductLinks = !!opts.hasProductLinks;
-  const askForProductLinks = needsLinks && !hasProductLinks;
+  const productLinksText = String(opts.productLinks || '').trim();
+  const linksForEmail = splitLinks_(productLinksText).join('\n');
   const isFollowUp = opts.isFollowUp != null
     ? !!opts.isFollowUp
     : isAlreadyBoostedThisMonth_(opts.handle);
@@ -216,22 +230,23 @@ function buildDraftMessage_(opts) {
   const values = {
     FIRST_NAME: firstName,
     PIECES_LABEL: formatPiecesLabel_(pieces),
+    PIECES_SLASH_LABEL: formatPiecesSlashLabel_(pieces),
     NEW_PIECES_LABEL: formatMorePiecesLabel_(newPieces),
     AMOUNT: amount,
     INCREMENT_AMOUNT: formatAmount_(GIFT_CARD_INCREMENT_AMOUNT * newPieces),
     SELECTED_VIDEOS_PHRASE: formatSelectedVideosPhrase_(contentPieces),
-    LINKS: '',
+    LINKS: linksForEmail,
   };
 
   let template;
   if (isFollowUp) {
     if (newPieces === 1) {
-      template = askForProductLinks ? INCREMENTAL_SINGLE_PROMPT : INCREMENTAL_SINGLE_PROMPT_NO_LINKS;
+      template = needsLinks ? INCREMENTAL_SINGLE_PROMPT : INCREMENTAL_SINGLE_PROMPT_NO_LINKS;
     } else {
-      template = askForProductLinks ? INCREMENTAL_MULTI_PROMPT : INCREMENTAL_MULTI_PROMPT_NO_LINKS;
+      template = needsLinks ? INCREMENTAL_MULTI_PROMPT : INCREMENTAL_MULTI_PROMPT_NO_LINKS;
     }
   } else {
-    template = askForProductLinks ? NEW_CREATOR_PROMPT : NEW_CREATOR_PROMPT_NO_LINKS;
+    template = needsLinks ? NEW_CREATOR_PROMPT : NEW_CREATOR_PROMPT_NO_LINKS;
   }
 
   return fillTemplate_(template, values);
