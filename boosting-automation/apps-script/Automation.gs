@@ -186,6 +186,57 @@ function syncPendingCreatorsMenu_() {
   toast_('Synced ' + result.synced + ' creator(s) to ' + result.tabName + ' (' + result.draftMonthLabel + ' batch).');
 }
 
+/**
+ * Standalone repair — does not call lookupLatestTrackerDateForHandle_ or sync.
+ * Replaces tracker dates (8/17, etc.) wrongly sitting in First Name with real names.
+ */
+function repairGiftCardMisplacedDates_() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const tabName = getActiveGiftCardSheetName_();
+  const sheet = ss.getSheetByName(tabName);
+  if (!sheet) {
+    throw new Error('Gift card tab not found: "' + tabName + '".');
+  }
+
+  const headerRow = getGiftCardHeaderRow_(sheet);
+  const lastCol = sheet.getLastColumn();
+  const lastRow = sheet.getLastRow();
+  const headerIndex = buildHeaderIndex_(sheet.getRange(headerRow, 1, 1, lastCol).getValues()[0]);
+  const firstNameCol = colIndex_(headerIndex, 'first name', false);
+  const lastNameCol = colIndex_(headerIndex, 'last name', false);
+  const handleCol = colIndex_(headerIndex, 'creator handle', false);
+  const nameCol = handleCol !== -1 ? handleCol : colIndex_(headerIndex, 'creator name', false);
+  if (firstNameCol === -1 || nameCol === -1) {
+    throw new Error('Gift card tab must have First Name and Creator Handle columns.');
+  }
+
+  const lookup = buildNameLookup_();
+  let repaired = 0;
+
+  for (let r = headerRow + 1; r <= lastRow; r++) {
+    const handle = String(sheet.getRange(r, nameCol + 1).getValue() || '').trim();
+    if (!handle) continue;
+
+    const currentFirst = sheet.getRange(r, firstNameCol + 1).getValue();
+    const currentText = String(currentFirst || '').trim();
+    const isDate = cellLooksLikeTrackerDate_(currentFirst);
+    if (currentText !== '' && !isDate) continue;
+
+    const profile = lookup[normalizeHandle_(handle)];
+    const firstName = resolveGiftCardFirstName_(handle, profile);
+    if (!firstName) continue;
+
+    sheet.getRange(r, firstNameCol + 1).setValue(firstName);
+    if (lastNameCol !== -1 && profile && profile.lastName) {
+      sheet.getRange(r, lastNameCol + 1).setValue(profile.lastName);
+    }
+    repaired++;
+  }
+
+  toast_('Repaired ' + repaired + ' First Name cell(s) on ' + tabName + '.');
+  return repaired;
+}
+
 /** Scans Boosting Tracker and writes outreach emails to today's Google Doc. */
 function draftOutreachMessages(silent) {
   const collectResult = scanBoostingTrackerForMonday_();

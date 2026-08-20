@@ -672,29 +672,31 @@ function ensureGiftCardMonthTabForTracker_() {
   return { tabName: tabName, created: created, inferred: inferred };
 }
 
-/** Latest tracker date in column D for a creator handle (for gift card column D). */
+/** Parses Duration of Usage / date column from a tracker row object (readFlatSheetRows_ shape). */
+function trackerRowObjectDateParsed_(row, headerIndex) {
+  const dateCol0 = getBoostingTrackerDateCol0_(headerIndex);
+  const keys = Object.keys(headerIndex);
+  for (let i = 0; i < keys.length; i++) {
+    if (headerIndex[keys[i]] === dateCol0) {
+      return parseMonthYearFromCell_(row[keys[i]]);
+    }
+  }
+  return null;
+}
+
+/** Latest tracker date in column D for a creator handle (only used when gift card tab has a Date column). */
 function lookupLatestTrackerDateForHandle_(handle) {
   const handleKey = normalizeHandle_(handle);
   if (!handleKey) return null;
 
   const trackerSheet = getSheet_(SHEET_NAMES.BOOSTING_TRACKER);
-  const lastRow = trackerSheet.getLastRow();
-  if (lastRow <= HEADER_ROW.BOOSTING_TRACKER) return null;
+  const read = readFlatSheetRows_(trackerSheet, HEADER_ROW.BOOSTING_TRACKER);
+  if (!read.rows.length) return null;
 
-  const lastCol = trackerSheet.getLastColumn();
-  const headers = trackerSheet.getRange(HEADER_ROW.BOOSTING_TRACKER, 1, 1, lastCol).getValues()[0];
-  const headerIndex = buildHeaderIndex_(headers);
-  const nameIdx = colIndex_(headerIndex, 'creator name', false);
-  const dateCol0 = getBoostingTrackerDateCol0_(headerIndex);
-  if (nameIdx === -1) return null;
-
-  const firstDataRow = HEADER_ROW.BOOSTING_TRACKER + 1;
-  const numRows = lastRow - firstDataRow + 1;
-  const values = trackerSheet.getRange(firstDataRow, 1, numRows, lastCol).getValues();
   let latest = null;
-  values.forEach((row) => {
-    if (normalizeHandle_(row[nameIdx]) !== handleKey) return;
-    const parsed = parseMonthYearFromCell_(row[dateCol0]);
+  read.rows.forEach((row) => {
+    if (normalizeHandle_(row['creator name']) !== handleKey) return;
+    const parsed = trackerRowObjectDateParsed_(row, read.headerIndex);
     if (!parsed) return;
     if (!latest || parsed.sortKey > latest.sortKey) latest = parsed;
   });
@@ -720,47 +722,11 @@ function resolveGiftCardFirstName_(handle, profile) {
 }
 
 function applyTrackerDateToGiftCardRow_(ctx, row, handle) {
-  const trackerDate = lookupLatestTrackerDateForHandle_(handle);
-  if (!trackerDate) return;
   const dateCol = getGiftCardDateCol1_(ctx);
   if (dateCol === -1) return;
+  const trackerDate = lookupLatestTrackerDateForHandle_(handle);
+  if (!trackerDate) return;
   ctx.sheet.getRange(row, dateCol).setValue(trackerDate);
-}
-
-/** Clears tracker dates wrongly written to First Name; fills names from Names tab or handle. */
-function repairGiftCardMisplacedDates_() {
-  const ctx = getGiftCardContext_();
-  const rows = readGiftCardRows_(ctx);
-  const lookup = buildNameLookup_();
-  const firstNameCol = giftCardCol1_(ctx, 'First Name', false);
-  const lastNameCol = giftCardCol1_(ctx, 'Last Name', false);
-  if (firstNameCol === -1) {
-    throw new Error('Gift card tab must have a First Name column.');
-  }
-
-  let repaired = 0;
-  rows.forEach((row) => {
-    const handle = String(row[ctx.nameKey] || '').trim();
-    const handleKey = normalizeHandle_(handle);
-    if (!handleKey) return;
-
-    const currentFirst = row['first name'];
-    const needsRepair = cellLooksLikeTrackerDate_(currentFirst) || String(currentFirst || '').trim() === '';
-    if (!needsRepair) return;
-
-    const profile = lookup[handleKey];
-    const firstName = resolveGiftCardFirstName_(handle, profile);
-    if (!firstName) return;
-
-    ctx.sheet.getRange(row._sheetRow, firstNameCol).setValue(firstName);
-    if (lastNameCol !== -1 && profile && profile.lastName) {
-      ctx.sheet.getRange(row._sheetRow, lastNameCol).setValue(profile.lastName);
-    }
-    repaired++;
-  });
-
-  toast_('Repaired ' + repaired + ' First Name cell(s) on ' + ctx.sheet.getName() + '.');
-  return repaired;
 }
 
 /** Builds the tab name: "August Gift Card Cost Tracker". */
