@@ -367,11 +367,203 @@ const GIFT_CARD_MONTH_NAMES_ = [
   'july', 'august', 'september', 'october', 'november', 'december',
 ];
 
+const GIFT_CARD_MONTH_DISPLAY_NAMES_ = [
+  'January', 'February', 'March', 'April', 'May', 'June',
+  'July', 'August', 'September', 'October', 'November', 'December',
+];
+
+const GIFT_CARD_MONTH_ABBR_ = {
+  jan: 0, feb: 1, mar: 2, apr: 3, may: 4, jun: 5,
+  jul: 6, aug: 7, sep: 8, oct: 9, nov: 10, dec: 11,
+};
+
+/** Normalizes "aug", "August", "AUGUST" -> "August". Returns null if not a month. */
+function normalizeMonthName_(input) {
+  const raw = String(input || '').trim().toLowerCase();
+  if (!raw) return null;
+  let index = GIFT_CARD_MONTH_NAMES_.indexOf(raw);
+  if (index === -1 && raw.length >= 3) {
+    index = GIFT_CARD_MONTH_ABBR_[raw.slice(0, 3)];
+  }
+  if (index == null || index < 0) return null;
+  return GIFT_CARD_MONTH_DISPLAY_NAMES_[index];
+}
+
+function monthYearSortKey_(year, monthIndex) {
+  return Number(year) * 12 + Number(monthIndex);
+}
+
+/** Parses a tracker cell, Date object, or "August 2026" string into month metadata. */
+function parseMonthYearFromCell_(value) {
+  const tz = Session.getScriptTimeZone();
+  if (value instanceof Date && !isNaN(value.getTime())) {
+    const monthIndex = value.getMonth();
+    return {
+      monthName: GIFT_CARD_MONTH_DISPLAY_NAMES_[monthIndex],
+      year: value.getFullYear(),
+      monthIndex: monthIndex,
+      sortKey: monthYearSortKey_(value.getFullYear(), monthIndex),
+      date: value,
+    };
+  }
+
+  const str = String(value || '').trim();
+  if (!str) return null;
+
+  const named = str.match(/^([A-Za-z]+)\s+(\d{4})$/);
+  if (named) {
+    const monthName = normalizeMonthName_(named[1]);
+    if (!monthName) return null;
+    const monthIndex = GIFT_CARD_MONTH_DISPLAY_NAMES_.indexOf(monthName);
+    const year = parseInt(named[2], 10);
+    return {
+      monthName: monthName,
+      year: year,
+      monthIndex: monthIndex,
+      sortKey: monthYearSortKey_(year, monthIndex),
+      date: new Date(year, monthIndex, 1),
+    };
+  }
+
+  const parsed = new Date(str);
+  if (!isNaN(parsed.getTime())) return parseMonthYearFromCell_(parsed);
+
+  const slash = str.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})$/);
+  if (slash) {
+    const year = slash[3].length === 2 ? 2000 + parseInt(slash[3], 10) : parseInt(slash[3], 10);
+    const monthIndex = parseInt(slash[1], 10) - 1;
+    if (monthIndex >= 0 && monthIndex < 12) {
+      return {
+        monthName: GIFT_CARD_MONTH_DISPLAY_NAMES_[monthIndex],
+        year: year,
+        monthIndex: monthIndex,
+        sortKey: monthYearSortKey_(year, monthIndex),
+        date: new Date(year, monthIndex, parseInt(slash[2], 10)),
+      };
+    }
+  }
+
+  return null;
+}
+
+/** Parses prompt input like "August 2026", "Aug 2026", or "8/2026". */
+function parseMonthYearInput_(text) {
+  const input = String(text || '').trim();
+  if (!input) return null;
+
+  const named = input.match(/^([A-Za-z]+)\s+(\d{4})$/);
+  if (named) {
+    const monthName = normalizeMonthName_(named[1]);
+    if (!monthName) return null;
+    return { monthName: monthName, year: parseInt(named[2], 10) };
+  }
+
+  const monthSlashYear = input.match(/^(\d{1,2})[\/\-](\d{4})$/);
+  if (monthSlashYear) {
+    const monthIndex = parseInt(monthSlashYear[1], 10) - 1;
+    if (monthIndex < 0 || monthIndex > 11) return null;
+    return {
+      monthName: GIFT_CARD_MONTH_DISPLAY_NAMES_[monthIndex],
+      year: parseInt(monthSlashYear[2], 10),
+    };
+  }
+
+  const fromDate = parseMonthYearFromCell_(input);
+  if (fromDate) return { monthName: fromDate.monthName, year: fromDate.year };
+  return null;
+}
+
+function getBoostingTrackerDateCol0_(headerIndex) {
+  for (let i = 0; i < BOOSTING_TRACKER_DATE_HEADERS.length; i++) {
+    const key = BOOSTING_TRACKER_DATE_HEADERS[i];
+    if (headerIndex[key] != null) return headerIndex[key];
+  }
+  return BOOSTING_TRACKER_DATE_COL - 1;
+}
+
+/**
+ * Reads Boosting Tracker dates (column D by default) and returns the month/year
+ * for the most recent dated row — used to create/select the gift card tab.
+ */
+function inferGiftCardMonthFromTracker_() {
+  const trackerSheet = getSheet_(SHEET_NAMES.BOOSTING_TRACKER);
+  const lastRow = trackerSheet.getLastRow();
+  if (lastRow <= HEADER_ROW.BOOSTING_TRACKER) return null;
+
+  const lastCol = trackerSheet.getLastColumn();
+  const headers = trackerSheet.getRange(HEADER_ROW.BOOSTING_TRACKER, 1, 1, lastCol).getValues()[0];
+  const headerIndex = buildHeaderIndex_(headers);
+  const dateCol0 = getBoostingTrackerDateCol0_(headerIndex);
+  const numRows = lastRow - HEADER_ROW.BOOSTING_TRACKER;
+  const values = trackerSheet.getRange(HEADER_ROW.BOOSTING_TRACKER + 1, dateCol0 + 1, numRows, 1).getValues();
+
+  let latest = null;
+  values.forEach((row) => {
+    const parsed = parseMonthYearFromCell_(row[0]);
+    if (parsed && (!latest || parsed.sortKey > latest.sortKey)) latest = parsed;
+  });
+  return latest;
+}
+
+/** Creates/selects the gift card tab matching the latest tracker date in column D. */
+function ensureGiftCardMonthTabForTracker_() {
+  const inferred = inferGiftCardMonthFromTracker_();
+  if (!inferred) {
+    return { tabName: getActiveGiftCardSheetName_(), created: false, inferred: null };
+  }
+
+  const tabName = formatGiftCardMonthTabName_(inferred.monthName, inferred.year);
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  let created = false;
+  if (!ss.getSheetByName(tabName)) {
+    createGiftCardMonthTab_(tabName);
+    created = true;
+  }
+  setActiveGiftCardSheet_(tabName);
+  return { tabName: tabName, created: created, inferred: inferred };
+}
+
+/** Latest tracker date in column D for a creator handle (for gift card column D). */
+function lookupLatestTrackerDateForHandle_(handle) {
+  const handleKey = normalizeHandle_(handle);
+  if (!handleKey) return null;
+
+  const trackerSheet = getSheet_(SHEET_NAMES.BOOSTING_TRACKER);
+  const lastRow = trackerSheet.getLastRow();
+  if (lastRow <= HEADER_ROW.BOOSTING_TRACKER) return null;
+
+  const lastCol = trackerSheet.getLastColumn();
+  const headers = trackerSheet.getRange(HEADER_ROW.BOOSTING_TRACKER, 1, 1, lastCol).getValues()[0];
+  const headerIndex = buildHeaderIndex_(headers);
+  const nameIdx = colIndex_(headerIndex, 'creator name', false);
+  const dateCol0 = getBoostingTrackerDateCol0_(headerIndex);
+  if (nameIdx === -1) return null;
+
+  const numRows = lastRow - HEADER_ROW.BOOSTING_TRACKER;
+  const values = trackerSheet.getRange(HEADER_ROW.BOOSTING_TRACKER + 1, 1, numRows, lastCol).getValues();
+  let latest = null;
+  values.forEach((row) => {
+    if (normalizeHandle_(row[nameIdx]) !== handleKey) return;
+    const parsed = parseMonthYearFromCell_(row[dateCol0]);
+    if (!parsed) return;
+    if (!latest || parsed.sortKey > latest.sortKey) latest = parsed;
+  });
+  return latest ? latest.date : null;
+}
+
+function applyTrackerDateToGiftCardRow_(ctx, row, handle) {
+  const trackerDate = lookupLatestTrackerDateForHandle_(handle);
+  if (!trackerDate) return;
+  const dateCol = giftCardCol1_(ctx, 'date', false);
+  const col1 = dateCol !== -1 ? dateCol : GIFT_CARD_DATE_COL;
+  ctx.sheet.getRange(row, col1).setValue(trackerDate);
+}
+
 /** Builds the tab name: "July 2026 Gift Card Cost Tracker". */
 function formatGiftCardMonthTabName_(monthName, year) {
-  const month = String(monthName || '').trim();
+  const month = normalizeMonthName_(monthName);
   const y = Number(year);
-  if (!month || !y) throw new Error('Month and year are required (e.g. July 2026).');
+  if (!month || !y) throw new Error('Month and year are required (e.g. August 2026).');
   return month + ' ' + y + ' ' + GIFT_CARD_MONTH_TAB_SUFFIX;
 }
 
@@ -383,14 +575,15 @@ function parseGiftCardMonthTabName_(tabName) {
   const prefix = name.slice(0, -suffix.length).trim();
   const match = prefix.match(/^(\w+)\s+(\d{4})$/);
   if (!match) return null;
-  const monthIndex = GIFT_CARD_MONTH_NAMES_.indexOf(match[1].toLowerCase());
-  if (monthIndex === -1) return null;
+  const monthName = normalizeMonthName_(match[1]);
+  if (!monthName) return null;
+  const monthIndex = GIFT_CARD_MONTH_DISPLAY_NAMES_.indexOf(monthName);
   const year = parseInt(match[2], 10);
   return {
-    month: match[1],
+    month: monthName,
     year: year,
     monthIndex: monthIndex,
-    sortKey: year * 12 + monthIndex,
+    sortKey: monthYearSortKey_(year, monthIndex),
     tabName: name,
   };
 }
@@ -412,6 +605,14 @@ function listGiftCardMonthTabs_() {
 }
 
 function getActiveGiftCardSheetName_() {
+  const inferred = inferGiftCardMonthFromTracker_();
+  if (inferred) {
+    const inferredTab = formatGiftCardMonthTabName_(inferred.monthName, inferred.year);
+    if (SpreadsheetApp.getActiveSpreadsheet().getSheetByName(inferredTab)) {
+      return inferredTab;
+    }
+  }
+
   const stored = PropertiesService.getScriptProperties().getProperty(ACTIVE_GIFT_CARD_SHEET_PROPERTY);
   if (stored) {
     const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(stored);

@@ -20,6 +20,17 @@ const ACTIVE_GIFT_CARD_SHEET_PROPERTY = 'ACTIVE_GIFT_CARD_SHEET';
 /** How many data rows get the Gift Card Amount formula when a new month tab is created. */
 const GIFT_CARD_FORMULA_ROWS = 400;
 
+/**
+ * Boosting Tracker column D (1-based) holds the content/comp date when no "Date"
+ * header is found. Used to pick the active gift card month tab automatically.
+ */
+const BOOSTING_TRACKER_DATE_COL = 4;
+/** Gift card month tabs: copy each creator's tracker date into this column when present. */
+const GIFT_CARD_DATE_COL = 4;
+const BOOSTING_TRACKER_DATE_HEADERS = [
+  'date', 'content date', 'video date', 'date added', 'boost date', 'comp date',
+];
+
 /** Optional: URL of a separate file that holds the Names tab. Leave blank if Names is in this spreadsheet. */
 const EXTERNAL_NAMES_SHEET_ID = '';
 

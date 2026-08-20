@@ -28,6 +28,11 @@ function onOpen() {
 
 /** One click: scan tracker, fill Outreach Queue, write emails to a Google Doc. */
 function mondayCheck() {
+  toast_('Monday check: ensuring gift card month tab...');
+  const monthResult = ensureGiftCardMonthTabForTracker_();
+  if (monthResult.created) {
+    toast_('Created gift card tab: ' + monthResult.tabName);
+  }
   toast_('Monday check: scanning Boosting Tracker...');
   const summary = syncBoostingTracker(true);
   toast_('Monday check: writing emails to Google Doc...');
@@ -70,26 +75,32 @@ function runScheduledSync() {
 
 function startNewMonth() {
   const ui = SpreadsheetApp.getUi();
-  const resp = ui.prompt(
-    'Start new month',
-    'Month and year for the new gift card tab (e.g. "July 2026"):',
-    ui.ButtonSet.OK_CANCEL
-  );
+  const inferred = inferGiftCardMonthFromTracker_();
+  const detected = inferred ? (inferred.monthName + ' ' + inferred.year) : '';
+  let prompt = 'Month and year for the new gift card tab (e.g. "August 2026").';
+  if (detected) {
+    prompt += '\n\nDetected from Boosting Tracker column D: ' + detected +
+      '\nLeave blank and click OK to use that month.';
+  }
+
+  const resp = ui.prompt('Start new month', prompt, ui.ButtonSet.OK_CANCEL);
   if (resp.getSelectedButton() !== ui.Button.OK) return;
-  const input = resp.getResponseText().trim();
+  let input = resp.getResponseText().trim();
+  if (!input && detected) input = detected;
   if (!input) return;
 
-  const match = input.match(/^(\w+)\s+(\d{4})$/);
-  if (!match) {
-    ui.alert('Please enter month and year like "July 2026".');
+  const parsed = parseMonthYearInput_(input);
+  if (!parsed) {
+    ui.alert('Please enter month and year like "August 2026" or "Aug 2026".');
     return;
   }
 
-  const tabName = formatGiftCardMonthTabName_(match[1], match[2]);
+  const tabName = formatGiftCardMonthTabName_(parsed.monthName, parsed.year);
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   if (ss.getSheetByName(tabName)) {
     setActiveGiftCardSheet_(tabName);
     ui.alert('Tab "' + tabName + '" already exists — it is now the active gift card month.');
+    ss.setActiveSheet(ss.getSheetByName(tabName));
     return;
   }
 
@@ -192,6 +203,7 @@ function promoteConfirmedNewCreators_(showToast) {
     if (lastNameCol !== -1) giftSheet.getRange(targetRow, lastNameCol).setValue(r['last name'] || '');
     giftSheet.getRange(targetRow, newPiecesCol).setValue(r['new pieces of content used']);
     if (emailCol !== -1) giftSheet.getRange(targetRow, emailCol).setValue(r['email address']);
+    applyTrackerDateToGiftCardRow_(ctx, targetRow, r['creator handle']);
     existingHandles[handleKey] = true;
     queueSheet.getRange(r._sheetRow, read.headerIndex[promotedKey] + 1).setValue(true);
     promotedCount++;
@@ -208,6 +220,7 @@ function promoteConfirmedNewCreators_(showToast) {
  * Outreach Queue, and updates gift card rows for confirmed creators.
  */
 function syncBoostingTracker(silent) {
+  const monthResult = ensureGiftCardMonthTabForTracker_();
   const promotion = promoteConfirmedNewCreators_(false);
 
   const trackerSheet = getSheet_(SHEET_NAMES.BOOSTING_TRACKER);
