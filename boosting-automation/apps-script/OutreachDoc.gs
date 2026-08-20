@@ -8,87 +8,7 @@ const OUTREACH_DRAFTS_DOC_TITLE_PREFIX = 'Boosting Outreach Drafts — ';
 
 /** Builds draft entries for every unsent Outreach Queue row. */
 function collectOutreachDraftEntries_() {
-  const sheet = getOutreachQueueSheet_();
-  const read = readFlatSheetRows_(sheet, HEADER_ROW.OUTREACH_QUEUE);
-  const sentKey = normalizeHeader_(SENT_CHECKBOX_HEADER);
-  const typeKey = normalizeHeader_(TYPE_COLUMN_HEADER);
-  const platformKey = normalizeHeader_(PLATFORM_COLUMN_HEADER);
-  const platformLookup = buildPlatformLookupFromTracker_();
-  const linksLookup = buildLinksLookupFromTracker_();
-
-  const entries = [];
-  const skipped = [];
-  let alreadySent = 0;
-
-  read.rows.forEach((row) => {
-    if (row[sentKey]) {
-      alreadySent++;
-      return;
-    }
-
-    const firstName = String(row['first name'] || '').trim();
-    const handle = String(row['creator handle'] || '').trim();
-    const displayName = firstName || (handle ? capitalizeFirst_(handle.replace(/^@/, '').split(/[._]/)[0]) : '');
-    const rowType = String(row[typeKey] || '').trim() || OUTREACH_TYPE_NEW;
-    const isFollowUp = rowType === OUTREACH_TYPE_FOLLOWUP;
-    const platform = String(row[platformKey] || '').trim()
-      || lookupPlatformsForHandleFromTracker_(handle, platformLookup);
-    const needsLinks = needsProductLinksForPlatforms_(platform);
-    const links = resolveOutreachLinks_(row, handle, linksLookup);
-
-    let newPieces = Number(row['new pieces of content used']) || 1;
-    if (newPieces < 1) newPieces = 1;
-    let amount = String(row['gift card amount'] || '').trim();
-    if (!amount) amount = formatAmount_(calculateGiftCardAmount_(newPieces));
-
-    const reasons = [];
-    if (!displayName) reasons.push('missing name');
-    if (needsLinks && !links) reasons.push('missing link');
-
-    if (reasons.length) {
-      skipped.push({
-        row: row._sheetRow,
-        handle: handle || '(blank handle)',
-        type: rowType,
-        pieces: newPieces,
-        amount: amount,
-        reasons: reasons.join(', '),
-      });
-      return;
-    }
-
-    entries.push({
-      row: row._sheetRow,
-      handle: handle,
-      firstName: displayName,
-      type: rowType,
-      isFollowUp: isFollowUp,
-      pieces: newPieces,
-      amount: amount,
-      links: links,
-      platform: platform,
-      message: buildDraftMessage_({
-        isFollowUp: isFollowUp,
-        handle: handle,
-        firstName: displayName,
-        pieces: newPieces,
-        newPieces: newPieces,
-        amount: amount,
-        links: links,
-        needsLinks: needsLinks,
-      }),
-    });
-  });
-
-  return {
-    entries: entries,
-    skipped: skipped,
-    drafted: entries.length,
-    skippedCount: skipped.length,
-    skippedNoName: skipped.filter((s) => s.reasons.indexOf('missing name') !== -1).length,
-    skippedNoLinks: skipped.filter((s) => s.reasons.indexOf('missing link') !== -1).length,
-    alreadySent: alreadySent,
-  };
+  return scanBoostingTrackerForMonday_();
 }
 
 function outreachDocPropertyKey_() {
@@ -156,7 +76,7 @@ function writeOutreachDraftsGoogleDoc_(collectResult) {
   body.appendParagraph('Tracker: ' + ss.getName()).setItalic(true);
   body.appendParagraph(
     'Generated ' + Utilities.formatDate(new Date(), tz, 'MMMM d, yyyy h:mm a z') +
-    ' — copy each message into CreatorIQ, then check Sent? on Outreach Queue.'
+    ' — copy each message into CreatorIQ. Paste confirmed email on Boosting Tracker to add them to the gift card tab.'
   );
   body.appendParagraph(
     entries.length + ' ready to send' +
@@ -189,7 +109,7 @@ function writeOutreachDraftsGoogleDoc_(collectResult) {
   if (skipped.length) {
     body.appendPageBreak();
     body.appendParagraph('Needs attention before drafting').setHeading(DocumentApp.ParagraphHeading.HEADING1);
-    body.appendParagraph('Fix these on Outreach Queue (or Boosting Tracker), then run Monday check again.').setItalic(true);
+    body.appendParagraph('Fix these on Boosting Tracker, then run Monday check again.').setItalic(true);
     skipped.forEach((s) => {
       body.appendParagraph(
         'Row ' + s.row + ': ' + s.handle + ' (' + s.type + ', ' + s.pieces + ' piece(s), ' + s.amount + ') — ' + s.reasons

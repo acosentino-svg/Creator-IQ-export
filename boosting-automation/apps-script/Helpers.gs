@@ -174,14 +174,12 @@ function isAlreadyBoostedThisMonth_(handle) {
   } catch (e) { /* optional */ }
 
   try {
-    const msgSheet = getOutreachQueueSheet_();
-    const read = readFlatSheetRows_(msgSheet, HEADER_ROW.OUTREACH_QUEUE);
-    const sentKey = normalizeHeader_(SENT_CHECKBOX_HEADER);
-    const typeKey = normalizeHeader_(TYPE_COLUMN_HEADER);
+    const msgSheet = getSheet_(SHEET_NAMES.BOOSTING_TRACKER);
+    const read = readFlatSheetRows_(msgSheet, HEADER_ROW.BOOSTING_TRACKER);
+    const sentKey = normalizeHeader_('creator notified');
     if (read.rows.some((r) =>
-      normalizeHandle_(r['creator handle']) === handleKey &&
-      r[sentKey] &&
-      String(r[typeKey] || '').trim() === OUTREACH_TYPE_NEW
+      normalizeHandle_(r['creator name']) === handleKey &&
+      normalizeHeader_(r[sentKey]) === normalizeHeader_('yes')
     )) {
       return true;
     }
@@ -393,16 +391,37 @@ function monthYearSortKey_(year, monthIndex) {
   return Number(year) * 12 + Number(monthIndex);
 }
 
+function isReasonableGiftCardYear_(year) {
+  const y = Number(year);
+  return y >= GIFT_CARD_YEAR_MIN && y <= GIFT_CARD_YEAR_MAX;
+}
+
+function sheetsSerialToDate_(serial) {
+  const n = Number(serial);
+  if (isNaN(n) || n <= 0) return null;
+  // Google Sheets epoch: Dec 30, 1899
+  const ms = Math.round((n - 25569) * 86400 * 1000);
+  const d = new Date(ms);
+  return isNaN(d.getTime()) ? null : d;
+}
+
 /** Parses a tracker cell, Date object, or "August 2026" string into month metadata. */
 function parseMonthYearFromCell_(value) {
-  const tz = Session.getScriptTimeZone();
+  if (typeof value === 'number') {
+    const fromSerial = sheetsSerialToDate_(value);
+    if (fromSerial) return parseMonthYearFromCell_(fromSerial);
+    return null;
+  }
+
   if (value instanceof Date && !isNaN(value.getTime())) {
+    const year = value.getFullYear();
+    if (!isReasonableGiftCardYear_(year)) return null;
     const monthIndex = value.getMonth();
     return {
       monthName: GIFT_CARD_MONTH_DISPLAY_NAMES_[monthIndex],
-      year: value.getFullYear(),
+      year: year,
       monthIndex: monthIndex,
-      sortKey: monthYearSortKey_(value.getFullYear(), monthIndex),
+      sortKey: monthYearSortKey_(year, monthIndex),
       date: value,
     };
   }
@@ -413,9 +432,9 @@ function parseMonthYearFromCell_(value) {
   const named = str.match(/^([A-Za-z]+)\s+(\d{4})$/);
   if (named) {
     const monthName = normalizeMonthName_(named[1]);
-    if (!monthName) return null;
-    const monthIndex = GIFT_CARD_MONTH_DISPLAY_NAMES_.indexOf(monthName);
     const year = parseInt(named[2], 10);
+    if (!monthName || !isReasonableGiftCardYear_(year)) return null;
+    const monthIndex = GIFT_CARD_MONTH_DISPLAY_NAMES_.indexOf(monthName);
     return {
       monthName: monthName,
       year: year,
@@ -425,12 +444,11 @@ function parseMonthYearFromCell_(value) {
     };
   }
 
-  const parsed = new Date(str);
-  if (!isNaN(parsed.getTime())) return parseMonthYearFromCell_(parsed);
-
   const slash = str.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})$/);
   if (slash) {
-    const year = slash[3].length === 2 ? 2000 + parseInt(slash[3], 10) : parseInt(slash[3], 10);
+    let year = parseInt(slash[3], 10);
+    if (slash[3].length === 2) year = 2000 + year;
+    if (!isReasonableGiftCardYear_(year)) return null;
     const monthIndex = parseInt(slash[1], 10) - 1;
     if (monthIndex >= 0 && monthIndex < 12) {
       return {
@@ -442,6 +460,9 @@ function parseMonthYearFromCell_(value) {
       };
     }
   }
+
+  const parsed = new Date(str);
+  if (!isNaN(parsed.getTime())) return parseMonthYearFromCell_(parsed);
 
   return null;
 }
@@ -500,7 +521,8 @@ function inferGiftCardMonthFromTracker_() {
   let latest = null;
   values.forEach((row) => {
     const parsed = parseMonthYearFromCell_(row[0]);
-    if (parsed && (!latest || parsed.sortKey > latest.sortKey)) latest = parsed;
+    if (!parsed || !isReasonableGiftCardYear_(parsed.year)) return;
+    if (!latest || parsed.sortKey > latest.sortKey) latest = parsed;
   });
   return latest;
 }
@@ -559,31 +581,43 @@ function applyTrackerDateToGiftCardRow_(ctx, row, handle) {
   ctx.sheet.getRange(row, col1).setValue(trackerDate);
 }
 
-/** Builds the tab name: "July 2026 Gift Card Cost Tracker". */
+/** Builds the tab name: "August Gift Card Cost Tracker". */
 function formatGiftCardMonthTabName_(monthName, year) {
   const month = normalizeMonthName_(monthName);
-  const y = Number(year);
-  if (!month || !y) throw new Error('Month and year are required (e.g. August 2026).');
-  return month + ' ' + y + ' ' + GIFT_CARD_MONTH_TAB_SUFFIX;
+  if (!month) throw new Error('Month is required (e.g. August).');
+  return month + ' ' + GIFT_CARD_MONTH_TAB_SUFFIX;
 }
 
-/** Parses "July 2026 Gift Card Cost Tracker" -> { month, year, monthIndex, sortKey }. */
+/** Parses "August Gift Card Cost Tracker" or legacy "August 2026 Gift Card Cost Tracker". */
 function parseGiftCardMonthTabName_(tabName) {
   const suffix = ' ' + GIFT_CARD_MONTH_TAB_SUFFIX;
   const name = String(tabName || '').trim();
   if (!name.endsWith(suffix)) return null;
   const prefix = name.slice(0, -suffix.length).trim();
-  const match = prefix.match(/^(\w+)\s+(\d{4})$/);
-  if (!match) return null;
-  const monthName = normalizeMonthName_(match[1]);
+
+  const withYear = prefix.match(/^(\w+)\s+(\d{4})$/);
+  if (withYear) {
+    const monthName = normalizeMonthName_(withYear[1]);
+    const year = parseInt(withYear[2], 10);
+    if (!monthName || !isReasonableGiftCardYear_(year)) return null;
+    const monthIndex = GIFT_CARD_MONTH_DISPLAY_NAMES_.indexOf(monthName);
+    return {
+      month: monthName,
+      year: year,
+      monthIndex: monthIndex,
+      sortKey: monthYearSortKey_(year, monthIndex),
+      tabName: name,
+    };
+  }
+
+  const monthName = normalizeMonthName_(prefix);
   if (!monthName) return null;
   const monthIndex = GIFT_CARD_MONTH_DISPLAY_NAMES_.indexOf(monthName);
-  const year = parseInt(match[2], 10);
   return {
     month: monthName,
-    year: year,
+    year: null,
     monthIndex: monthIndex,
-    sortKey: monthYearSortKey_(year, monthIndex),
+    sortKey: monthIndex,
     tabName: name,
   };
 }
@@ -871,20 +905,6 @@ function ensureColumn_(sheet, headerRowNum, headerText) {
   const newCol = lastCol + 1;
   sheet.getRange(headerRowNum, newCol).setValue(headerText);
   return newCol;
-}
-
-// --- Outreach Queue (one tab in this spreadsheet; one row per email to send) ---
-
-function getOutreachQueueSheet_() {
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
-  let sheet = ss.getSheetByName(SHEET_NAMES.OUTREACH_QUEUE);
-  if (!sheet) {
-    sheet = ss.insertSheet(SHEET_NAMES.OUTREACH_QUEUE);
-    sheet.getRange(1, 1, 1, OUTREACH_QUEUE_HEADERS.length).setValues([OUTREACH_QUEUE_HEADERS]);
-    sheet.getRange(1, 1, 1, OUTREACH_QUEUE_HEADERS.length).setFontWeight('bold');
-    sheet.setFrozenRows(1);
-  }
-  return sheet;
 }
 
 function toast_(msg) {

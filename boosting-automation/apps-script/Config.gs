@@ -7,15 +7,16 @@
 
 const SHEET_NAMES = {
   BOOSTING_TRACKER: 'Boosting Tracker',
-  OUTREACH_QUEUE: 'Outreach Queue',
   GIFT_CARD_TEMPLATE: 'Gift Card Template',
   /** @deprecated Legacy horizontal layout — still supported as a fallback. */
   GIFT_CARD_LEGACY: 'Monthly Gift Card Cost Tracker',
   EOM_EXPORT: 'EOM Export',
 };
 
-/** Per-month tabs are named like "July 2026 Gift Card Cost Tracker". */
+/** Per-month tabs are named like "August Gift Card Cost Tracker" (month name only). */
 const GIFT_CARD_MONTH_TAB_SUFFIX = 'Gift Card Cost Tracker';
+const GIFT_CARD_YEAR_MIN = 2024;
+const GIFT_CARD_YEAR_MAX = 2035;
 const ACTIVE_GIFT_CARD_SHEET_PROPERTY = 'ACTIVE_GIFT_CARD_SHEET';
 /** How many data rows get the Gift Card Amount formula when a new month tab is created. */
 const GIFT_CARD_FORMULA_ROWS = 400;
@@ -30,47 +31,30 @@ const GIFT_CARD_DATE_COL = 4;
 const BOOSTING_TRACKER_DATE_HEADERS = [
   'date', 'content date', 'video date', 'date added', 'boost date', 'comp date',
 ];
+/** When a confirmed gift card email is pasted on Boosting Tracker, promotion runs automatically. */
+const BOOSTING_TRACKER_EMAIL_HEADERS = [
+  'email address', 'confirmed email', 'gift card email', 'creator email',
+];
 
 /** Optional: URL of a separate file that holds the Names tab. Leave blank if Names is in this spreadsheet. */
 const EXTERNAL_NAMES_SHEET_ID = '';
 
 const HEADER_ROW = {
   BOOSTING_TRACKER: 2,
-  OUTREACH_QUEUE: 1,
-  /** Header row on per-month gift card tabs (e.g. "July 2026 Gift Card Cost Tracker"). */
+  /** Header row on per-month gift card tabs (e.g. "August Gift Card Cost Tracker"). */
   GIFT_CARD_TRACKER: 1,
   /** Legacy horizontal layout only — row 1 = month labels, row 2 = field headers. */
   GIFT_CARD_TRACKER_MONTH_LABEL_ROW: 1,
   GIFT_CARD_TRACKER_FIELD_ROW: 2,
 };
 
-const OUTREACH_TYPE_NEW = 'New';
-const OUTREACH_TYPE_FOLLOWUP = 'Follow-Up';
-const TYPE_COLUMN_HEADER = 'Type';
-
-const ALREADY_HANDLED_VALUES = ['yes'];
 const DUPE_MARKERS = ['dupe'];
 const QUEUED_MARKER = 'Queued (auto)';
-/** @deprecated Legacy column — drafts now go to a Google Doc, not this column. */
-const DRAFT_COLUMN_HEADER = 'Drafted Message (auto)';
-const SENT_CHECKBOX_HEADER = 'Sent?';
-const PROMOTED_COLUMN_HEADER = 'Added to Tracker? (auto)';
+const ALREADY_HANDLED_VALUES = ['yes'];
 const PLATFORM_COLUMN_HEADER = 'Platform (auto)';
 
-/** Columns on the Outreach Queue tab (row 1). One row per email to send. */
-const OUTREACH_QUEUE_HEADERS = [
-  TYPE_COLUMN_HEADER,
-  'Creator Handle',
-  'First Name',
-  'Last Name',
-  'New Pieces of Content Used',
-  'Gift Card Amount',
-  'Links',
-  PLATFORM_COLUMN_HEADER,
-  SENT_CHECKBOX_HEADER,
-  'Email Address',
-  PROMOTED_COLUMN_HEADER,
-];
+const OUTREACH_TYPE_NEW = 'New';
+const OUTREACH_TYPE_FOLLOWUP = 'Follow-Up';
 
 // Payout: 1st selected piece = $100, each additional piece = +$50.
 const GIFT_CARD_BASE_AMOUNT = 100;
