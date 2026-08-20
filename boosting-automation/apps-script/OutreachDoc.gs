@@ -98,7 +98,7 @@ function writeOutreachDraftsGoogleDoc_(collectResult) {
         'Scan: ' + pending + ' pending video(s)' +
         (skippedDupes ? (', ' + skippedDupes + ' dupe row(s) skipped') : '') +
         (skippedRepeat ? (', ' + skippedRepeat + ' repeat video(s) ignored') : '') +
-        (skippedStale ? (', ' + skippedStale + ' older/out-of-month row(s) skipped') : '') +
+        (skippedStale ? (', ' + skippedStale + ' out-of-month row(s) skipped') : '') +
         (skippedFix ? (', ' + skippedFix + ' creator(s) need a name') : '') +
         '.'
       );

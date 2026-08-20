@@ -15,10 +15,10 @@ function scanBoostingTrackerForMonday_() {
   ['creator name', 'content used', 'creator notified'].forEach((h) => colIndex_(headerIndex, h, true));
 
   const clearedLegacy = clearLegacyQueuedMarkersOnTracker_(trackerSheet, headerIndex);
-  const draftMonth = inferGiftCardMonthFromTracker_();
+  const batchMonth = getActiveBatchMonth_();
 
   const firstDataRow = HEADER_ROW.BOOSTING_TRACKER + 1;
-  const numRows = lastRow - HEADER_ROW.BOOSTING_TRACKER;
+  const numRows = lastRow - firstDataRow + 1;
   if (numRows <= 0) {
     return emptyMondayScanResult_();
   }
@@ -65,8 +65,7 @@ function scanBoostingTrackerForMonday_() {
       continue;
     }
 
-    if (!isTrackerRowRecentEnoughForDraft_(row, headerIndex)
-        || !isTrackerRowInDraftMonth_(row, headerIndex, draftMonth)) {
+    if (!isTrackerRowInDraftMonth_(row, headerIndex, batchMonth)) {
       skippedStale++;
       continue;
     }
@@ -195,7 +194,7 @@ function scanBoostingTrackerForMonday_() {
     skippedRepeatLinks: skippedRepeatLinks,
     skippedStale: skippedStale,
     clearedLegacyQueued: clearedLegacy,
-    draftMonthLabel: draftMonth ? draftMonth.monthName + ' ' + draftMonth.year : '',
+    draftMonthLabel: batchMonth ? batchMonth.monthName + ' ' + batchMonth.year : '',
     emailRows: entries.length,
   };
 }
@@ -264,13 +263,13 @@ function promoteCreatorFromTrackerRow_(sheetRow, emailOverride) {
 function syncCreatorToGiftCardTab_(handle, handleKey, email, trackerSheet, headerIndex, opts) {
   opts = opts || {};
   ensureGiftCardMonthTabForTracker_();
-  const draftMonth = inferGiftCardMonthFromTracker_();
+  const draftMonth = getActiveBatchMonth_();
   const ctx = getGiftCardContext_();
   const nameKey = ctx.nameKey;
   const blockRows = readGiftCardRows_(ctx);
   const existing = blockRows.find((r) => normalizeHandle_(r[nameKey]) === handleKey);
 
-  const stats = summarizePendingTrackerRowsForHandle_(handleKey, headerIndex, trackerSheet, draftMonth);
+  const stats = summarizePendingTrackerRowsForHandle_(handleKey, headerIndex, trackerSheet, getActiveBatchMonth_());
   if (!stats.pieces) return { synced: 0, error: 'no pending videos for this creator' };
 
   const giftSheet = ctx.sheet;
@@ -343,17 +342,20 @@ function syncAllPendingCreatorsToGiftCardTab_() {
   if (lastRow <= HEADER_ROW.BOOSTING_TRACKER) return { synced: 0 };
 
   ensureGiftCardMonthTabForTracker_();
-  const draftMonth = inferGiftCardMonthFromTracker_();
+  const batchMonth = getActiveBatchMonth_();
   const lastCol = trackerSheet.getLastColumn();
   const headers = trackerSheet.getRange(HEADER_ROW.BOOSTING_TRACKER, 1, 1, lastCol).getValues()[0];
   const headerIndex = buildHeaderIndex_(headers);
   const firstDataRow = HEADER_ROW.BOOSTING_TRACKER + 1;
-  const values = trackerSheet.getRange(firstDataRow, 1, lastRow - firstDataRow + 1, lastCol).getValues();
+  const numRows = lastRow - firstDataRow + 1;
+  if (numRows <= 0) return { synced: 0 };
+
+  const values = trackerSheet.getRange(firstDataRow, 1, numRows, lastCol).getValues();
   const handles = {};
 
   values.forEach((row) => {
     if (!isTrackerRowEligibleForMonthInference_(row, headerIndex)) return;
-    if (!isTrackerRowInDraftMonth_(row, headerIndex, draftMonth)) return;
+    if (!isTrackerRowInDraftMonth_(row, headerIndex, batchMonth)) return;
     const handle = String(row[headerIndex['creator name']] || '').trim();
     const handleKey = normalizeHandle_(handle);
     if (handleKey) handles[handleKey] = handle;
@@ -364,7 +366,11 @@ function syncAllPendingCreatorsToGiftCardTab_() {
     const result = syncCreatorToGiftCardTab_(handles[handleKey], handleKey, '', trackerSheet, headerIndex, {});
     if (result.synced) synced++;
   });
-  return { synced: synced, tabName: getActiveGiftCardSheetName_(), draftMonthLabel: draftMonth.monthName + ' ' + draftMonth.year };
+  return {
+    synced: synced,
+    tabName: getActiveGiftCardSheetName_(),
+    draftMonthLabel: batchMonth.monthName + ' ' + batchMonth.year,
+  };
 }
 
 function syncCreatorFromTrackerRow_(sheetRow) {
@@ -438,7 +444,7 @@ function summarizePendingTrackerRowsForHandle_(handleKey, headerIndex, trackerSh
   const lastRow = trackerSheet.getLastRow();
   const lastCol = trackerSheet.getLastColumn();
   const firstDataRow = HEADER_ROW.BOOSTING_TRACKER + 1;
-  const numRows = lastRow - HEADER_ROW.BOOSTING_TRACKER;
+  const numRows = lastRow - firstDataRow + 1;
   if (numRows <= 0) return { pieces: 0, links: '', profileUrl: '' };
 
   const values = trackerSheet.getRange(firstDataRow, 1, numRows, lastCol).getValues();

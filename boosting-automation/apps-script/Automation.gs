@@ -41,7 +41,7 @@ function mondayCheck() {
   let msg = 'Monday check done: ' + draftResult.pending + ' pending video(s)';
   if (draftResult.skippedDupes) msg += ', ' + draftResult.skippedDupes + ' dupe(s) skipped';
   if (draftResult.skippedRepeatLinks) msg += ', ' + draftResult.skippedRepeatLinks + ' repeat link(s) ignored';
-  if (draftResult.skippedStale) msg += ', ' + draftResult.skippedStale + ' older row(s) skipped';
+  if (draftResult.skippedStale) msg += ', ' + draftResult.skippedStale + ' out-of-month row(s) skipped';
   if (draftResult.clearedLegacyQueued) msg += ', cleared ' + draftResult.clearedLegacyQueued + ' legacy Queued (auto) cell(s)';
   msg += '. Wrote ' + draftResult.drafted + ' email(s) to Google Doc';
   if (syncResult.synced) msg += '. Added ' + syncResult.synced + ' creator(s) to ' + syncResult.tabName;

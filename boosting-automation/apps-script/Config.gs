@@ -33,7 +33,7 @@ const BOOSTING_TRACKER_DATE_HEADERS = [
   /** Some trackers label column D "Duration of Usage" but store the comp/add date (e.g. 8/17). */
   'duration of usage',
 ];
-/** Optional Boosting Tracker column — not required. Use the menu or gift card tab instead. */
+/** Optional Boosting Tracker column — not required. Use link paste or gift card tab instead. */
 const BOOSTING_TRACKER_EMAIL_HEADERS = [
   'email address', 'confirmed email', 'gift card email', 'creator email',
 ];
@@ -59,8 +59,6 @@ const SENT_MARKER = 'Yes';
 const ALREADY_HANDLED_VALUES = ['yes'];
 /** Old script marker — cleared to blank automatically on Monday check. */
 const LEGACY_QUEUED_MARKER = 'queued (auto)';
-/** Only draft rows whose column D date is within this many days and matches the active batch month. */
-const OUTREACH_DRAFT_MAX_AGE_DAYS = 45;
 const PLATFORM_COLUMN_HEADER = 'Platform (auto)';
 
 const OUTREACH_TYPE_NEW = 'New';

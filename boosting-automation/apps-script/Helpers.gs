@@ -578,28 +578,45 @@ function getTrackerRowDateParsed_(row, headerIndex) {
   return parseMonthYearFromCell_(row[dateCol0]);
 }
 
-/** Column D date is recent enough to include in this week's outreach batch. */
-function isTrackerRowRecentEnoughForDraft_(row, headerIndex) {
-  const parsed = getTrackerRowDateParsed_(row, headerIndex);
-  if (!parsed || !parsed.date || !isReasonableGiftCardYear_(parsed.year)) return false;
-  const ageMs = Date.now() - parsed.date.getTime();
-  if (ageMs < 0) return false;
-  return ageMs <= OUTREACH_DRAFT_MAX_AGE_DAYS * 86400000;
-}
-
-/** Column D date falls in the same month/year as the active outreach batch. */
-function isTrackerRowInDraftMonth_(row, headerIndex, draftMonth) {
-  if (!draftMonth) return true;
+/** Row column D date is in the same calendar month/year as the batch (e.g. all of August 2026). */
+function isTrackerRowInDraftMonth_(row, headerIndex, batchMonth) {
+  if (!batchMonth) return true;
   const parsed = getTrackerRowDateParsed_(row, headerIndex);
   if (!parsed) return false;
-  return parsed.monthIndex === draftMonth.monthIndex && parsed.year === draftMonth.year;
+  return parsed.monthIndex === batchMonth.monthIndex && parsed.year === batchMonth.year;
+}
+
+/**
+ * Which month bucket to use: read column D on each row and match month + year.
+ * Default = current calendar month (August while it's August).
+ * Override with menu "Choose active gift card month".
+ */
+function getActiveBatchMonth_() {
+  const stored = PropertiesService.getScriptProperties().getProperty(ACTIVE_GIFT_CARD_SHEET_PROPERTY);
+  if (stored) {
+    const parsed = parseGiftCardMonthTabName_(stored);
+    if (parsed) {
+      const year = new Date().getFullYear();
+      return {
+        monthName: parsed.month,
+        year: year,
+        monthIndex: parsed.monthIndex,
+        sortKey: monthYearSortKey_(year, parsed.monthIndex),
+      };
+    }
+  }
+  return currentCalendarMonth_();
+}
+
+function inferGiftCardMonthFromTracker_() {
+  return getActiveBatchMonth_();
 }
 
 /** Clears legacy Queued (auto) cells left by older script versions. */
 function clearLegacyQueuedMarkersOnTracker_(trackerSheet, headerIndex) {
   const lastRow = trackerSheet.getLastRow();
   const firstDataRow = HEADER_ROW.BOOSTING_TRACKER + 1;
-  const numRows = lastRow - HEADER_ROW.BOOSTING_TRACKER;
+  const numRows = lastRow - firstDataRow + 1;
   if (numRows <= 0) return 0;
 
   const lastCol = trackerSheet.getLastColumn();
@@ -654,40 +671,7 @@ function currentCalendarMonth_() {
   };
 }
 
-/**
- * Reads column D on rows still in workflow (not Yes, not dupe) and returns the
- * month of the **newest** recent pending date — so a small August batch wins
- * over many older July rows still marked blank.
- */
-function inferGiftCardMonthFromTracker_() {
-  const today = currentCalendarMonth_();
-  const trackerSheet = getSheet_(SHEET_NAMES.BOOSTING_TRACKER);
-  const lastRow = trackerSheet.getLastRow();
-  if (lastRow <= HEADER_ROW.BOOSTING_TRACKER) return today;
-
-  const lastCol = trackerSheet.getLastColumn();
-  const headers = trackerSheet.getRange(HEADER_ROW.BOOSTING_TRACKER, 1, 1, lastCol).getValues()[0];
-  const headerIndex = buildHeaderIndex_(headers);
-  const numRows = lastRow - HEADER_ROW.BOOSTING_TRACKER;
-  const values = trackerSheet.getRange(HEADER_ROW.BOOSTING_TRACKER + 1, 1, numRows, lastCol).getValues();
-
-  let latest = null;
-  let hasCurrentMonthRow = false;
-
-  values.forEach((row) => {
-    if (!isTrackerRowEligibleForMonthInference_(row, headerIndex)) return;
-    if (!isTrackerRowRecentEnoughForDraft_(row, headerIndex)) return;
-    const parsed = getTrackerRowDateParsed_(row, headerIndex);
-    if (!parsed || !isReasonableGiftCardYear_(parsed.year)) return;
-    if (parsed.sortKey === today.sortKey) hasCurrentMonthRow = true;
-    if (!latest || parsed.sortKey > latest.sortKey) latest = parsed;
-  });
-
-  if (hasCurrentMonthRow) return today;
-  return latest || today;
-}
-
-/** Creates/selects the gift card tab matching the latest tracker date in column D. */
+/** Creates/selects the gift card tab for the active batch month. */
 function ensureGiftCardMonthTabForTracker_() {
   const inferred = inferGiftCardMonthFromTracker_();
   if (!inferred) {
