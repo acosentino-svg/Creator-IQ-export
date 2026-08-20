@@ -2,7 +2,7 @@
  * Automation.gs
  * Menu + boosting workflow:
  *   Boosting Tracker -> Google Doc (emails) -> CreatorIQ send ->
- *   email pasted on tracker -> Gift Card month tab (auto).
+ *   creator replies -> menu or gift card Email column -> Gift Card month tab.
  */
 
 function onOpen() {
@@ -15,6 +15,7 @@ function onOpen() {
     .addItem('2. End-of-month export (Step 5)', 'exportEndOfMonth')
     .addSeparator()
     .addItem('Regenerate outreach drafts doc', 'draftOutreachMessages')
+    .addItem('Add to gift card (creator replied)...', 'addCreatorToGiftCardFromSelection_')
     .addItem('Turn ON automatic weekly sync', 'enableAutoSync')
     .addItem('Turn OFF automatic sync', 'disableAutoSync')
     .addSeparator()

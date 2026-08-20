@@ -31,7 +31,7 @@ const GIFT_CARD_DATE_COL = 4;
 const BOOSTING_TRACKER_DATE_HEADERS = [
   'date', 'content date', 'video date', 'date added', 'boost date', 'comp date',
 ];
-/** When a confirmed gift card email is pasted on Boosting Tracker, promotion runs automatically. */
+/** Optional Boosting Tracker column — not required. Use the menu or gift card tab instead. */
 const BOOSTING_TRACKER_EMAIL_HEADERS = [
   'email address', 'confirmed email', 'gift card email', 'creator email',
 ];

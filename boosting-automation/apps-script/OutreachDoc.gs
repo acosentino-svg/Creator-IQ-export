@@ -77,7 +77,7 @@ function writeOutreachDraftsGoogleDoc_(collectResult) {
   body.appendParagraph('Tracker: ' + ss.getName()).setItalic(true);
   body.appendParagraph(
     'Generated ' + Utilities.formatDate(new Date(), tz, 'MMMM d, yyyy h:mm a z') +
-    ' — copy each message into CreatorIQ, then mark Creator Notified Yes after sending. Paste confirmed email on Boosting Tracker to add them to the gift card tab.'
+    ' — copy each message into CreatorIQ, then mark Creator Notified Yes after sending. When they reply: Boosting Automation → Add to gift card (creator replied), or paste their email on the gift card tab Email Address column.'
   );
   body.appendParagraph(
     entries.length + ' ready to send' +

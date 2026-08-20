@@ -228,8 +228,8 @@ function getBoostingTrackerEmailCol0_(headerIndex) {
   return -1;
 }
 
-/** Adds/updates a creator on the active gift card tab when email is entered on the tracker. */
-function promoteCreatorFromTrackerRow_(sheetRow) {
+/** Adds/updates a creator on the active gift card tab from a Boosting Tracker row + email. */
+function promoteCreatorFromTrackerRow_(sheetRow, emailOverride) {
   const trackerSheet = getSheet_(SHEET_NAMES.BOOSTING_TRACKER);
   const lastCol = trackerSheet.getLastColumn();
   const headers = trackerSheet.getRange(HEADER_ROW.BOOSTING_TRACKER, 1, 1, lastCol).getValues()[0];
@@ -238,11 +238,20 @@ function promoteCreatorFromTrackerRow_(sheetRow) {
 
   const handle = String(row[headerIndex['creator name']] || '').trim();
   const handleKey = normalizeHandle_(handle);
-  if (!handleKey) return { promoted: 0 };
+  if (!handleKey) return { promoted: 0, error: 'missing handle' };
 
-  const emailCol0 = getBoostingTrackerEmailCol0_(headerIndex);
-  const email = emailCol0 !== -1 ? String(row[emailCol0] || '').trim() : '';
-  if (!email || email.indexOf('@') === -1) return { promoted: 0 };
+  let email = String(emailOverride || '').trim();
+  if (!email) {
+    const emailCol0 = getBoostingTrackerEmailCol0_(headerIndex);
+    email = emailCol0 !== -1 ? String(row[emailCol0] || '').trim() : '';
+  }
+  if (!email || email.indexOf('@') === -1) return { promoted: 0, error: 'missing email' };
+
+  return promoteCreatorByHandleAndEmail_(handle, handleKey, email, trackerSheet, headerIndex);
+}
+
+/** Core gift-card promotion: pull pending tracker rows for handle and write gift card tab. */
+function promoteCreatorByHandleAndEmail_(handle, handleKey, email, trackerSheet, headerIndex) {
 
   ensureGiftCardMonthTabForTracker_();
   const ctx = getGiftCardContext_();
@@ -251,7 +260,7 @@ function promoteCreatorFromTrackerRow_(sheetRow) {
   const existing = blockRows.find((r) => normalizeHandle_(r[nameKey]) === handleKey);
 
   const stats = summarizePendingTrackerRowsForHandle_(handleKey, headerIndex, trackerSheet);
-  if (!stats.pieces) return { promoted: 0 };
+  if (!stats.pieces) return { promoted: 0, error: 'no pending videos for this creator' };
 
   const giftSheet = ctx.sheet;
   const nameHeaderLabel = (nameKey === 'creator handle') ? 'Creator Handle' : 'Creator Name';
@@ -294,8 +303,68 @@ function promoteCreatorFromTrackerRow_(sheetRow) {
 
   applyTrackerDateToGiftCardRow_(ctx, targetRow, handle);
   markTrackerRowsYesForHandle_(handleKey, headerIndex, trackerSheet);
-  toast_('Added ' + handle + ' to ' + getActiveGiftCardSheetName_() + ' (' + stats.pieces + ' piece(s), ' + formatAmount_(calculateGiftCardAmount_(stats.pieces)) + ').');
-  return { promoted: 1 };
+  return {
+    promoted: 1,
+    handle: handle,
+    pieces: stats.pieces,
+    amount: formatAmount_(calculateGiftCardAmount_(stats.pieces)),
+    tabName: getActiveGiftCardSheetName_(),
+  };
+}
+
+/** Menu flow: select a Boosting Tracker row, paste the creator's confirmed email. */
+function addCreatorToGiftCardFromSelection_() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const ui = SpreadsheetApp.getUi();
+  const sheet = ss.getActiveSheet();
+
+  if (sheet.getName() !== SHEET_NAMES.BOOSTING_TRACKER) {
+    ui.alert(
+      'Select a creator row on Boosting Tracker',
+      'Click any row for that creator on the Boosting Tracker tab, then run this menu item again.',
+      ui.ButtonSet.OK
+    );
+    return;
+  }
+
+  const row = ss.getActiveRange().getRow();
+  if (row <= HEADER_ROW.BOOSTING_TRACKER) {
+    ui.alert('Select a creator data row (not the header row).');
+    return;
+  }
+
+  const lastCol = sheet.getLastColumn();
+  const headers = sheet.getRange(HEADER_ROW.BOOSTING_TRACKER, 1, 1, lastCol).getValues()[0];
+  const headerIndex = buildHeaderIndex_(headers);
+  const handle = String(sheet.getRange(row, headerIndex['creator name'] + 1).getValue() || '').trim();
+
+  const resp = ui.prompt(
+    'Add to gift card',
+    'Creator: ' + (handle || '(unknown)') +
+      '\n\nPaste the confirmed gift card email from their reply:',
+    ui.ButtonSet.OK_CANCEL
+  );
+  if (resp.getSelectedButton() !== ui.Button.OK) return;
+
+  const email = String(resp.getResponseText() || '').trim();
+  if (!email || email.indexOf('@') === -1) {
+    ui.alert('Please enter a valid email address.');
+    return;
+  }
+
+  ensureGiftCardMonthTabForTracker_();
+  const result = promoteCreatorFromTrackerRow_(row, email);
+  if (!result.promoted) {
+    const msg = result.error === 'no pending videos for this creator'
+      ? 'No pending videos found for ' + handle + ' (already marked Yes, or all rows are dupes).'
+      : 'Could not add ' + handle + ' to the gift card tab.';
+    ui.alert(msg);
+    return;
+  }
+
+  toast_('Added ' + result.handle + ' to ' + result.tabName + ' (' + result.pieces + ' piece(s), ' + result.amount + ').');
+  const giftSheet = ss.getSheetByName(result.tabName);
+  if (giftSheet) ss.setActiveSheet(giftSheet);
 }
 
 function summarizePendingTrackerRowsForHandle_(handleKey, headerIndex, trackerSheet) {
@@ -363,7 +432,7 @@ function markTrackerRowsYesForHandle_(handleKey, headerIndex, trackerSheet) {
   batchSetColumnValues_(trackerSheet, notifiedCol, updates);
 }
 
-/** Runs when you enter a confirmed email on Boosting Tracker (installable onEdit optional). */
+/** Optional: paste email on Boosting Tracker if an email column exists. */
 function onEditBoostingTrackerPromote_(e) {
   if (!e || !e.range) return;
   if (e.range.getSheet().getName() !== SHEET_NAMES.BOOSTING_TRACKER) return;
@@ -376,9 +445,49 @@ function onEditBoostingTrackerPromote_(e) {
   const emailCol0 = getBoostingTrackerEmailCol0_(headerIndex);
   if (emailCol0 === -1 || e.range.getColumn() !== emailCol0 + 1) return;
 
-  promoteCreatorFromTrackerRow_(e.range.getRow());
+  ensureGiftCardMonthTabForTracker_();
+  const result = promoteCreatorFromTrackerRow_(e.range.getRow(), e.value);
+  if (result.promoted) {
+    toast_('Added ' + result.handle + ' to ' + result.tabName + ' (' + result.pieces + ' piece(s), ' + result.amount + ').');
+  }
+}
+
+/** Paste email on the gift card month tab Email Address column (handle must be on that row). */
+function onEditGiftCardEmailPromote_(e) {
+  if (!e || !e.range || !e.value) return;
+  const sheet = e.range.getSheet();
+  if (!isGiftCardMonthTabName_(sheet.getName())) return;
+  if (e.range.getRow() <= getGiftCardHeaderRow_(sheet)) return;
+  if (String(e.value).indexOf('@') === -1) return;
+
+  const lastCol = sheet.getLastColumn();
+  const headerRow = getGiftCardHeaderRow_(sheet);
+  const headerIndex = buildHeaderIndex_(sheet.getRange(headerRow, 1, 1, lastCol).getValues()[0]);
+  const emailCol0 = colIndex_(headerIndex, 'email address', false);
+  if (emailCol0 === -1 || e.range.getColumn() !== emailCol0 + 1) return;
+
+  const nameKey = ('creator handle' in headerIndex) ? 'creator handle' : 'creator name';
+  const nameCol0 = colIndex_(headerIndex, nameKey, false);
+  if (nameCol0 === -1) return;
+
+  const handle = String(sheet.getRange(e.range.getRow(), nameCol0 + 1).getValue() || '').trim();
+  const handleKey = normalizeHandle_(handle);
+  if (!handleKey) return;
+
+  const trackerSheet = getSheet_(SHEET_NAMES.BOOSTING_TRACKER);
+  const trackerHeaders = trackerSheet.getRange(HEADER_ROW.BOOSTING_TRACKER, 1, 1, trackerSheet.getLastColumn()).getValues()[0];
+  const trackerHeaderIndex = buildHeaderIndex_(trackerHeaders);
+
+  ensureGiftCardMonthTabForTracker_();
+  const result = promoteCreatorByHandleAndEmail_(
+    handle, handleKey, String(e.value).trim(), trackerSheet, trackerHeaderIndex
+  );
+  if (result.promoted) {
+    toast_('Synced ' + result.handle + ' from Boosting Tracker (' + result.pieces + ' piece(s), ' + result.amount + ').');
+  }
 }
 
 function onEdit(e) {
   onEditBoostingTrackerPromote_(e);
+  onEditGiftCardEmailPromote_(e);
 }
