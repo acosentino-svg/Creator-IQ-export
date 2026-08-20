@@ -52,7 +52,8 @@ const HEADER_ROW = {
 };
 
 const DUPE_MARKERS = ['dupe'];
-const QUEUED_MARKER = 'Queued (auto)';
+/** Creator Notified = Yes means the initial outreach email was sent (set manually or on email paste). */
+const SENT_MARKER = 'Yes';
 const ALREADY_HANDLED_VALUES = ['yes'];
 const PLATFORM_COLUMN_HEADER = 'Platform (auto)';
 

@@ -40,10 +40,9 @@ function scanBoostingTrackerForMonday_() {
   const creators = {};
   const globalContentUrls = {};
   const globalUids = {};
-  const trackerMarkerUpdates = [];
   let skippedDupes = 0;
   let skippedRepeatLinks = 0;
-  let queued = 0;
+  let pending = 0;
 
   for (let i = 0; i < values.length; i++) {
     const row = values[i];
@@ -110,14 +109,8 @@ function scanBoostingTrackerForMonday_() {
       creator.links.push(link);
     });
     if (platform) creator.platforms.push(platform);
-
-    if (notifiedNorm !== normalizeHeader_(QUEUED_MARKER)) {
-      trackerMarkerUpdates.push({ row: sheetRow, value: QUEUED_MARKER });
-    }
-    queued++;
+    pending++;
   }
-
-  batchSetColumnValues_(trackerSheet, headerIndex['creator notified'] + 1, trackerMarkerUpdates);
 
   const entries = [];
   const skipped = [];
@@ -177,7 +170,7 @@ function scanBoostingTrackerForMonday_() {
     skippedCount: skipped.length,
     skippedNoName: skipped.filter((s) => s.reasons.indexOf('missing name') !== -1).length,
     skippedNoLinks: skipped.filter((s) => s.reasons.indexOf('missing link') !== -1).length,
-    queued: queued,
+    pending: pending,
     skippedDupes: skippedDupes,
     skippedRepeatLinks: skippedRepeatLinks,
     emailRows: entries.length,
@@ -335,10 +328,10 @@ function markTrackerRowsYesForHandle_(handleKey, headerIndex, trackerSheet) {
 
   values.forEach((row, i) => {
     if (normalizeHandle_(row[headerIndex['creator name']]) !== handleKey) return;
+    if (isTrackerDupeRow_(row, headerIndex)) return;
     const notifiedNorm = normalizeHeader_(row[headerIndex['creator notified']]);
-    if (notifiedNorm === normalizeHeader_(QUEUED_MARKER)) {
-      updates.push({ row: firstDataRow + i, value: 'Yes' });
-    }
+    if (ALREADY_HANDLED_VALUES.indexOf(notifiedNorm) !== -1) return;
+    updates.push({ row: firstDataRow + i, value: SENT_MARKER });
   });
   batchSetColumnValues_(trackerSheet, notifiedCol, updates);
 }

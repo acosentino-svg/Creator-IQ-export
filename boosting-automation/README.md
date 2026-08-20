@@ -72,12 +72,10 @@ scopes for not much extra benefit), the starter kit solves the actual problem
   sent — the outreach message asks them to confirm that on purpose. The
   lookup only leaves a note as a hint; the actual column stays empty until a
   creator's confirmed reply goes in, exactly like today.
-- **Silently marking a creator as "notified."** The script uses a distinct
-  marker (`Queued (auto)`) instead of writing `Yes` straight away, so "Yes"
-  still only ever means a human actually confirmed the message went out. You
-  can wire up `onEditMarkSent` (see `Automation.gs`) so checking a "Sent?" box
-  on the message sheet flips it to `Yes` for you automatically — that part's
-  optional and off by default.
+- **Creator Notified column.** Monday check does not write to this column.
+  Leave it blank until you send the outreach email in CreatorIQ, then type
+  **Yes**. When you paste a confirmed gift-card email on the tracker, matching
+  rows are marked **Yes** automatically as part of gift-card promotion.
 
 ## Important: three separate files, not one
 

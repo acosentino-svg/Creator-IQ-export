@@ -77,7 +77,7 @@ function writeOutreachDraftsGoogleDoc_(collectResult) {
   body.appendParagraph('Tracker: ' + ss.getName()).setItalic(true);
   body.appendParagraph(
     'Generated ' + Utilities.formatDate(new Date(), tz, 'MMMM d, yyyy h:mm a z') +
-    ' — copy each message into CreatorIQ. Paste confirmed email on Boosting Tracker to add them to the gift card tab.'
+    ' — copy each message into CreatorIQ, then mark Creator Notified Yes after sending. Paste confirmed email on Boosting Tracker to add them to the gift card tab.'
   );
   body.appendParagraph(
     entries.length + ' ready to send' +
@@ -87,20 +87,20 @@ function writeOutreachDraftsGoogleDoc_(collectResult) {
 
   if (!entries.length) {
     body.appendParagraph('No unsent outreach rows are ready to draft yet.').setItalic(true);
-    const queued = collectResult.queued || 0;
+    const pending = collectResult.pending || 0;
     const skippedDupes = collectResult.skippedDupes || 0;
     const skippedRepeat = collectResult.skippedRepeatLinks || 0;
     const skippedFix = collectResult.skippedCount || 0;
-    if (queued || skippedDupes || skippedRepeat || skippedFix) {
+    if (pending || skippedDupes || skippedRepeat || skippedFix) {
       body.appendParagraph(
-        'Scan: ' + queued + ' pending video(s)' +
+        'Scan: ' + pending + ' pending video(s)' +
         (skippedDupes ? (', ' + skippedDupes + ' dupe row(s) skipped') : '') +
         (skippedRepeat ? (', ' + skippedRepeat + ' repeat video(s) ignored') : '') +
         (skippedFix ? (', ' + skippedFix + ' creator(s) need a name or product link') : '') +
         '.'
       );
     }
-    if (queued > 0 && skippedFix) {
+    if (pending > 0 && skippedFix) {
       body.appendParagraph(
         'Creators with missing names or non-AppLovin product links are listed at the bottom of this doc. AppLovin rows only need a handle (first name is guessed from the handle if Names tab is empty).'
       ).setItalic(true);

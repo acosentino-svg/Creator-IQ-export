@@ -36,18 +36,19 @@ function mondayCheck() {
   toast_('Monday check: scanning Boosting Tracker (skipping dupes)...');
   const draftResult = draftOutreachMessages(true);
 
-  let msg = 'Monday check done: ' + draftResult.queued + ' video(s) queued';
+  let msg = 'Monday check done: ' + draftResult.pending + ' pending video(s)';
   if (draftResult.skippedDupes) msg += ', ' + draftResult.skippedDupes + ' dupe(s) skipped';
   if (draftResult.skippedRepeatLinks) msg += ', ' + draftResult.skippedRepeatLinks + ' repeat link(s) ignored';
   msg += '. Wrote ' + draftResult.drafted + ' email(s) to Google Doc';
   if (draftResult.skippedCount) {
     msg += '. ' + draftResult.skippedCount + ' creator(s) need a name or link (see bottom of doc)';
   }
-  if (draftResult.drafted === 0 && draftResult.queued > 0) {
-    msg += '. Found ' + draftResult.queued + ' pending video(s) but wrote 0 emails — see the Google Doc for skipped reasons (name/link fixes).';
-  } else if (draftResult.drafted === 0 && draftResult.queued === 0) {
+  if (draftResult.drafted === 0 && draftResult.pending > 0) {
+    msg += '. Found ' + draftResult.pending + ' pending video(s) but wrote 0 emails — see the Google Doc for skipped reasons (name/link fixes).';
+  } else if (draftResult.drafted === 0 && draftResult.pending === 0) {
     msg += '. No pending rows found — only blank, Yes, or dupe rows remain on the tracker.';
   }
+  msg += '. Mark Creator Notified Yes after you send each email in CreatorIQ.';
   msg += '. Gift card tab: ' + getActiveGiftCardSheetName_() + '.';
   toast_(msg);
 }
@@ -182,7 +183,7 @@ function draftOutreachMessages(silent) {
     skippedCount: collectResult.skippedCount,
     skippedNoName: collectResult.skippedNoName,
     skippedNoLinks: collectResult.skippedNoLinks,
-    queued: collectResult.queued,
+    pending: collectResult.pending,
     skippedDupes: collectResult.skippedDupes,
     skippedRepeatLinks: collectResult.skippedRepeatLinks,
     emailRows: collectResult.emailRows,
