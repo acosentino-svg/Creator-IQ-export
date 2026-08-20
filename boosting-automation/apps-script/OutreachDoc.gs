@@ -123,12 +123,20 @@ function writeOutreachDraftsGoogleDoc_(collectResult) {
 
 function openUrlInNewTab_(url) {
   if (!url) return;
-  const safeUrl = String(url).replace(/\\/g, '\\\\').replace(/"/g, '\\"');
-  const html = HtmlService.createHtmlOutput(
-    '<p style="font-family:sans-serif;font-size:13px">Opening outreach drafts doc…</p>' +
-    '<script>window.open("' + safeUrl + '");google.script.host.close();</script>'
-  ).setWidth(260).setHeight(50);
-  SpreadsheetApp.getUi().showModalDialog(html, 'Opening doc');
+  try {
+    const safeUrl = String(url).replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+    const html = HtmlService.createHtmlOutput(
+      '<p style="font-family:sans-serif;font-size:13px">Opening outreach drafts doc…</p>' +
+      '<script>window.open("' + safeUrl + '");google.script.host.close();</script>'
+    ).setWidth(260).setHeight(50);
+    SpreadsheetApp.getUi().showModalDialog(html, 'Opening doc');
+  } catch (e) {
+    SpreadsheetApp.getUi().alert(
+      'Outreach doc ready',
+      'Copy this link into your browser:\n\n' + url,
+      SpreadsheetApp.getUi().ButtonSet.OK
+    );
+  }
 }
 
 /** Opens today's outreach doc, or alerts if none exists yet. */
