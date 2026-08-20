@@ -55,6 +55,10 @@ const DUPE_MARKERS = ['dupe'];
 /** Creator Notified = Yes means the initial outreach email was sent (set manually or on email paste). */
 const SENT_MARKER = 'Yes';
 const ALREADY_HANDLED_VALUES = ['yes'];
+/** Old script marker — cleared to blank automatically on Monday check. */
+const LEGACY_QUEUED_MARKER = 'queued (auto)';
+/** Only draft rows whose column D date is within this many days and matches the active batch month. */
+const OUTREACH_DRAFT_MAX_AGE_DAYS = 45;
 const PLATFORM_COLUMN_HEADER = 'Platform (auto)';
 
 const OUTREACH_TYPE_NEW = 'New';

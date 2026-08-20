@@ -14,6 +14,9 @@ function scanBoostingTrackerForMonday_() {
   const headerIndex = buildHeaderIndex_(headers);
   ['creator name', 'content used', 'creator notified'].forEach((h) => colIndex_(headerIndex, h, true));
 
+  const clearedLegacy = clearLegacyQueuedMarkersOnTracker_(trackerSheet, headerIndex);
+  const draftMonth = inferGiftCardMonthFromTracker_();
+
   const firstDataRow = HEADER_ROW.BOOSTING_TRACKER + 1;
   const numRows = lastRow - HEADER_ROW.BOOSTING_TRACKER;
   if (numRows <= 0) {
@@ -23,8 +26,6 @@ function scanBoostingTrackerForMonday_() {
   const values = trackerSheet.getRange(firstDataRow, 1, numRows, lastCol).getValues();
   const nameLookup = buildNameLookup_();
   const platformCol0 = getTrackerPlatformCol0_(headerIndex);
-  const linksIdx = colIndex_(headerIndex, 'storefront links provided', false);
-  const favLinksIdx = colIndex_(headerIndex, "fav's list + affiliate links provided", false);
   const uidIdx = colIndex_(headerIndex, 'unique identifier', false);
 
   let ctx = null;
@@ -42,6 +43,7 @@ function scanBoostingTrackerForMonday_() {
   const globalUids = {};
   let skippedDupes = 0;
   let skippedRepeatLinks = 0;
+  let skippedStale = 0;
   let pending = 0;
 
   for (let i = 0; i < values.length; i++) {
@@ -60,6 +62,12 @@ function scanBoostingTrackerForMonday_() {
     if (isTrackerDupeRow_(row, headerIndex)) {
       skippedDupes++;
       fillDupeLinks_(trackerSheet, headerIndex, values, i, sheetRow);
+      continue;
+    }
+
+    if (!isTrackerRowRecentEnoughForDraft_(row, headerIndex)
+        || !isTrackerRowInDraftMonth_(row, headerIndex, draftMonth)) {
+      skippedStale++;
       continue;
     }
 
@@ -86,7 +94,8 @@ function scanBoostingTrackerForMonday_() {
     const handle = String(creatorName).trim();
     const handleKey = normalizeHandle_(handle);
     const platform = platformCol0 !== -1 ? String(row[platformCol0] || '').trim() : '';
-    const rowLinks = resolveTrackerRowLinks_(row, headerIndex, contentUsed);
+    const contentLink = String(contentUsed || '').trim();
+    const productLinksText = resolveTrackerProductLinks_(row, headerIndex);
 
     let creator = creators[handleKey];
     if (!creator) {
@@ -95,18 +104,27 @@ function scanBoostingTrackerForMonday_() {
         handle: handle,
         firstName: profile ? profile.firstName : '',
         lastName: profile ? profile.lastName : '',
-        linkSet: {},
-        links: [],
+        contentUrlSet: {},
+        contentUrls: [],
+        productLinkSet: {},
+        productLinks: [],
         platforms: [],
         isFollowUp: !!handleOnGiftCard[handleKey],
       };
     }
 
-    splitLinks_(rowLinks).forEach((link) => {
+    if (contentLink) {
+      const contentKey = normalizeContentUrl_(contentLink);
+      if (contentKey && !creator.contentUrlSet[contentKey]) {
+        creator.contentUrlSet[contentKey] = true;
+        creator.contentUrls.push(contentLink);
+      }
+    }
+    splitLinks_(productLinksText).forEach((link) => {
       const key = normalizeContentUrl_(link);
-      if (!key || creator.linkSet[key]) return;
-      creator.linkSet[key] = true;
-      creator.links.push(link);
+      if (!key || creator.productLinkSet[key]) return;
+      creator.productLinkSet[key] = true;
+      creator.productLinks.push(link);
     });
     if (platform) creator.platforms.push(platform);
     pending++;
@@ -117,26 +135,24 @@ function scanBoostingTrackerForMonday_() {
 
   Object.keys(creators).forEach((handleKey) => {
     const c = creators[handleKey];
-    const pieces = c.links.length || 1;
+    const pieces = c.contentUrls.length || 1;
     const platform = mergePlatformLabels_('', c.platforms.join(', '));
-    const links = c.links.join(', ');
+    const contentUrls = c.contentUrls.join(', ');
+    const productLinks = c.productLinks.join(', ');
     const displayName = String(c.firstName || '').trim()
       || (c.handle ? capitalizeFirst_(c.handle.replace(/^@/, '').split(/[._]/)[0]) : '');
     const needsLinks = needsProductLinksForPlatforms_(platform);
+    const hasProductLinks = c.productLinks.length > 0;
     const amount = formatAmount_(calculateGiftCardAmount_(pieces));
     const rowType = c.isFollowUp ? OUTREACH_TYPE_FOLLOWUP : OUTREACH_TYPE_NEW;
 
-    const reasons = [];
-    if (!displayName) reasons.push('missing name');
-    if (needsLinks && !links) reasons.push('missing link');
-
-    if (reasons.length) {
+    if (!displayName) {
       skipped.push({
         handle: c.handle || '(blank handle)',
         type: rowType,
         pieces: pieces,
         amount: amount,
-        reasons: reasons.join(', '),
+        reasons: 'missing name',
       });
       return;
     }
@@ -148,17 +164,19 @@ function scanBoostingTrackerForMonday_() {
       isFollowUp: c.isFollowUp,
       pieces: pieces,
       amount: amount,
-      links: links,
+      contentUrls: contentUrls,
+      productLinks: productLinks,
       platform: platform,
       message: buildDraftMessage_({
         isFollowUp: c.isFollowUp,
         handle: c.handle,
         firstName: displayName,
         pieces: pieces,
+        contentPieces: pieces,
         newPieces: pieces,
         amount: amount,
-        links: links,
         needsLinks: needsLinks,
+        hasProductLinks: hasProductLinks,
       }),
     });
   });
@@ -169,10 +187,13 @@ function scanBoostingTrackerForMonday_() {
     drafted: entries.length,
     skippedCount: skipped.length,
     skippedNoName: skipped.filter((s) => s.reasons.indexOf('missing name') !== -1).length,
-    skippedNoLinks: skipped.filter((s) => s.reasons.indexOf('missing link') !== -1).length,
+    skippedNoLinks: 0,
     pending: pending,
     skippedDupes: skippedDupes,
     skippedRepeatLinks: skippedRepeatLinks,
+    skippedStale: skippedStale,
+    clearedLegacyQueued: clearedLegacy,
+    draftMonthLabel: draftMonth ? draftMonth.monthName + ' ' + draftMonth.year : '',
     emailRows: entries.length,
   };
 }
@@ -185,20 +206,14 @@ function emptyMondayScanResult_() {
     skippedCount: 0,
     skippedNoName: 0,
     skippedNoLinks: 0,
-    queued: 0,
+    pending: 0,
     skippedDupes: 0,
     skippedRepeatLinks: 0,
+    skippedStale: 0,
+    clearedLegacyQueued: 0,
+    draftMonthLabel: '',
     emailRows: 0,
   };
-}
-
-function resolveTrackerRowLinks_(row, headerIndex, contentUsed) {
-  const linksIdx = headerIndex['storefront links provided'];
-  const favLinksIdx = headerIndex["fav's list + affiliate links provided"];
-  const fromF = linksIdx != null ? String(row[linksIdx] || '').trim() : '';
-  const fromG = favLinksIdx != null ? String(row[favLinksIdx] || '').trim() : '';
-  const content = String(contentUsed || '').trim();
-  return mergeLinkLabels_(mergeLinkLabels_(fromF, fromG), content);
 }
 
 function normalizeContentUrl_(value) {
@@ -235,7 +250,7 @@ function promoteCreatorFromTrackerRow_(sheetRow) {
   const blockRows = readGiftCardRows_(ctx);
   const existing = blockRows.find((r) => normalizeHandle_(r[nameKey]) === handleKey);
 
-  const stats = summarizeQueuedTrackerRowsForHandle_(handleKey, headerIndex, trackerSheet);
+  const stats = summarizePendingTrackerRowsForHandle_(handleKey, headerIndex, trackerSheet);
   if (!stats.pieces) return { promoted: 0 };
 
   const giftSheet = ctx.sheet;
@@ -283,7 +298,7 @@ function promoteCreatorFromTrackerRow_(sheetRow) {
   return { promoted: 1 };
 }
 
-function summarizeQueuedTrackerRowsForHandle_(handleKey, headerIndex, trackerSheet) {
+function summarizePendingTrackerRowsForHandle_(handleKey, headerIndex, trackerSheet) {
   const lastRow = trackerSheet.getLastRow();
   const lastCol = trackerSheet.getLastColumn();
   const firstDataRow = HEADER_ROW.BOOSTING_TRACKER + 1;
@@ -292,9 +307,10 @@ function summarizeQueuedTrackerRowsForHandle_(handleKey, headerIndex, trackerShe
 
   const values = trackerSheet.getRange(firstDataRow, 1, numRows, lastCol).getValues();
   const linksIdx = headerIndex['storefront links provided'];
-  const favLinksIdx = headerIndex["fav's list + affiliate links provided"];
-  const linkSet = {};
-  const links = [];
+  const contentUrlSet = {};
+  const contentUrls = [];
+  const productLinkSet = {};
+  const productLinks = [];
   let profileUrl = '';
 
   values.forEach((row) => {
@@ -304,18 +320,29 @@ function summarizeQueuedTrackerRowsForHandle_(handleKey, headerIndex, trackerShe
     if (isTrackerDupeRow_(row, headerIndex)) return;
 
     const contentUsed = row[headerIndex['content used']];
-    const rowLinks = resolveTrackerRowLinks_(row, headerIndex, contentUsed);
-    splitLinks_(rowLinks).forEach((link) => {
+    const contentLink = String(contentUsed || '').trim();
+    if (contentLink) {
+      const contentKey = normalizeContentUrl_(contentLink);
+      if (contentKey && !contentUrlSet[contentKey]) {
+        contentUrlSet[contentKey] = true;
+        contentUrls.push(contentLink);
+      }
+    }
+    splitLinks_(resolveTrackerProductLinks_(row, headerIndex)).forEach((link) => {
       const key = normalizeContentUrl_(link);
-      if (!key || linkSet[key]) return;
-      linkSet[key] = true;
-      links.push(link);
+      if (!key || productLinkSet[key]) return;
+      productLinkSet[key] = true;
+      productLinks.push(link);
     });
     if (!profileUrl && contentUsed) profileUrl = String(contentUsed).trim();
     if (linksIdx != null && row[linksIdx]) profileUrl = String(row[linksIdx]).trim();
   });
 
-  return { pieces: links.length || 0, links: links.join(', '), profileUrl: profileUrl };
+  return {
+    pieces: contentUrls.length || 0,
+    links: productLinks.join(', '),
+    profileUrl: profileUrl,
+  };
 }
 
 function markTrackerRowsYesForHandle_(handleKey, headerIndex, trackerSheet) {

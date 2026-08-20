@@ -81,6 +81,7 @@ function writeOutreachDraftsGoogleDoc_(collectResult) {
   );
   body.appendParagraph(
     entries.length + ' ready to send' +
+    (collectResult.draftMonthLabel ? (' · batch month: ' + collectResult.draftMonthLabel) : '') +
     (skipped.length ? (' · ' + skipped.length + ' need fixes (see bottom)') : '')
   );
   body.appendHorizontalRule();
@@ -90,13 +91,15 @@ function writeOutreachDraftsGoogleDoc_(collectResult) {
     const pending = collectResult.pending || 0;
     const skippedDupes = collectResult.skippedDupes || 0;
     const skippedRepeat = collectResult.skippedRepeatLinks || 0;
+    const skippedStale = collectResult.skippedStale || 0;
     const skippedFix = collectResult.skippedCount || 0;
-    if (pending || skippedDupes || skippedRepeat || skippedFix) {
+    if (pending || skippedDupes || skippedRepeat || skippedFix || skippedStale) {
       body.appendParagraph(
         'Scan: ' + pending + ' pending video(s)' +
         (skippedDupes ? (', ' + skippedDupes + ' dupe row(s) skipped') : '') +
         (skippedRepeat ? (', ' + skippedRepeat + ' repeat video(s) ignored') : '') +
-        (skippedFix ? (', ' + skippedFix + ' creator(s) need a name or product link') : '') +
+        (skippedStale ? (', ' + skippedStale + ' older/out-of-month row(s) skipped') : '') +
+        (skippedFix ? (', ' + skippedFix + ' creator(s) need a name') : '') +
         '.'
       );
     }
@@ -114,9 +117,13 @@ function writeOutreachDraftsGoogleDoc_(collectResult) {
       entry.type + ' · ' + formatPiecesLabel_(entry.pieces) + ' · ' + entry.amount +
       (entry.platform ? (' · ' + entry.platform) : '')
     );
-    if (entry.links) {
-      body.appendParagraph('Links').setBold(true);
-      splitLinks_(entry.links).forEach((link) => body.appendListItem(link));
+    if (entry.contentUrls) {
+      body.appendParagraph('Videos selected').setBold(true);
+      splitLinks_(entry.contentUrls).forEach((link) => body.appendListItem(link));
+    }
+    if (entry.productLinks) {
+      body.appendParagraph('Product links on file (not included in email)').setBold(true).setItalic(true);
+      splitLinks_(entry.productLinks).forEach((link) => body.appendListItem(link));
     }
     body.appendParagraph('Message').setBold(true);
     String(entry.message || '').split('\n').forEach((line) => {

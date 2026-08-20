@@ -39,6 +39,8 @@ function mondayCheck() {
   let msg = 'Monday check done: ' + draftResult.pending + ' pending video(s)';
   if (draftResult.skippedDupes) msg += ', ' + draftResult.skippedDupes + ' dupe(s) skipped';
   if (draftResult.skippedRepeatLinks) msg += ', ' + draftResult.skippedRepeatLinks + ' repeat link(s) ignored';
+  if (draftResult.skippedStale) msg += ', ' + draftResult.skippedStale + ' older row(s) skipped';
+  if (draftResult.clearedLegacyQueued) msg += ', cleared ' + draftResult.clearedLegacyQueued + ' legacy Queued (auto) cell(s)';
   msg += '. Wrote ' + draftResult.drafted + ' email(s) to Google Doc';
   if (draftResult.skippedCount) {
     msg += '. ' + draftResult.skippedCount + ' creator(s) need a name or link (see bottom of doc)';
@@ -186,6 +188,9 @@ function draftOutreachMessages(silent) {
     pending: collectResult.pending,
     skippedDupes: collectResult.skippedDupes,
     skippedRepeatLinks: collectResult.skippedRepeatLinks,
+    skippedStale: collectResult.skippedStale,
+    clearedLegacyQueued: collectResult.clearedLegacyQueued,
+    draftMonthLabel: collectResult.draftMonthLabel,
     emailRows: collectResult.emailRows,
     docUrl: docResult.url,
     docId: docResult.id,

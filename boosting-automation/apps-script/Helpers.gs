@@ -196,10 +196,10 @@ function buildDraftMessage_(opts) {
   const firstName = capitalizeFirst_(opts.firstName || '');
   const pieces = Number(opts.pieces) || 1;
   const newPieces = Number(opts.newPieces) || pieces;
-  const links = String(opts.links || '').trim();
-  const linkList = splitLinks_(links);
-  const linkCount = linkList.length || (links ? 1 : 0);
+  const contentPieces = Number(opts.contentPieces) || pieces;
   const needsLinks = opts.needsLinks !== false;
+  const hasProductLinks = !!opts.hasProductLinks;
+  const askForProductLinks = needsLinks && !hasProductLinks;
   const isFollowUp = opts.isFollowUp != null
     ? !!opts.isFollowUp
     : isAlreadyBoostedThisMonth_(opts.handle);
@@ -219,19 +219,19 @@ function buildDraftMessage_(opts) {
     NEW_PIECES_LABEL: formatMorePiecesLabel_(newPieces),
     AMOUNT: amount,
     INCREMENT_AMOUNT: formatAmount_(GIFT_CARD_INCREMENT_AMOUNT * newPieces),
-    SELECTED_VIDEOS_PHRASE: formatSelectedVideosPhrase_(linkCount),
-    LINKS: links,
+    SELECTED_VIDEOS_PHRASE: formatSelectedVideosPhrase_(contentPieces),
+    LINKS: '',
   };
 
   let template;
   if (isFollowUp) {
     if (newPieces === 1) {
-      template = needsLinks ? INCREMENTAL_SINGLE_PROMPT : INCREMENTAL_SINGLE_PROMPT_NO_LINKS;
+      template = askForProductLinks ? INCREMENTAL_SINGLE_PROMPT : INCREMENTAL_SINGLE_PROMPT_NO_LINKS;
     } else {
-      template = needsLinks ? INCREMENTAL_MULTI_PROMPT : INCREMENTAL_MULTI_PROMPT_NO_LINKS;
+      template = askForProductLinks ? INCREMENTAL_MULTI_PROMPT : INCREMENTAL_MULTI_PROMPT_NO_LINKS;
     }
   } else {
-    template = needsLinks ? NEW_CREATOR_PROMPT : NEW_CREATOR_PROMPT_NO_LINKS;
+    template = askForProductLinks ? NEW_CREATOR_PROMPT : NEW_CREATOR_PROMPT_NO_LINKS;
   }
 
   return fillTemplate_(template, values);
@@ -512,6 +512,58 @@ function getTrackerPlatformCol0_(headerIndex) {
   return -1;
 }
 
+/** Storefront / affiliate product links only (columns F/G) — not video URLs. */
+function resolveTrackerProductLinks_(row, headerIndex) {
+  const linksIdx = headerIndex['storefront links provided'];
+  const favLinksIdx = headerIndex["fav's list + affiliate links provided"];
+  const fromF = linksIdx != null ? String(row[linksIdx] || '').trim() : '';
+  const fromG = favLinksIdx != null ? String(row[favLinksIdx] || '').trim() : '';
+  return mergeLinkLabels_(fromF, fromG);
+}
+
+function getTrackerRowDateParsed_(row, headerIndex) {
+  const dateCol0 = getBoostingTrackerDateCol0_(headerIndex);
+  return parseMonthYearFromCell_(row[dateCol0]);
+}
+
+/** Column D date is recent enough to include in this week's outreach batch. */
+function isTrackerRowRecentEnoughForDraft_(row, headerIndex) {
+  const parsed = getTrackerRowDateParsed_(row, headerIndex);
+  if (!parsed || !parsed.date || !isReasonableGiftCardYear_(parsed.year)) return false;
+  const ageMs = Date.now() - parsed.date.getTime();
+  if (ageMs < 0) return false;
+  return ageMs <= OUTREACH_DRAFT_MAX_AGE_DAYS * 86400000;
+}
+
+/** Column D date falls in the same month/year as the active outreach batch. */
+function isTrackerRowInDraftMonth_(row, headerIndex, draftMonth) {
+  if (!draftMonth) return true;
+  const parsed = getTrackerRowDateParsed_(row, headerIndex);
+  if (!parsed) return false;
+  return parsed.monthIndex === draftMonth.monthIndex && parsed.year === draftMonth.year;
+}
+
+/** Clears legacy Queued (auto) cells left by older script versions. */
+function clearLegacyQueuedMarkersOnTracker_(trackerSheet, headerIndex) {
+  const lastRow = trackerSheet.getLastRow();
+  const firstDataRow = HEADER_ROW.BOOSTING_TRACKER + 1;
+  const numRows = lastRow - HEADER_ROW.BOOSTING_TRACKER;
+  if (numRows <= 0) return 0;
+
+  const lastCol = trackerSheet.getLastColumn();
+  const values = trackerSheet.getRange(firstDataRow, 1, numRows, lastCol).getValues();
+  const notifiedCol = headerIndex['creator notified'] + 1;
+  const updates = [];
+
+  values.forEach((row, i) => {
+    if (normalizeHeader_(row[headerIndex['creator notified']]) === LEGACY_QUEUED_MARKER) {
+      updates.push({ row: firstDataRow + i, value: '' });
+    }
+  });
+  batchSetColumnValues_(trackerSheet, notifiedCol, updates);
+  return updates.length;
+}
+
 /** Dupe if Creator Notified or Unique Identifier says dupe (column K formula). */
 function isTrackerDupeRow_(row, headerIndex) {
   const notifiedNorm = normalizeHeader_(row[headerIndex['creator notified']]);
@@ -562,14 +614,14 @@ function inferGiftCardMonthFromTracker_() {
   const lastCol = trackerSheet.getLastColumn();
   const headers = trackerSheet.getRange(HEADER_ROW.BOOSTING_TRACKER, 1, 1, lastCol).getValues()[0];
   const headerIndex = buildHeaderIndex_(headers);
-  const dateCol0 = getBoostingTrackerDateCol0_(headerIndex);
   const numRows = lastRow - HEADER_ROW.BOOSTING_TRACKER;
   const values = trackerSheet.getRange(HEADER_ROW.BOOSTING_TRACKER + 1, 1, numRows, lastCol).getValues();
 
   const counts = {};
   values.forEach((row) => {
     if (!isTrackerRowEligibleForMonthInference_(row, headerIndex)) return;
-    const parsed = parseMonthYearFromCell_(row[dateCol0]);
+    if (!isTrackerRowRecentEnoughForDraft_(row, headerIndex)) return;
+    const parsed = getTrackerRowDateParsed_(row, headerIndex);
     if (!parsed || !isReasonableGiftCardYear_(parsed.year)) return;
     const key = String(parsed.sortKey);
     if (!counts[key]) counts[key] = { parsed: parsed, count: 0 };
