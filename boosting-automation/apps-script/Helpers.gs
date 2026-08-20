@@ -688,6 +688,7 @@ function lookupLatestTrackerDateForHandle_(handle) {
   const dateCol0 = getBoostingTrackerDateCol0_(headerIndex);
   if (nameIdx === -1) return null;
 
+  const firstDataRow = HEADER_ROW.BOOSTING_TRACKER + 1;
   const numRows = lastRow - firstDataRow + 1;
   const values = trackerSheet.getRange(firstDataRow, 1, numRows, lastCol).getValues();
   let latest = null;
