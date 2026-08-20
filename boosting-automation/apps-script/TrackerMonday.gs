@@ -217,6 +217,72 @@ function emptyMondayScanResult_() {
   };
 }
 
+/** One-line reason a tracker row is in or out of this month's batch (for debugging). */
+function explainTrackerRowStatus_(row, headerIndex, batchMonth) {
+  const creatorName = row[headerIndex['creator name']];
+  if (!creatorName || normalizeHandle_(creatorName) === 'example entry') return 'skip: blank or example row';
+  const contentUsed = row[headerIndex['content used']];
+  if (!contentUsed || String(contentUsed).trim() === '') return 'skip: no Content Used link';
+  const notifiedNorm = normalizeHeader_(row[headerIndex['creator notified']]);
+  if (ALREADY_HANDLED_VALUES.indexOf(notifiedNorm) !== -1) return 'skip: Creator Notified is Yes';
+  if (isTrackerDupeRow_(row, headerIndex)) return 'skip: dupe row';
+  const dateCol0 = getBoostingTrackerDateCol0_(headerIndex);
+  const dateRaw = row[dateCol0];
+  const parsed = getTrackerRowDateParsed_(row, headerIndex);
+  if (!parsed) return 'skip: column D date not readable (value: ' + String(dateRaw) + ')';
+  if (!isTrackerRowInDraftMonth_(row, headerIndex, batchMonth)) {
+    return 'skip: column D is ' + parsed.monthName + ', batch is ' + batchMonth.monthName;
+  }
+  return 'include';
+}
+
+/** Writes every Boosting Tracker row + include/skip reason to a debug tab. */
+function runBatchDiagnostic_() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const trackerSheet = getSheet_(SHEET_NAMES.BOOSTING_TRACKER);
+  const batchMonth = getActiveBatchMonth_();
+  const lastRow = trackerSheet.getLastRow();
+  const lastCol = trackerSheet.getLastColumn();
+  const headers = trackerSheet.getRange(HEADER_ROW.BOOSTING_TRACKER, 1, 1, lastCol).getValues()[0];
+  const headerIndex = buildHeaderIndex_(headers);
+  const firstDataRow = HEADER_ROW.BOOSTING_TRACKER + 1;
+  const numRows = lastRow - firstDataRow + 1;
+
+  const tabName = 'Batch Scan Debug';
+  const existing = ss.getSheetByName(tabName);
+  if (existing) ss.deleteSheet(existing);
+  const debug = ss.insertSheet(tabName);
+
+  const rows = [['Row', 'Creator', 'Column D', 'Status', 'Creator Notified', 'Unique Identifier']];
+  if (numRows > 0) {
+    const values = trackerSheet.getRange(firstDataRow, 1, numRows, lastCol).getValues();
+    const dateCol0 = getBoostingTrackerDateCol0_(headerIndex);
+    const uidIdx = colIndex_(headerIndex, 'unique identifier', false);
+    values.forEach((row, i) => {
+      const status = explainTrackerRowStatus_(row, headerIndex, batchMonth);
+      rows.push([
+        firstDataRow + i,
+        row[headerIndex['creator name']],
+        row[dateCol0],
+        status,
+        row[headerIndex['creator notified']],
+        uidIdx !== -1 ? row[uidIdx] : '',
+      ]);
+    });
+  }
+
+  debug.getRange(1, 1, rows.length, rows[0].length).setValues(rows);
+  debug.getRange(1, 1, 1, rows[0].length).setFontWeight('bold');
+  debug.autoResizeColumns(1, rows[0].length);
+  debug.getRange(rows.length + 2, 1).setValue(
+    'Batch month: ' + batchMonth.monthName + ' ' + batchMonth.year +
+    ' · Included: ' + rows.filter((r, i) => i > 0 && r[3] === 'include').length +
+    ' · Open Boosting Automation → Sync pending creators after fixing skips.'
+  );
+  ss.setActiveSheet(debug);
+  toast_('Batch Scan Debug tab created — look for rows not marked include.');
+}
+
 function normalizeContentUrl_(value) {
   return String(value || '').trim().toLowerCase().replace(/\/+$/, '').split('?')[0].split('#')[0];
 }

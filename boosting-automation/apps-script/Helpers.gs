@@ -578,33 +578,16 @@ function getTrackerRowDateParsed_(row, headerIndex) {
   return parseMonthYearFromCell_(row[dateCol0]);
 }
 
-/** Row column D date is in the same calendar month/year as the batch (e.g. all of August 2026). */
+/** Row column D is in the active batch month (e.g. any August date while running in August). */
 function isTrackerRowInDraftMonth_(row, headerIndex, batchMonth) {
   if (!batchMonth) return true;
   const parsed = getTrackerRowDateParsed_(row, headerIndex);
   if (!parsed) return false;
-  return parsed.monthIndex === batchMonth.monthIndex && parsed.year === batchMonth.year;
+  return parsed.monthIndex === batchMonth.monthIndex;
 }
 
-/**
- * Which month bucket to use: read column D on each row and match month + year.
- * Default = current calendar month (August while it's August).
- * Override with menu "Choose active gift card month".
- */
+/** Always the current calendar month — August rows while it's August. Not the old stored tab name. */
 function getActiveBatchMonth_() {
-  const stored = PropertiesService.getScriptProperties().getProperty(ACTIVE_GIFT_CARD_SHEET_PROPERTY);
-  if (stored) {
-    const parsed = parseGiftCardMonthTabName_(stored);
-    if (parsed) {
-      const year = new Date().getFullYear();
-      return {
-        monthName: parsed.month,
-        year: year,
-        monthIndex: parsed.monthIndex,
-        sortKey: monthYearSortKey_(year, parsed.monthIndex),
-      };
-    }
-  }
   return currentCalendarMonth_();
 }
 
@@ -705,8 +688,8 @@ function lookupLatestTrackerDateForHandle_(handle) {
   const dateCol0 = getBoostingTrackerDateCol0_(headerIndex);
   if (nameIdx === -1) return null;
 
-  const numRows = lastRow - HEADER_ROW.BOOSTING_TRACKER;
-  const values = trackerSheet.getRange(HEADER_ROW.BOOSTING_TRACKER + 1, 1, numRows, lastCol).getValues();
+  const numRows = lastRow - firstDataRow + 1;
+  const values = trackerSheet.getRange(firstDataRow, 1, numRows, lastCol).getValues();
   let latest = null;
   values.forEach((row) => {
     if (normalizeHandle_(row[nameIdx]) !== handleKey) return;
@@ -783,12 +766,10 @@ function listGiftCardMonthTabs_() {
 }
 
 function getActiveGiftCardSheetName_() {
-  const inferred = inferGiftCardMonthFromTracker_();
-  if (inferred) {
-    const inferredTab = formatGiftCardMonthTabName_(inferred.monthName, inferred.year);
-    if (SpreadsheetApp.getActiveSpreadsheet().getSheetByName(inferredTab)) {
-      return inferredTab;
-    }
+  const batch = currentCalendarMonth_();
+  const currentTab = formatGiftCardMonthTabName_(batch.monthName, batch.year);
+  if (SpreadsheetApp.getActiveSpreadsheet().getSheetByName(currentTab)) {
+    return currentTab;
   }
 
   const stored = PropertiesService.getScriptProperties().getProperty(ACTIVE_GIFT_CARD_SHEET_PROPERTY);
