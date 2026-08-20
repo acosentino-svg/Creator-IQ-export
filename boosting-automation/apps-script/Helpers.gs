@@ -502,29 +502,71 @@ function getBoostingTrackerDateCol0_(headerIndex) {
   return BOOSTING_TRACKER_DATE_COL - 1;
 }
 
+/** True for tracker rows still in this month's workflow (not done, not dupe). */
+function isTrackerRowEligibleForMonthInference_(row, headerIndex) {
+  const creatorName = row[headerIndex['creator name']];
+  const contentUsed = row[headerIndex['content used']];
+  const notified = row[headerIndex['creator notified']];
+  if (!creatorName || normalizeHandle_(creatorName) === 'example entry') return false;
+  if (!contentUsed || String(contentUsed).trim() === '') return false;
+  const notifiedNorm = normalizeHeader_(notified);
+  if (ALREADY_HANDLED_VALUES.indexOf(notifiedNorm) !== -1) return false;
+  if (DUPE_MARKERS.some((m) => notifiedNorm.indexOf(m) !== -1)) return false;
+  return true;
+}
+
+function currentCalendarMonth_() {
+  const now = new Date();
+  const monthIndex = now.getMonth();
+  const year = now.getFullYear();
+  return {
+    monthName: GIFT_CARD_MONTH_DISPLAY_NAMES_[monthIndex],
+    year: year,
+    monthIndex: monthIndex,
+    sortKey: monthYearSortKey_(year, monthIndex),
+    date: now,
+  };
+}
+
 /**
- * Reads Boosting Tracker dates (column D by default) and returns the month/year
- * for the most recent dated row — used to create/select the gift card tab.
+ * Reads column D on rows still in workflow (not Yes, not dupe) and returns the
+ * most common month — NOT the single latest date on the whole sheet.
  */
 function inferGiftCardMonthFromTracker_() {
   const trackerSheet = getSheet_(SHEET_NAMES.BOOSTING_TRACKER);
   const lastRow = trackerSheet.getLastRow();
-  if (lastRow <= HEADER_ROW.BOOSTING_TRACKER) return null;
+  if (lastRow <= HEADER_ROW.BOOSTING_TRACKER) return currentCalendarMonth_();
 
   const lastCol = trackerSheet.getLastColumn();
   const headers = trackerSheet.getRange(HEADER_ROW.BOOSTING_TRACKER, 1, 1, lastCol).getValues()[0];
   const headerIndex = buildHeaderIndex_(headers);
   const dateCol0 = getBoostingTrackerDateCol0_(headerIndex);
   const numRows = lastRow - HEADER_ROW.BOOSTING_TRACKER;
-  const values = trackerSheet.getRange(HEADER_ROW.BOOSTING_TRACKER + 1, dateCol0 + 1, numRows, 1).getValues();
+  const values = trackerSheet.getRange(HEADER_ROW.BOOSTING_TRACKER + 1, 1, numRows, lastCol).getValues();
 
-  let latest = null;
+  const counts = {};
   values.forEach((row) => {
-    const parsed = parseMonthYearFromCell_(row[0]);
+    if (!isTrackerRowEligibleForMonthInference_(row, headerIndex)) return;
+    const parsed = parseMonthYearFromCell_(row[dateCol0]);
     if (!parsed || !isReasonableGiftCardYear_(parsed.year)) return;
-    if (!latest || parsed.sortKey > latest.sortKey) latest = parsed;
+    const key = String(parsed.sortKey);
+    if (!counts[key]) counts[key] = { parsed: parsed, count: 0 };
+    counts[key].count++;
   });
-  return latest;
+
+  if (!Object.keys(counts).length) return currentCalendarMonth_();
+
+  const today = currentCalendarMonth_();
+  let best = null;
+  Object.keys(counts).forEach((key) => {
+    const entry = counts[key];
+    if (!best || entry.count > best.count) {
+      best = entry;
+      return;
+    }
+    if (entry.count === best.count && Number(key) === today.sortKey) best = entry;
+  });
+  return best.parsed;
 }
 
 /** Creates/selects the gift card tab matching the latest tracker date in column D. */

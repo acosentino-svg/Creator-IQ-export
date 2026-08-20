@@ -30,7 +30,7 @@ function mondayCheck() {
   if (monthResult.created) {
     toast_('Created gift card tab: ' + monthResult.tabName);
   } else if (monthResult.inferred) {
-    toast_('Using gift card tab: ' + monthResult.tabName);
+    toast_('Using gift card tab: ' + monthResult.tabName + ' (from column D on pending rows)');
   }
 
   toast_('Monday check: scanning Boosting Tracker (skipping dupes)...');
@@ -189,7 +189,6 @@ function draftOutreachMessages(silent) {
     let msg = 'Wrote ' + result.drafted + ' email(s) to Google Doc.';
     if (result.skippedCount) msg += ' ' + result.skippedCount + ' need fixes (see doc).';
     toast_(msg);
-    if (result.docUrl) openUrlInNewTab_(result.docUrl);
   }
   return result;
 }
