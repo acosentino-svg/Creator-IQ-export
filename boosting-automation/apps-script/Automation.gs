@@ -45,8 +45,6 @@ function mondayCheck() {
   }
   msg += '. Gift card tab: ' + getActiveGiftCardSheetName_() + '.';
   toast_(msg);
-
-  if (draftResult.docUrl) openUrlInNewTab_(draftResult.docUrl);
 }
 
 const AUTO_SYNC_HANDLER = 'runScheduledSync';

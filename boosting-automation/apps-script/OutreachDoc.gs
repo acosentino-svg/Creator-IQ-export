@@ -5,6 +5,7 @@
  */
 
 const OUTREACH_DRAFTS_DOC_TITLE_PREFIX = 'Boosting Outreach Drafts — ';
+const OUTREACH_DOC_LINKS_TAB = 'Automation Links';
 
 /** Builds draft entries for every unsent Outreach Queue row. */
 function collectOutreachDraftEntries_() {
