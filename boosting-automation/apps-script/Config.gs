@@ -40,6 +40,7 @@ const TYPE_COLUMN_HEADER = 'Type';
 const ALREADY_HANDLED_VALUES = ['yes'];
 const DUPE_MARKERS = ['dupe'];
 const QUEUED_MARKER = 'Queued (auto)';
+/** @deprecated Legacy column — drafts now go to a Google Doc, not this column. */
 const DRAFT_COLUMN_HEADER = 'Drafted Message (auto)';
 const SENT_CHECKBOX_HEADER = 'Sent?';
 const PROMOTED_COLUMN_HEADER = 'Added to Tracker? (auto)';
@@ -55,7 +56,6 @@ const OUTREACH_QUEUE_HEADERS = [
   'Gift Card Amount',
   'Links',
   PLATFORM_COLUMN_HEADER,
-  DRAFT_COLUMN_HEADER,
   SENT_CHECKBOX_HEADER,
   'Email Address',
   PROMOTED_COLUMN_HEADER,

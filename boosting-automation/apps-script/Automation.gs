@@ -1,20 +1,21 @@
 /**
  * Automation.gs
  * Menu + boosting workflow. New content flows:
- *   Boosting Tracker -> Outreach Queue (draft emails) -> CreatorIQ send ->
- *   confirmed email entered -> Gift Card month tab.
+ *   Boosting Tracker -> Outreach Queue (checklist) -> Google Doc (email drafts) ->
+ *   CreatorIQ send -> confirmed email entered -> Gift Card month tab.
  */
 
 function onOpen() {
   SpreadsheetApp.getUi()
     .createMenu('Boosting Automation')
-    .addItem('Monday check (queue + draft emails)', 'mondayCheck')
+    .addItem('Monday check (sync + write emails to Doc)', 'mondayCheck')
+    .addItem('Open today\'s outreach drafts doc', 'openOutreachDraftsDoc_')
     .addItem('Promote confirmed emails to Gift Card Tracker', 'promoteConfirmedNewCreators_')
     .addSeparator()
     .addItem('1. Start new month (gift card tab)', 'startNewMonth')
     .addItem('2. End-of-month export (Step 5)', 'exportEndOfMonth')
     .addSeparator()
-    .addItem('Redraft outreach queue', 'draftOutreachMessages')
+    .addItem('Regenerate outreach drafts doc', 'draftOutreachMessages')
     .addItem('Turn ON automatic weekly sync', 'enableAutoSync')
     .addItem('Turn OFF automatic sync', 'disableAutoSync')
     .addSeparator()
@@ -25,30 +26,28 @@ function onOpen() {
     .addToUi();
 }
 
-/** One click: scan tracker, fill Outreach Queue, draft all emails, open that tab. */
+/** One click: scan tracker, fill Outreach Queue, write emails to a Google Doc. */
 function mondayCheck() {
   toast_('Monday check: scanning Boosting Tracker...');
   const summary = syncBoostingTracker(true);
-  toast_('Monday check: drafting outreach emails...');
+  toast_('Monday check: writing emails to Google Doc...');
   const draftResult = draftOutreachMessages(true);
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
-  const queue = ss.getSheetByName(SHEET_NAMES.OUTREACH_QUEUE);
-  if (queue) ss.setActiveSheet(queue);
   if (!summary) return;
 
   let msg = 'Monday check done: ' + summary.queued + ' video(s) from tracker';
   if (summary.skippedDupes) msg += ' (' + summary.skippedDupes + ' dupes skipped)';
-  msg += ' -> ' + summary.emailRows + ' email row(s). Drafted ' + draftResult.drafted;
+  msg += ' -> ' + summary.emailRows + ' email row(s). Wrote ' + draftResult.drafted + ' message(s) to Google Doc';
   if (summary.queued > summary.emailRows) {
     msg += ' (grouped by creator — multiple videos = one email)';
   }
-  if (draftResult.skipped) {
-    msg += '. ' + draftResult.skipped + ' row(s) still need a name or link';
+  if (draftResult.skippedCount) {
+    msg += '. ' + draftResult.skippedCount + ' row(s) need a name or link (listed at bottom of the doc)';
     writeDraftReadinessDebug_(true);
-    msg += ' — see "Draft Readiness Debug" tab';
   }
   msg += '.';
   toast_(msg);
+
+  if (draftResult.docUrl) openUrlInNewTab_(draftResult.docUrl);
 }
 
 const AUTO_SYNC_HANDLER = 'runScheduledSync';
@@ -239,7 +238,6 @@ function syncBoostingTracker(silent) {
   const queueSheet = getOutreachQueueSheet_();
   const promotedKey = normalizeHeader_(PROMOTED_COLUMN_HEADER);
   const sentKey = normalizeHeader_(SENT_CHECKBOX_HEADER);
-  const draftKey = normalizeHeader_(DRAFT_COLUMN_HEADER);
   const typeKey = normalizeHeader_(TYPE_COLUMN_HEADER);
   const queueRead = readFlatSheetRows_(queueSheet, HEADER_ROW.OUTREACH_QUEUE);
   const nameLookup = buildNameLookup_();
@@ -371,7 +369,6 @@ function syncBoostingTracker(silent) {
     const piecesIdx = queueRead.headerIndex['new pieces of content used'];
     const amountIdx = queueRead.headerIndex['gift card amount'];
     const linksIdx = queueRead.headerIndex['links'];
-    const draftIdx = queueRead.headerIndex[draftKey];
     const platformIdx = queueRead.headerIndex[platformKey];
     const firstNameIdx = queueRead.headerIndex['first name'];
     const lastNameIdx = queueRead.headerIndex['last name'];
@@ -385,7 +382,6 @@ function syncBoostingTracker(silent) {
       if (platformIdx != null && p._platforms && p._platforms.length) {
         rowVals[platformIdx] = mergePlatformLabels_(String(p[platformKey] || '').trim(), p._platforms.join(', '));
       }
-      rowVals[draftIdx] = '';
 
       if (!String(p['first name'] || '').trim()) {
         const found = nameLookup[normalizeHandle_(p['creator handle'])];
@@ -491,7 +487,6 @@ function writeDraftReadinessDebug_(silent) {
 
   const sheet = getOutreachQueueSheet_();
   const read = readFlatSheetRows_(sheet, HEADER_ROW.OUTREACH_QUEUE);
-  const draftKey = normalizeHeader_(DRAFT_COLUMN_HEADER);
   const sentKey = normalizeHeader_(SENT_CHECKBOX_HEADER);
   const platformLookup = buildPlatformLookupFromTracker_();
   const linksLookup = buildLinksLookupFromTracker_();
@@ -514,11 +509,9 @@ function writeDraftReadinessDebug_(silent) {
     let amount = String(row['gift card amount'] || '').trim();
     const amountNote = amount || formatAmount_(calculateGiftCardAmount_(pieces));
 
-    const alreadyDrafted = !!row[draftKey];
     const alreadySent = !!row[sentKey];
-    const ready = !alreadyDrafted && !alreadySent && !!displayName && (!needsLinks || !!linksFromRow);
+    const ready = !alreadySent && !!displayName && (!needsLinks || !!linksFromRow);
     const why = [];
-    if (alreadyDrafted) why.push('already has draft');
     if (alreadySent) why.push('already sent');
     if (!displayName) why.push('missing name');
     if (needsLinks && !linksFromRow) why.push('missing link');
@@ -622,72 +615,27 @@ function appendToOutreachQueue_(type, rows) {
   return out.length;
 }
 
-/** Drafts all undrafted, unsent rows on the Outreach Queue tab. */
+/** Writes all unsent Outreach Queue rows into today's Google Doc. */
 function draftOutreachMessages(silent) {
-  const sheet = getOutreachQueueSheet_();
-  const read = readFlatSheetRows_(sheet, HEADER_ROW.OUTREACH_QUEUE);
-  const draftKey = normalizeHeader_(DRAFT_COLUMN_HEADER);
-  const sentKey = normalizeHeader_(SENT_CHECKBOX_HEADER);
-  const typeKey = normalizeHeader_(TYPE_COLUMN_HEADER);
-  const draftCol = read.headerIndex[draftKey] + 1;
-  const platformKey = normalizeHeader_(PLATFORM_COLUMN_HEADER);
-  const platformLookup = buildPlatformLookupFromTracker_();
-  const linksLookup = buildLinksLookupFromTracker_();
-  const draftUpdates = [];
+  const collectResult = collectOutreachDraftEntries_();
+  const docResult = writeOutreachDraftsGoogleDoc_(collectResult);
+  const result = {
+    drafted: collectResult.drafted,
+    skippedCount: collectResult.skippedCount,
+    skippedNoName: collectResult.skippedNoName,
+    skippedNoLinks: collectResult.skippedNoLinks,
+    alreadySent: collectResult.alreadySent,
+    docUrl: docResult.url,
+    docId: docResult.id,
+  };
 
-  let drafted = 0, skipped = 0, skippedNoName = 0, skippedNoLinks = 0;
-  let alreadyDrafted = 0, alreadySent = 0;
-  read.rows.forEach((row) => {
-    if (row[draftKey]) { alreadyDrafted++; return; }
-    if (row[sentKey]) { alreadySent++; return; }
-
-    const firstName = String(row['first name'] || '').trim();
-    const handle = String(row['creator handle'] || '').trim();
-    const displayName = firstName || (handle ? capitalizeFirst_(handle.replace(/^@/, '').split(/[._]/)[0]) : '');
-    const rowType = String(row[typeKey] || '').trim();
-    const isFollowUp = rowType === OUTREACH_TYPE_FOLLOWUP;
-
-    const platform = String(row[platformKey] || '').trim()
-      || lookupPlatformsForHandleFromTracker_(handle, platformLookup);
-    const needsLinks = needsProductLinksForPlatforms_(platform);
-    const links = resolveOutreachLinks_(row, handle, linksLookup);
-
-    if (!displayName) { skipped++; skippedNoName++; return; }
-    if (needsLinks && !links) { skipped++; skippedNoLinks++; return; }
-
-    let newPieces = Number(row['new pieces of content used']) || 1;
-    if (newPieces < 1) newPieces = 1;
-    let amount = String(row['gift card amount'] || '').trim();
-    if (!amount) amount = formatAmount_(calculateGiftCardAmount_(newPieces));
-
-    const filled = buildDraftMessage_({
-      isFollowUp: isFollowUp,
-      handle: handle,
-      firstName: displayName,
-      pieces: newPieces,
-      newPieces: newPieces,
-      amount: amount,
-      links: links,
-      needsLinks: needsLinks,
-    });
-    draftUpdates.push({ row: row._sheetRow, value: filled });
-    drafted++;
-  });
-
-  batchSetColumnValues_(sheet, draftCol, draftUpdates);
-
-  const result = { drafted: drafted, skipped: skipped, skippedNoName: skippedNoName, skippedNoLinks: skippedNoLinks, alreadyDrafted: alreadyDrafted, alreadySent: alreadySent };
   if (!silent) {
-    let msg = 'Drafted ' + drafted + ' message(s) on Outreach Queue.';
-    if (skipped) {
-      msg += ' ' + skipped + ' skipped';
-      const reasons = [];
-      if (skippedNoName) reasons.push(skippedNoName + ' missing a name');
-      if (skippedNoLinks) reasons.push(skippedNoLinks + ' missing a link');
-      if (reasons.length) msg += ' (' + reasons.join(', ') + ')';
-      msg += '. Run Setup > Test draft readiness for details.';
+    let msg = 'Wrote ' + result.drafted + ' message(s) to Google Doc.';
+    if (result.skippedCount) {
+      msg += ' ' + result.skippedCount + ' row(s) need fixes (listed at the bottom of the doc).';
     }
     toast_(msg);
+    if (result.docUrl) openUrlInNewTab_(result.docUrl);
   }
   return result;
 }
