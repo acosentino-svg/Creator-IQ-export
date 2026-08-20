@@ -700,12 +700,66 @@ function lookupLatestTrackerDateForHandle_(handle) {
   return latest ? latest.date : null;
 }
 
+function getGiftCardDateCol1_(ctx) {
+  for (let i = 0; i < GIFT_CARD_DATE_HEADERS.length; i++) {
+    const col = giftCardCol1_(ctx, GIFT_CARD_DATE_HEADERS[i], false);
+    if (col !== -1) return col;
+  }
+  return -1;
+}
+
+/** True when a gift card First Name cell holds a tracker date (8/17, 8/3/2026, etc.). */
+function cellLooksLikeTrackerDate_(value) {
+  return !!parseMonthYearFromCell_(value);
+}
+
+function resolveGiftCardFirstName_(handle, profile) {
+  if (profile && String(profile.firstName || '').trim()) return profile.firstName;
+  return firstNameFromHandle_(handle);
+}
+
 function applyTrackerDateToGiftCardRow_(ctx, row, handle) {
   const trackerDate = lookupLatestTrackerDateForHandle_(handle);
   if (!trackerDate) return;
-  const dateCol = giftCardCol1_(ctx, 'date', false);
-  const col1 = dateCol !== -1 ? dateCol : GIFT_CARD_DATE_COL;
-  ctx.sheet.getRange(row, col1).setValue(trackerDate);
+  const dateCol = getGiftCardDateCol1_(ctx);
+  if (dateCol === -1) return;
+  ctx.sheet.getRange(row, dateCol).setValue(trackerDate);
+}
+
+/** Clears tracker dates wrongly written to First Name; fills names from Names tab or handle. */
+function repairGiftCardMisplacedDates_() {
+  const ctx = getGiftCardContext_();
+  const rows = readGiftCardRows_(ctx);
+  const lookup = buildNameLookup_();
+  const firstNameCol = giftCardCol1_(ctx, 'First Name', false);
+  const lastNameCol = giftCardCol1_(ctx, 'Last Name', false);
+  if (firstNameCol === -1) {
+    throw new Error('Gift card tab must have a First Name column.');
+  }
+
+  let repaired = 0;
+  rows.forEach((row) => {
+    const handle = String(row[ctx.nameKey] || '').trim();
+    const handleKey = normalizeHandle_(handle);
+    if (!handleKey) return;
+
+    const currentFirst = row['first name'];
+    const needsRepair = cellLooksLikeTrackerDate_(currentFirst) || String(currentFirst || '').trim() === '';
+    if (!needsRepair) return;
+
+    const profile = lookup[handleKey];
+    const firstName = resolveGiftCardFirstName_(handle, profile);
+    if (!firstName) return;
+
+    ctx.sheet.getRange(row._sheetRow, firstNameCol).setValue(firstName);
+    if (lastNameCol !== -1 && profile && profile.lastName) {
+      ctx.sheet.getRange(row._sheetRow, lastNameCol).setValue(profile.lastName);
+    }
+    repaired++;
+  });
+
+  toast_('Repaired ' + repaired + ' First Name cell(s) on ' + ctx.sheet.getName() + '.');
+  return repaired;
 }
 
 /** Builds the tab name: "August Gift Card Cost Tracker". */

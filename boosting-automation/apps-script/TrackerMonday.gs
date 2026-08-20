@@ -354,6 +354,13 @@ function syncCreatorToGiftCardTab_(handle, handleKey, email, trackerSheet, heade
   let targetRow;
   if (existing) {
     targetRow = existing._sheetRow;
+    if (firstNameCol !== -1) {
+      const currentFirst = giftSheet.getRange(targetRow, firstNameCol).getValue();
+      if (cellLooksLikeTrackerDate_(currentFirst) || String(currentFirst || '').trim() === '') {
+        const firstName = resolveGiftCardFirstName_(handle, profile);
+        if (firstName) giftSheet.getRange(targetRow, firstNameCol).setValue(firstName);
+      }
+    }
     giftSheet.getRange(targetRow, newPiecesCol).setValue(stats.pieces);
     if (amountCol !== -1) {
       giftSheet.getRange(targetRow, amountCol).setValue(formatAmount_(calculateGiftCardAmount_(stats.pieces)));
@@ -367,8 +374,13 @@ function syncCreatorToGiftCardTab_(handle, handleKey, email, trackerSheet, heade
   } else {
     targetRow = findNextEmptyGiftCardRow_(ctx, blockRows);
     setGiftCardCell_(ctx, targetRow, nameHeaderLabel, handle);
-    if (firstNameCol !== -1 && profile) giftSheet.getRange(targetRow, firstNameCol).setValue(profile.firstName);
-    if (lastNameCol !== -1 && profile) giftSheet.getRange(targetRow, lastNameCol).setValue(profile.lastName);
+    if (firstNameCol !== -1) {
+      const firstName = resolveGiftCardFirstName_(handle, profile);
+      if (firstName) giftSheet.getRange(targetRow, firstNameCol).setValue(firstName);
+    }
+    if (lastNameCol !== -1 && profile && profile.lastName) {
+      giftSheet.getRange(targetRow, lastNameCol).setValue(profile.lastName);
+    }
     giftSheet.getRange(targetRow, newPiecesCol).setValue(stats.pieces);
     if (amountCol !== -1) {
       giftSheet.getRange(targetRow, amountCol).setValue(formatAmount_(calculateGiftCardAmount_(stats.pieces)));

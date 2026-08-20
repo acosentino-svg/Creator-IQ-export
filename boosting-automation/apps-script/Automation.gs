@@ -16,6 +16,7 @@ function onOpen() {
     .addSeparator()
     .addItem('Regenerate outreach drafts doc', 'draftOutreachMessages')
     .addItem('Sync pending creators to gift card tab', 'syncPendingCreatorsMenu_')
+    .addItem('Fix gift card First Name column (remove misplaced dates)', 'repairGiftCardMisplacedDates_')
     .addItem('Debug: why rows skipped (Batch Scan Debug tab)', 'runBatchDiagnostic_')
     .addItem('Turn ON automatic weekly sync', 'enableAutoSync')
     .addItem('Turn OFF automatic sync', 'disableAutoSync')

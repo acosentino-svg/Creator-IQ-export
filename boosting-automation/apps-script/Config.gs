@@ -26,8 +26,14 @@ const GIFT_CARD_FORMULA_ROWS = 400;
  * header is found. Used to pick the active gift card month tab automatically.
  */
 const BOOSTING_TRACKER_DATE_COL = 4;
-/** Gift card month tabs: copy each creator's tracker date into this column when present. */
+/**
+ * Legacy fallback only — modern tabs use URL in column A and First Name in column D.
+ * Never write dates unless a Date header exists (see GIFT_CARD_DATE_HEADERS).
+ */
 const GIFT_CARD_DATE_COL = 4;
+const GIFT_CARD_DATE_HEADERS = [
+  'date', 'content date', 'video date', 'comp date', 'boost date', 'date added',
+];
 const BOOSTING_TRACKER_DATE_HEADERS = [
   'date', 'content date', 'video date', 'date added', 'boost date', 'comp date',
   /** Some trackers label column D "Duration of Usage" but store the comp/add date (e.g. 8/17). */

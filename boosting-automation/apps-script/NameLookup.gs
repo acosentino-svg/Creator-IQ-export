@@ -14,11 +14,16 @@ function fillMissingNamesFromLookup() {
 
   let filled = 0;
   rows.forEach((row) => {
-    if (String(row['first name'] || '').trim() !== '') return;
-    const name = lookup[normalizeHandle_(row[ctx.nameKey])];
-    if (!name) return;
-    ctx.sheet.getRange(row._sheetRow, firstNameCol).setValue(name.firstName);
-    ctx.sheet.getRange(row._sheetRow, lastNameCol).setValue(name.lastName);
+    const currentFirst = String(row['first name'] || '').trim();
+    if (currentFirst !== '' && !cellLooksLikeTrackerDate_(currentFirst)) return;
+    const handle = String(row[ctx.nameKey] || '').trim();
+    const name = lookup[normalizeHandle_(handle)];
+    const firstName = resolveGiftCardFirstName_(handle, name);
+    if (!firstName) return;
+    ctx.sheet.getRange(row._sheetRow, firstNameCol).setValue(firstName);
+    if (lastNameCol !== -1 && name && name.lastName) {
+      ctx.sheet.getRange(row._sheetRow, lastNameCol).setValue(name.lastName);
+    }
     filled++;
   });
 
