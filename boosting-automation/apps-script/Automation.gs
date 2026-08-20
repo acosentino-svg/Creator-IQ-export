@@ -2,7 +2,7 @@
  * Automation.gs
  * Menu + boosting workflow:
  *   Boosting Tracker -> Google Doc (emails) -> CreatorIQ send ->
- *   creator replies -> menu or gift card Email column -> Gift Card month tab.
+ *   creator replies -> paste link column F/G on tracker (auto) or email on gift card tab.
  */
 
 function onOpen() {
@@ -15,7 +15,7 @@ function onOpen() {
     .addItem('2. End-of-month export (Step 5)', 'exportEndOfMonth')
     .addSeparator()
     .addItem('Regenerate outreach drafts doc', 'draftOutreachMessages')
-    .addItem('Add to gift card (creator replied)...', 'addCreatorToGiftCardFromSelection_')
+    .addItem('Sync pending creators to gift card tab', 'syncPendingCreatorsMenu_')
     .addItem('Turn ON automatic weekly sync', 'enableAutoSync')
     .addItem('Turn OFF automatic sync', 'disableAutoSync')
     .addSeparator()
@@ -35,6 +35,7 @@ function mondayCheck() {
   }
 
   toast_('Monday check: scanning Boosting Tracker (skipping dupes)...');
+  const syncResult = syncAllPendingCreatorsToGiftCardTab_();
   const draftResult = draftOutreachMessages(true);
 
   let msg = 'Monday check done: ' + draftResult.pending + ' pending video(s)';
@@ -43,6 +44,7 @@ function mondayCheck() {
   if (draftResult.skippedStale) msg += ', ' + draftResult.skippedStale + ' older row(s) skipped';
   if (draftResult.clearedLegacyQueued) msg += ', cleared ' + draftResult.clearedLegacyQueued + ' legacy Queued (auto) cell(s)';
   msg += '. Wrote ' + draftResult.drafted + ' email(s) to Google Doc';
+  if (syncResult.synced) msg += '. Added ' + syncResult.synced + ' creator(s) to ' + syncResult.tabName;
   if (draftResult.skippedCount) {
     msg += '. ' + draftResult.skippedCount + ' creator(s) need a name or link (see bottom of doc)';
   }
@@ -175,6 +177,11 @@ function testNameLookup_() {
   debugSheet.getRange(1, 1, rows.length, 2).setValues(rows);
   debugSheet.autoResizeColumns(1, 2);
   SpreadsheetApp.getUi().alert('Done. Check the "Names Lookup Debug" tab.');
+}
+
+function syncPendingCreatorsMenu_() {
+  const result = syncAllPendingCreatorsToGiftCardTab_();
+  toast_('Synced ' + result.synced + ' creator(s) to ' + result.tabName + ' (' + result.draftMonthLabel + ' batch).');
 }
 
 /** Scans Boosting Tracker and writes outreach emails to today's Google Doc. */

@@ -557,6 +557,22 @@ function resolveTrackerProductLinks_(row, headerIndex) {
   return mergeLinkLabels_(fromF, fromG);
 }
 
+function getTrackerStorefrontLinkCol0_(headerIndex) {
+  const key = normalizeHeader_('storefront links provided');
+  return key in headerIndex ? headerIndex[key] : -1;
+}
+
+function getTrackerFavLinksCol0_(headerIndex) {
+  const key = normalizeHeader_("fav's list + affiliate links provided");
+  return key in headerIndex ? headerIndex[key] : -1;
+}
+
+function looksLikeProductLink_(value) {
+  const s = String(value || '').trim().toLowerCase();
+  if (!s || s.length < 8) return false;
+  return s.indexOf('http') === 0 || s.indexOf('www.') === 0 || s.indexOf('creatorlink.') !== -1;
+}
+
 function getTrackerRowDateParsed_(row, headerIndex) {
   const dateCol0 = getBoostingTrackerDateCol0_(headerIndex);
   return parseMonthYearFromCell_(row[dateCol0]);
@@ -644,9 +660,10 @@ function currentCalendarMonth_() {
  * over many older July rows still marked blank.
  */
 function inferGiftCardMonthFromTracker_() {
+  const today = currentCalendarMonth_();
   const trackerSheet = getSheet_(SHEET_NAMES.BOOSTING_TRACKER);
   const lastRow = trackerSheet.getLastRow();
-  if (lastRow <= HEADER_ROW.BOOSTING_TRACKER) return currentCalendarMonth_();
+  if (lastRow <= HEADER_ROW.BOOSTING_TRACKER) return today;
 
   const lastCol = trackerSheet.getLastColumn();
   const headers = trackerSheet.getRange(HEADER_ROW.BOOSTING_TRACKER, 1, 1, lastCol).getValues()[0];
@@ -655,15 +672,19 @@ function inferGiftCardMonthFromTracker_() {
   const values = trackerSheet.getRange(HEADER_ROW.BOOSTING_TRACKER + 1, 1, numRows, lastCol).getValues();
 
   let latest = null;
+  let hasCurrentMonthRow = false;
+
   values.forEach((row) => {
     if (!isTrackerRowEligibleForMonthInference_(row, headerIndex)) return;
     if (!isTrackerRowRecentEnoughForDraft_(row, headerIndex)) return;
     const parsed = getTrackerRowDateParsed_(row, headerIndex);
     if (!parsed || !isReasonableGiftCardYear_(parsed.year)) return;
+    if (parsed.sortKey === today.sortKey) hasCurrentMonthRow = true;
     if (!latest || parsed.sortKey > latest.sortKey) latest = parsed;
   });
 
-  return latest || currentCalendarMonth_();
+  if (hasCurrentMonthRow) return today;
+  return latest || today;
 }
 
 /** Creates/selects the gift card tab matching the latest tracker date in column D. */

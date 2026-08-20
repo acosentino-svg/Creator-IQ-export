@@ -249,20 +249,29 @@ function promoteCreatorFromTrackerRow_(sheetRow, emailOverride) {
   }
   if (!email || email.indexOf('@') === -1) return { promoted: 0, error: 'missing email' };
 
-  return promoteCreatorByHandleAndEmail_(handle, handleKey, email, trackerSheet, headerIndex);
+  const result = syncCreatorToGiftCardTab_(handle, handleKey, email, trackerSheet, headerIndex, { markSent: true });
+  return {
+    promoted: result.synced,
+    error: result.error,
+    handle: result.handle,
+    pieces: result.pieces,
+    amount: result.amount,
+    tabName: result.tabName,
+  };
 }
 
-/** Core gift-card promotion: pull pending tracker rows for handle and write gift card tab. */
-function promoteCreatorByHandleAndEmail_(handle, handleKey, email, trackerSheet, headerIndex) {
-
+/** Core gift-card write: pull pending tracker rows for handle and update the month tab. */
+function syncCreatorToGiftCardTab_(handle, handleKey, email, trackerSheet, headerIndex, opts) {
+  opts = opts || {};
   ensureGiftCardMonthTabForTracker_();
+  const draftMonth = inferGiftCardMonthFromTracker_();
   const ctx = getGiftCardContext_();
   const nameKey = ctx.nameKey;
   const blockRows = readGiftCardRows_(ctx);
   const existing = blockRows.find((r) => normalizeHandle_(r[nameKey]) === handleKey);
 
-  const stats = summarizePendingTrackerRowsForHandle_(handleKey, headerIndex, trackerSheet);
-  if (!stats.pieces) return { promoted: 0, error: 'no pending videos for this creator' };
+  const stats = summarizePendingTrackerRowsForHandle_(handleKey, headerIndex, trackerSheet, draftMonth);
+  if (!stats.pieces) return { synced: 0, error: 'no pending videos for this creator' };
 
   const giftSheet = ctx.sheet;
   const nameHeaderLabel = (nameKey === 'creator handle') ? 'Creator Handle' : 'Creator Name';
@@ -275,6 +284,7 @@ function promoteCreatorByHandleAndEmail_(handle, handleKey, email, trackerSheet,
   const profileUrlCol = giftCardCol1_(ctx, 'URL', false);
   const nameLookup = buildNameLookup_();
   const profile = nameLookup[handleKey];
+  const emailToWrite = String(email || '').trim();
 
   let targetRow;
   if (existing) {
@@ -286,7 +296,9 @@ function promoteCreatorByHandleAndEmail_(handle, handleKey, email, trackerSheet,
     if (linksCol !== -1 && stats.links) {
       giftSheet.getRange(targetRow, linksCol).setValue(stats.links);
     }
-    if (emailCol !== -1) giftSheet.getRange(targetRow, emailCol).setValue(email);
+    if (emailCol !== -1 && emailToWrite.indexOf('@') !== -1) {
+      giftSheet.getRange(targetRow, emailCol).setValue(emailToWrite);
+    }
   } else {
     targetRow = findNextEmptyGiftCardRow_(ctx, blockRows);
     setGiftCardCell_(ctx, targetRow, nameHeaderLabel, handle);
@@ -297,21 +309,74 @@ function promoteCreatorByHandleAndEmail_(handle, handleKey, email, trackerSheet,
       giftSheet.getRange(targetRow, amountCol).setValue(formatAmount_(calculateGiftCardAmount_(stats.pieces)));
     }
     if (linksCol !== -1) giftSheet.getRange(targetRow, linksCol).setValue(stats.links);
-    if (emailCol !== -1) giftSheet.getRange(targetRow, emailCol).setValue(email);
+    if (emailCol !== -1 && emailToWrite.indexOf('@') !== -1) {
+      giftSheet.getRange(targetRow, emailCol).setValue(emailToWrite);
+    }
     if (profileUrlCol !== -1 && stats.profileUrl) {
       giftSheet.getRange(targetRow, profileUrlCol).setValue(stats.profileUrl);
     }
   }
 
   applyTrackerDateToGiftCardRow_(ctx, targetRow, handle);
-  markTrackerRowsYesForHandle_(handleKey, headerIndex, trackerSheet);
+
+  if (opts.markSent) {
+    markTrackerRowsYesForHandle_(handleKey, headerIndex, trackerSheet);
+  }
+
   return {
-    promoted: 1,
+    synced: 1,
     handle: handle,
     pieces: stats.pieces,
     amount: formatAmount_(calculateGiftCardAmount_(stats.pieces)),
     tabName: getActiveGiftCardSheetName_(),
   };
+}
+
+function promoteCreatorByHandleAndEmail_(handle, handleKey, email, trackerSheet, headerIndex) {
+  return syncCreatorToGiftCardTab_(handle, handleKey, email, trackerSheet, headerIndex, { markSent: true });
+}
+
+/** Adds every pending creator for the active month to the gift card tab (no email required yet). */
+function syncAllPendingCreatorsToGiftCardTab_() {
+  const trackerSheet = getSheet_(SHEET_NAMES.BOOSTING_TRACKER);
+  const lastRow = trackerSheet.getLastRow();
+  if (lastRow <= HEADER_ROW.BOOSTING_TRACKER) return { synced: 0 };
+
+  ensureGiftCardMonthTabForTracker_();
+  const draftMonth = inferGiftCardMonthFromTracker_();
+  const lastCol = trackerSheet.getLastColumn();
+  const headers = trackerSheet.getRange(HEADER_ROW.BOOSTING_TRACKER, 1, 1, lastCol).getValues()[0];
+  const headerIndex = buildHeaderIndex_(headers);
+  const firstDataRow = HEADER_ROW.BOOSTING_TRACKER + 1;
+  const values = trackerSheet.getRange(firstDataRow, 1, lastRow - firstDataRow + 1, lastCol).getValues();
+  const handles = {};
+
+  values.forEach((row) => {
+    if (!isTrackerRowEligibleForMonthInference_(row, headerIndex)) return;
+    if (!isTrackerRowInDraftMonth_(row, headerIndex, draftMonth)) return;
+    const handle = String(row[headerIndex['creator name']] || '').trim();
+    const handleKey = normalizeHandle_(handle);
+    if (handleKey) handles[handleKey] = handle;
+  });
+
+  let synced = 0;
+  Object.keys(handles).forEach((handleKey) => {
+    const result = syncCreatorToGiftCardTab_(handles[handleKey], handleKey, '', trackerSheet, headerIndex, {});
+    if (result.synced) synced++;
+  });
+  return { synced: synced, tabName: getActiveGiftCardSheetName_(), draftMonthLabel: draftMonth.monthName + ' ' + draftMonth.year };
+}
+
+function syncCreatorFromTrackerRow_(sheetRow) {
+  const trackerSheet = getSheet_(SHEET_NAMES.BOOSTING_TRACKER);
+  const lastCol = trackerSheet.getLastColumn();
+  const headers = trackerSheet.getRange(HEADER_ROW.BOOSTING_TRACKER, 1, 1, lastCol).getValues()[0];
+  const headerIndex = buildHeaderIndex_(headers);
+  const row = trackerSheet.getRange(sheetRow, 1, 1, lastCol).getValues()[0];
+  const handle = String(row[headerIndex['creator name']] || '').trim();
+  const handleKey = normalizeHandle_(handle);
+  if (!handleKey) return { synced: 0, error: 'missing handle' };
+  return syncCreatorToGiftCardTab_(handle, handleKey, '', trackerSheet, headerIndex, {});
 }
 
 /** Menu flow: select a Boosting Tracker row, paste the creator's confirmed email. */
@@ -369,7 +434,7 @@ function addCreatorToGiftCardFromSelection_() {
   if (giftSheet) ss.setActiveSheet(giftSheet);
 }
 
-function summarizePendingTrackerRowsForHandle_(handleKey, headerIndex, trackerSheet) {
+function summarizePendingTrackerRowsForHandle_(handleKey, headerIndex, trackerSheet, draftMonth) {
   const lastRow = trackerSheet.getLastRow();
   const lastCol = trackerSheet.getLastColumn();
   const firstDataRow = HEADER_ROW.BOOSTING_TRACKER + 1;
@@ -389,6 +454,7 @@ function summarizePendingTrackerRowsForHandle_(handleKey, headerIndex, trackerSh
     const notifiedNorm = normalizeHeader_(row[headerIndex['creator notified']]);
     if (ALREADY_HANDLED_VALUES.indexOf(notifiedNorm) !== -1) return;
     if (isTrackerDupeRow_(row, headerIndex)) return;
+    if (draftMonth && !isTrackerRowInDraftMonth_(row, headerIndex, draftMonth)) return;
 
     const contentUsed = row[headerIndex['content used']];
     const contentLink = String(contentUsed || '').trim();
@@ -432,6 +498,27 @@ function markTrackerRowsYesForHandle_(handleKey, headerIndex, trackerSheet) {
     updates.push({ row: firstDataRow + i, value: SENT_MARKER });
   });
   batchSetColumnValues_(trackerSheet, notifiedCol, updates);
+}
+
+/** Paste product link in column F or G → sync that creator to the gift card month tab. */
+function onEditBoostingTrackerLinkSync_(e) {
+  if (!e || !e.range || e.value == null) return;
+  if (e.range.getSheet().getName() !== SHEET_NAMES.BOOSTING_TRACKER) return;
+  if (e.range.getRow() <= HEADER_ROW.BOOSTING_TRACKER) return;
+  if (!looksLikeProductLink_(e.value)) return;
+
+  const lastCol = e.range.getSheet().getLastColumn();
+  const headers = e.range.getSheet().getRange(HEADER_ROW.BOOSTING_TRACKER, 1, 1, lastCol).getValues()[0];
+  const headerIndex = buildHeaderIndex_(headers);
+  const editedCol0 = e.range.getColumn() - 1;
+  const storefrontCol0 = getTrackerStorefrontLinkCol0_(headerIndex);
+  const favCol0 = getTrackerFavLinksCol0_(headerIndex);
+  if (editedCol0 !== storefrontCol0 && editedCol0 !== favCol0) return;
+
+  const result = syncCreatorFromTrackerRow_(e.range.getRow());
+  if (result.synced) {
+    toast_('Updated ' + result.handle + ' on ' + result.tabName + ' (' + result.pieces + ' piece(s), ' + result.amount + ').');
+  }
 }
 
 /** Optional: paste email on Boosting Tracker if an email column exists. */
@@ -484,12 +571,13 @@ function onEditGiftCardEmailPromote_(e) {
   const result = promoteCreatorByHandleAndEmail_(
     handle, handleKey, String(e.value).trim(), trackerSheet, trackerHeaderIndex
   );
-  if (result.promoted) {
-    toast_('Synced ' + result.handle + ' from Boosting Tracker (' + result.pieces + ' piece(s), ' + result.amount + ').');
+  if (result.synced) {
+    toast_('Updated ' + result.handle + ' on gift card tab (' + result.pieces + ' piece(s), ' + result.amount + ').');
   }
 }
 
 function onEdit(e) {
+  onEditBoostingTrackerLinkSync_(e);
   onEditBoostingTrackerPromote_(e);
   onEditGiftCardEmailPromote_(e);
 }
