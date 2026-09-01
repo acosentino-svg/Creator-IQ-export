@@ -92,5 +92,6 @@ Then set up a scheduled job to refresh data (ask someone technical, or we can ad
 2. Confirm main file is **`streamlit_app.py`** (repo root) or **`app/streamlit_app.py`**.
 3. **Settings → General → Python version = 3.12** (not 3.14 — fixes many `ModuleNotFoundError` including plotly).
 4. **Manage app → Reboot app** (or **Clear cache and reboot**).
-5. If you see **`ModuleNotFoundError: plotly`**, merge the latest `main` (includes `requirements.txt` fix) and reboot again.
-6. On **Data & Settings**, use **Quick sync** or **GitHub Actions + warehouse.db upload** — not a full browser sync for 43k.
+5. **Settings → General → Python version = 3.12** (not 3.14).
+6. **Manage app → Reboot app** after every merge that touches `requirements.txt`.
+7. If you see **`ModuleNotFoundError: plotly`**, confirm `requirements.txt` on `main` lists `plotly==5.24.1` (no `-e .` line) and reboot again.
