@@ -62,6 +62,8 @@ def generate_demo_boosting_content(
                 rows.append(
                     {
                         "creator_id": cid,
+                        "creator_name": f"Creator {cid}",
+                        "creator_handle": f"@creator_{content_idx}",
                         "month": month,
                         "content_url": f"https://example.com/content/{content_idx}",
                         "platform": rng.choice(PLATFORMS),
