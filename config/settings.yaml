@@ -46,6 +46,17 @@ geography:
   # all enrolled creators as US (even when Country is blank in CRM).
   us_only_program: true
 
+boosting:
+  # Campaigns whose activity feeds the Boosting scorecard (see app/pages/12_Boosting_Scorecard.py).
+  # Match by name substring and/or explicit campaign IDs from CreatorIQ.
+  campaign_name_contains:
+    - boost
+    - Boosting
+  campaign_ids: []
+  # When boosting_eligible isn't mapped in field_mappings.yaml, treat all posts
+  # in matching campaigns as eligible Boosting content.
+  default_eligible_if_in_campaign: true
+
 live_sync:
   # Safety limits for pulling from the real CreatorIQ API (see
   # src/creatoriq_dashboard/etl.py), used once CREATORIQ_DASHBOARD_MODE is

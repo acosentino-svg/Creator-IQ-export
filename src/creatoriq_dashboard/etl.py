@@ -38,9 +38,11 @@ from .storage import (
     append_link_click_snapshot,
     derive_link_click_deltas,
     get_engine,
+    read_table,
     record_sync,
     write_table,
 )
+from .boosting_creatoriq import merge_api_with_supplements, posts_to_boosting_content
 
 logger = logging.getLogger(__name__)
 
@@ -395,6 +397,13 @@ def sync_all(config: AppConfig) -> dict[str, int]:
     record_sync(engine, "creators", now)
     record_sync(engine, "posts", now)
 
+    existing_boosting = read_table(engine, "boosting_content")
+    boosting_df = posts_to_boosting_content(posts_df, config)
+    if not existing_boosting.empty:
+        boosting_df = merge_api_with_supplements(boosting_df, existing_boosting)
+    write_table(engine, "boosting_content", boosting_df)
+    record_sync(engine, "boosting_content", now)
+
     if not posts_df.empty:
         append_link_click_snapshot(engine, posts_df, now)
     link_clicks_df = derive_link_click_deltas(engine)
@@ -430,6 +439,7 @@ def sync_all(config: AppConfig) -> dict[str, int]:
         "campaigns": len(campaigns_df),
         "creators": len(roster_df),
         "posts": len(posts_df),
+        "boosting_content": len(boosting_df),
         "link_clicks": len(link_clicks_df),
         "links": len(link_creations_df),
         "email_events": len(email_events_df),
