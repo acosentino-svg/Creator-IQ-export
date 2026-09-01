@@ -36,8 +36,9 @@ st.caption(
 
 if content.empty:
     st.info(
-        "No data yet. Use the sidebar to **upload a monthly CSV/Excel export** (recommended) "
-        "or sync from CreatorIQ API."
+        "No data yet. In **live mode** the app auto-syncs from CreatorIQ on load — "
+        "use **Refresh from CreatorIQ** in the sidebar if needed. "
+        "In demo mode, load sample data or add API secrets."
     )
     st.stop()
 

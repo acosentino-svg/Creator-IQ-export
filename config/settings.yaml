@@ -61,6 +61,15 @@ boosting:
     - wayfairelevate
   # Only used when CreatorIQ exposes boosting_eligible via API; otherwise hashtags rule applies.
   default_eligible_if_in_campaign: false
+  # Boosting sync uses its own campaign status filter (not live_sync.campaign_status_filter).
+  # Empty list = include all statuses so "Wayfair Boosting Partnership" is found even when not Active.
+  campaign_status_filter: []
+  # Pull scorecard data from CreatorIQ on app load when cache is empty or stale.
+  auto_sync_on_load: true
+  # Re-sync automatically when cached data is older than this many hours (0 = only when empty).
+  sync_stale_hours: 24
+  # Cap WBP tag scan via /publishers (100 creators/page). null = scan until API returns a short page.
+  max_publisher_pages: null
 
 live_sync:
   # Safety limits for pulling from the real CreatorIQ API (see

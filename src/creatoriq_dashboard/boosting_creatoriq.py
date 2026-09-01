@@ -7,6 +7,7 @@ import pandas as pd
 
 from .api_client import CreatorIQClient
 from .boosting_rules import (
+    creator_has_boosting_tag,
     is_boosting_campaign,
     is_boosting_creator_post,
     is_eligible_boosting_content,
@@ -15,6 +16,7 @@ from .boosting_rules import (
 from .boosting_scorecard import CONTENT_RAW_COLUMNS, merge_content_raw, normalize_content_raw
 from .config import AppConfig
 from .normalize import clean_id_columns, normalize_records
+from .tiers import extract_tier_from_tags, normalize_tag_string
 
 logger = logging.getLogger(__name__)
 
@@ -55,6 +57,146 @@ def _num(value, default: float = 0.0) -> float:
     if pd.isna(parsed):
         return default
     return float(parsed)
+
+
+def _boosting_settings(config: AppConfig) -> dict:
+    return config.settings.get("boosting", default={}) or {}
+
+
+def _fetch_boosting_campaigns(config: AppConfig, client: CreatorIQClient) -> pd.DataFrame:
+    """List campaigns, applying boosting-specific status filter (not live_sync Active-only)."""
+    mapping = config.field_mappings.get("campaigns", {})
+    raw = client.fetch_all("campaigns")
+    df = pd.DataFrame(normalize_records(raw, mapping))
+    df = clean_id_columns(df, ["campaign_id"])
+
+    status_filter = _boosting_settings(config).get("campaign_status_filter")
+    if status_filter is None:
+        status_filter = []
+    if status_filter and not df.empty and "status" in df.columns:
+        df = df[df["status"].isin(status_filter)]
+
+    if df.empty:
+        return df
+
+    mask = df.apply(
+        lambda row: is_boosting_campaign(row.get("campaign_name", ""), row.get("campaign_id", ""), config),
+        axis=1,
+    )
+    return df[mask].reset_index(drop=True)
+
+
+def _fetch_campaign_roster(
+    config: AppConfig,
+    client: CreatorIQClient,
+    campaign_ids: list,
+) -> pd.DataFrame:
+    """Roster rows for the configured boosting campaign(s)."""
+    if not campaign_ids:
+        return pd.DataFrame()
+
+    creator_mapping = config.field_mappings.get("creators", {})
+    roster_rows: list[dict] = []
+    for campaign_id in campaign_ids:
+        try:
+            raw_roster = client.fetch_unpaginated_list("campaign_publishers", path_params={"campaign_id": campaign_id})
+            roster_rows.extend(normalize_records(raw_roster, creator_mapping))
+        except Exception:  # noqa: BLE001
+            logger.exception("Failed to fetch roster for boosting campaign %s", campaign_id)
+
+    roster_df = clean_id_columns(pd.DataFrame(roster_rows), ["creator_id"])
+    if roster_df.empty:
+        return roster_df
+
+    if "joined_date" in roster_df.columns:
+        roster_df = roster_df.sort_values("joined_date")
+    return roster_df.drop_duplicates(subset=["creator_id"], keep="last").reset_index(drop=True)
+
+
+def _fetch_wbp_tagged_publishers(config: AppConfig, client: CreatorIQClient) -> pd.DataFrame:
+    """Scan /publishers for CRM tag WBP (bounded by boosting.max_publisher_pages)."""
+    cfg = _boosting_settings(config)
+    required_tags = cfg.get("creator_tags") or ["WBP"]
+    max_pages = cfg.get("max_publisher_pages")
+    mapping = config.field_mappings.get("publishers", {})
+
+    rows: list[dict] = []
+    for record in client.iter_resource("publishers", max_pages=max_pages):
+        pub = record.get("Publisher", record) if isinstance(record, dict) else record
+        if not isinstance(pub, dict):
+            continue
+        tags = normalize_tag_string(pub.get("Tags") or pub.get("TagNames"))
+        if not creator_has_boosting_tag(tags, required_tags):
+            continue
+        row = normalize_records([pub], mapping)[0]
+        row["tags"] = tags
+        row["tier"] = extract_tier_from_tags(tags)
+        rows.append(row)
+
+    df = clean_id_columns(pd.DataFrame(rows), ["creator_id", "network_publisher_id"])
+    if df.empty:
+        return df
+    return df.drop_duplicates(subset=["creator_id"], keep="last").reset_index(drop=True)
+
+
+def _combine_creators(*frames: pd.DataFrame) -> pd.DataFrame:
+    parts = [df for df in frames if df is not None and not df.empty]
+    if not parts:
+        return pd.DataFrame()
+    combined = pd.concat(parts, ignore_index=True)
+    if "creator_id" not in combined.columns:
+        return combined.drop_duplicates(keep="last")
+    sort_col = "joined_date" if "joined_date" in combined.columns else None
+    if sort_col:
+        combined = combined.sort_values(sort_col)
+    return combined.drop_duplicates(subset=["creator_id"], keep="last").reset_index(drop=True)
+
+
+def _fetch_boosting_creators(
+    config: AppConfig,
+    client: CreatorIQClient,
+    campaign_ids: list,
+) -> pd.DataFrame:
+    """WBP-tagged publishers plus roster from the boosting campaign(s)."""
+    roster = _fetch_campaign_roster(config, client, campaign_ids)
+    wbp_publishers = _fetch_wbp_tagged_publishers(config, client)
+    return _combine_creators(roster, wbp_publishers)
+
+
+def _enrich_content_with_creators(content: pd.DataFrame, creators: pd.DataFrame) -> pd.DataFrame:
+    if content.empty or creators.empty or "creator_id" not in creators.columns:
+        return content
+
+    name_map: dict[str, str] = {}
+    handle_map: dict[str, str] = {}
+    for _, row in creators.iterrows():
+        cid = str(row.get("creator_id", "")).strip()
+        if not cid or cid == "nan":
+            continue
+        for src, dest in (("name", name_map), ("creator_name", name_map)):
+            val = row.get(src)
+            if val is not None and str(val).strip() not in {"", "nan"}:
+                dest[cid] = str(val).strip()
+        for src in ("handle", "creator_handle", "username"):
+            val = row.get(src)
+            if val is not None and str(val).strip() not in {"", "nan"}:
+                handle_map[cid] = str(val).strip()
+
+    out = content.copy()
+    if "creator_name" not in out.columns:
+        out["creator_name"] = ""
+    if "creator_handle" not in out.columns:
+        out["creator_handle"] = ""
+
+    for idx, row in out.iterrows():
+        cid = str(row.get("creator_id", "")).strip()
+        if not cid:
+            continue
+        if not str(row.get("creator_name", "")).strip() or str(row.get("creator_name")) == "nan":
+            out.at[idx, "creator_name"] = name_map.get(cid, "")
+        if not str(row.get("creator_handle", "")).strip() or str(row.get("creator_handle")) == "nan":
+            out.at[idx, "creator_handle"] = handle_map.get(cid, "")
+    return out
 
 
 def posts_to_boosting_content(
@@ -121,7 +263,8 @@ def posts_to_boosting_content(
             }
         )
 
-    return normalize_content_raw(pd.DataFrame(rows, columns=CONTENT_RAW_COLUMNS))
+    content = normalize_content_raw(pd.DataFrame(rows, columns=CONTENT_RAW_COLUMNS))
+    return _enrich_content_with_creators(content, creators) if creators is not None else content
 
 
 def merge_api_with_supplements(api_df: pd.DataFrame, supplement_df: pd.DataFrame) -> pd.DataFrame:
@@ -182,19 +325,14 @@ def sync_boosting_from_creatoriq(
     client: CreatorIQClient | None = None,
 ) -> pd.DataFrame:
     """Fetch boosting campaign activity from CreatorIQ and return Content Raw rows."""
-    from .etl import _fetch_campaigns  # local import avoids circular dependency with etl.py
-
     client = client or CreatorIQClient(config)
     post_mapping = config.field_mappings.get("posts", {})
-    campaigns_df = _fetch_campaigns(config, client)
 
-    boosting_campaigns = campaigns_df[
-        campaigns_df.apply(
-            lambda row: is_boosting_campaign(row.get("campaign_name", ""), row.get("campaign_id", ""), config),
-            axis=1,
-        )
-    ]
+    boosting_campaigns = _fetch_boosting_campaigns(config, client)
     campaign_ids = boosting_campaigns["campaign_id"].tolist() if not boosting_campaigns.empty else []
+
+    if creators is None or creators.empty:
+        creators = _fetch_boosting_creators(config, client, campaign_ids)
 
     post_rows: list[dict] = []
     for campaign_id in campaign_ids:
@@ -211,7 +349,11 @@ def sync_boosting_from_creatoriq(
         posts_df = posts_df.drop_duplicates(subset=["post_id"], keep="last")
 
     if not campaign_ids:
-        logger.warning("No boosting campaigns matched config.boosting filters.")
+        names = _boosting_settings(config).get("campaign_names") or ["Wayfair Boosting Partnership"]
+        logger.warning(
+            "No boosting campaigns matched config (%s). Check campaign_names / campaign_ids in settings.yaml.",
+            ", ".join(str(n) for n in names),
+        )
 
     posts_df = _combine_posts(posts_df, extra_posts)
     api_content = posts_to_boosting_content(posts_df, config, creators=creators)
