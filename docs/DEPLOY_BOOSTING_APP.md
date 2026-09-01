@@ -27,6 +27,14 @@ CREATORIQ_BASE_URL = "https://api.creatoriq.com/api"
 
 When you open that URL, you land directly on the Boosting scorecard with the four tabs at the top.
 
+**Settings → General → Python version = 3.12** (not 3.14).
+
+## If you see `ModuleNotFoundError: yaml` or `plotly`
+
+1. Confirm **Python 3.12** in app Settings → General.
+2. **Manage app → Clear cache and reboot** (forces a fresh `pip install -r requirements.txt`).
+3. Do not add `-e .` to `requirements.txt` — it breaks Streamlit Cloud installs.
+
 ## Sync data
 
 1. In the app, expand **Data sources & sync**
