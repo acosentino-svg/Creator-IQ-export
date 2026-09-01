@@ -144,10 +144,16 @@ def render_sidebar(config: AppConfig | None = None) -> pd.DataFrame:
     st.sidebar.divider()
     st.sidebar.subheader("Data source")
 
-    st.sidebar.markdown(
-        "The scorecard pulls posts from **Wayfair Creators Boosting Partnership** (campaign 2206666) "
-        "and WBP-tagged creators via the CreatorIQ API. It auto-syncs on load."
-    )
+    if content.empty and not config.is_demo:
+        st.sidebar.warning(
+            "**No data loaded yet.** Click **Refresh from CreatorIQ** below "
+            "(usually 1–2 minutes for the first sync)."
+        )
+    else:
+        st.sidebar.markdown(
+            "Posts sync from **Wayfair Creators Boosting Partnership** (campaign 2206666). "
+            "WBP-tagged creators on the campaign roster are included."
+        )
 
     if st.sidebar.button("Refresh from CreatorIQ", use_container_width=True, disabled=config.is_demo, type="primary"):
         run_api_sync(config)

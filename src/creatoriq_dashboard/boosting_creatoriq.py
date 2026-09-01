@@ -130,8 +130,13 @@ def _fetch_campaign_roster(
 def _fetch_wbp_tagged_publishers(config: AppConfig, client: CreatorIQClient) -> pd.DataFrame:
     """Scan /publishers for CRM tag WBP (bounded by boosting.max_publisher_pages)."""
     cfg = _boosting_settings(config)
+    if not cfg.get("scan_wbp_publishers", False):
+        return pd.DataFrame()
+
     required_tags = cfg.get("creator_tags") or ["WBP"]
     max_pages = cfg.get("max_publisher_pages")
+    if max_pages == 0 or max_pages == "0":
+        return pd.DataFrame()
     mapping = config.field_mappings.get("publishers", {})
 
     rows: list[dict] = []
@@ -171,8 +176,10 @@ def _fetch_boosting_creators(
     client: CreatorIQClient,
     campaign_ids: list,
 ) -> pd.DataFrame:
-    """WBP-tagged publishers plus roster from the boosting campaign(s)."""
+    """Campaign roster (+ optional WBP publisher scan when enabled in config)."""
     roster = _fetch_campaign_roster(config, client, campaign_ids)
+    if not (_boosting_settings(config).get("scan_wbp_publishers", False)):
+        return roster
     wbp_publishers = _fetch_wbp_tagged_publishers(config, client)
     return _combine_creators(roster, wbp_publishers)
 
@@ -342,8 +349,13 @@ def sync_boosting_from_creatoriq(
     client = client or CreatorIQClient(config)
     post_mapping = config.field_mappings.get("posts", {})
 
-    boosting_campaigns = _fetch_boosting_campaigns(config, client)
-    campaign_ids = _resolve_boosting_campaign_ids(config, boosting_campaigns)
+    configured_ids = [str(x) for x in (_boosting_settings(config).get("campaign_ids") or []) if str(x).strip()]
+    if configured_ids:
+        campaign_ids = configured_ids
+        logger.info("Using configured boosting campaign IDs: %s", ", ".join(campaign_ids))
+    else:
+        boosting_campaigns = _fetch_boosting_campaigns(config, client)
+        campaign_ids = _resolve_boosting_campaign_ids(config, boosting_campaigns)
 
     if creators is None or creators.empty:
         creators = _fetch_boosting_creators(config, client, campaign_ids)
