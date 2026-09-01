@@ -16,6 +16,7 @@ from creatoriq_dashboard.config import AppConfig, load_config
 
 CONTENT_KEY = "boosting_content"
 MESSAGE_KEY = "boosting_flash_message"
+SYNC_STATUS_KEY = "boosting_sync_status"
 
 
 @st.cache_resource
@@ -26,8 +27,9 @@ def get_config() -> AppConfig:
 def init_content(config: AppConfig | None = None) -> pd.DataFrame:
     config = config or get_config()
     if CONTENT_KEY not in st.session_state:
-        content, _ = load_boosting_content(config)
+        content, sync_status = load_boosting_content(config)
         st.session_state[CONTENT_KEY] = content
+        st.session_state[SYNC_STATUS_KEY] = sync_status
     return st.session_state[CONTENT_KEY]
 
 
@@ -68,13 +70,13 @@ def run_api_sync(config: AppConfig) -> None:
         if df.empty:
             _flash(
                 "error",
-                "Sync finished but returned **0 rows**. Check that your Wayfair Boosting Partnership "
-                "campaign exists in CreatorIQ, or upload a monthly CSV instead (recommended).",
+                "Sync finished but returned **0 rows**. Confirm campaign **Wayfair Creators Boosting Partnership** "
+                "(ID 2206666) exists in CreatorIQ and has tracked posts. WBP-tagged creators are also included.",
             )
         else:
             _flash(
                 "success",
-                f"Synced **{len(df):,}** content rows (**{eligible:,}** eligible). "
+                f"Synced **{len(df):,}** content rows (**{eligible:,}** eligible) from CreatorIQ campaigns. "
                 "Open **Overview** or **Content Funnel** to explore.",
             )
     except Exception as exc:  # noqa: BLE001
@@ -123,55 +125,65 @@ def apply_filters(content: pd.DataFrame) -> pd.DataFrame:
 def render_sidebar(config: AppConfig | None = None) -> pd.DataFrame:
     config = config or get_config()
     content = init_content(config)
+    sync_status = st.session_state.get(SYNC_STATUS_KEY, {})
 
     st.sidebar.title("🚀 Wayfair Boosting")
-    st.sidebar.caption("Upload monthly exports · metrics update automatically")
+    st.sidebar.caption("Pulls from CreatorIQ campaigns · metrics update automatically")
 
     if config.is_demo:
-        st.sidebar.warning("**Demo mode** — upload a CSV below, or add CreatorIQ secrets for API sync.")
+        st.sidebar.warning(
+            "**Demo mode** — showing sample data. Add CreatorIQ secrets to `.streamlit/secrets.toml` "
+            "for live API sync."
+        )
     else:
-        st.sidebar.success("**Live mode**")
+        st.sidebar.success("**Live mode** — data syncs from CreatorIQ API")
+        last_sync = sync_status.get("boosting_content")
+        if last_sync and last_sync != "demo":
+            st.sidebar.caption(f"Last synced: {last_sync[:19].replace('T', ' ')} UTC")
 
     st.sidebar.divider()
-    st.sidebar.subheader("Get data")
+    st.sidebar.subheader("Data source")
 
     st.sidebar.markdown(
-        "**Recommended:** upload your monthly CreatorIQ / content tracker export on **Data Upload**. "
-        "API sync is optional."
+        "The scorecard pulls posts from **Wayfair Creators Boosting Partnership** (campaign 2206666) "
+        "and WBP-tagged creators via the CreatorIQ API. It auto-syncs on load."
     )
 
-    uploaded = st.sidebar.file_uploader(
-        "Quick upload (CSV/Excel)",
-        type=["csv", "xlsx", "xls"],
-        accept_multiple_files=True,
-        key="sidebar_upload",
-    )
-    if uploaded and st.sidebar.button("Import uploaded file(s)", use_container_width=True):
-        from creatoriq_dashboard.boosting_scorecard import parse_upload_file
-
-        try:
-            batches = [parse_upload_file(f.getvalue(), f.name) for f in uploaded]
-            merged = batches[0]
-            for batch in batches[1:]:
-                merged = merge_content_raw(merged, batch)
-            set_content(merge_content_raw(content, merged), config)
-            _flash("success", f"Imported **{len(merged):,}** rows. Metrics updated.")
-            st.rerun()
-        except ValueError as exc:
-            _flash("error", str(exc))
-
-    if st.sidebar.button("Sync CreatorIQ API", use_container_width=True, disabled=config.is_demo):
+    if st.sidebar.button("Refresh from CreatorIQ", use_container_width=True, disabled=config.is_demo, type="primary"):
         run_api_sync(config)
         st.rerun()
 
-    if st.sidebar.button("Rebuild from cache", use_container_width=True, disabled=config.is_demo):
-        run_cache_rebuild(config)
-        st.rerun()
+    with st.sidebar.expander("Optional: upload CSV supplement"):
+        st.caption("Only needed if paid-media fields are missing from the API.")
+        uploaded = st.file_uploader(
+            "CSV/Excel supplement",
+            type=["csv", "xlsx", "xls"],
+            accept_multiple_files=True,
+            key="sidebar_upload",
+            label_visibility="collapsed",
+        )
+        if uploaded and st.button("Import supplement", use_container_width=True, key="sidebar_import"):
+            from creatoriq_dashboard.boosting_scorecard import parse_upload_file
 
-    if st.sidebar.button("Load sample data", use_container_width=True):
-        set_content(generate_demo_boosting_content(), config)
-        _flash("info", "Loaded sample data.")
-        st.rerun()
+            try:
+                batches = [parse_upload_file(f.getvalue(), f.name) for f in uploaded]
+                merged = batches[0]
+                for batch in batches[1:]:
+                    merged = merge_content_raw(merged, batch)
+                set_content(merge_content_raw(content, merged), config)
+                _flash("success", f"Merged **{len(merged):,}** supplement rows into scorecard.")
+                st.rerun()
+            except ValueError as exc:
+                _flash("error", str(exc))
+
+    with st.sidebar.expander("Advanced"):
+        if st.button("Rebuild from warehouse cache", use_container_width=True, disabled=config.is_demo):
+            run_cache_rebuild(config)
+            st.rerun()
+        if st.button("Load sample data", use_container_width=True):
+            set_content(generate_demo_boosting_content(), config)
+            _flash("info", "Loaded sample data.")
+            st.rerun()
 
     st.sidebar.divider()
     st.sidebar.subheader("Filters")

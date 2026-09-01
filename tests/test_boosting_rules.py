@@ -27,7 +27,7 @@ def make_config() -> AppConfig:
             raw={
                 "boosting": {
                     "creator_tags": ["WBP"],
-                    "campaign_names": ["Wayfair Boosting Partnership"],
+                    "campaign_names": ["Wayfair Creators Boosting Partnership"],
                     "campaign_name_contains": [],
                     "eligible_hashtags": ["WayfairCreator", "wayfairelevate"],
                 }
@@ -45,7 +45,7 @@ def test_wbp_tag_detection():
 
 def test_campaign_name_exact_match():
     config = make_config()
-    assert is_boosting_campaign("Wayfair Boosting Partnership", "1", config)
+    assert is_boosting_campaign("Wayfair Creators Boosting Partnership", "1", config)
     assert not is_boosting_campaign("Affiliate Always-on", "2", config)
 
 

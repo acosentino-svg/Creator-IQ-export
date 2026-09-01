@@ -62,20 +62,23 @@ def wbp_creator_ids(creators: pd.DataFrame | None, config: AppConfig) -> set[str
 
 def is_boosting_campaign(campaign_name: str, campaign_id: str, config: AppConfig) -> bool:
     cfg = _boosting_settings(config)
-    campaign_ids = cfg.get("campaign_ids") or []
-    if campaign_ids:
-        return str(campaign_id) in {str(x) for x in campaign_ids}
+    configured_ids = {str(x) for x in (cfg.get("campaign_ids") or [])}
+    if configured_ids and str(campaign_id) in configured_ids:
+        return True
 
     exact_names = cfg.get("campaign_names") or []
     if exact_names:
         name = str(campaign_name).strip().lower()
-        return name in {str(n).strip().lower() for n in exact_names}
+        if name in {str(n).strip().lower() for n in exact_names}:
+            return True
 
     terms = cfg.get("campaign_name_contains") or []
-    if not terms:
-        return False
-    text = str(campaign_name).lower()
-    return any(str(term).lower() in text for term in terms)
+    if terms:
+        text = str(campaign_name).lower()
+        if any(str(term).lower() in text for term in terms):
+            return True
+
+    return False
 
 
 def post_text_for_eligibility(post: pd.Series) -> str:

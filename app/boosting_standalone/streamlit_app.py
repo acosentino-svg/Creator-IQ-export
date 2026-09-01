@@ -30,14 +30,15 @@ show_flash()
 
 st.title("Overview")
 st.caption(
-    "Wayfair Boosting Partnership · Eligible content requires **#WayfairCreator** and **#wayfairelevate** "
+    "Wayfair Creators Boosting Partnership · Eligible content requires **#WayfairCreator** and **#wayfairelevate** "
     "(any capitalization, e.g. #wayfaircreator, #WayfairElevate)."
 )
 
 if content.empty:
     st.info(
-        "No data yet. Use the sidebar to **upload a monthly CSV/Excel export** (recommended) "
-        "or sync from CreatorIQ API."
+        "No data yet. In **live mode** the app auto-syncs from CreatorIQ on load — "
+        "use **Refresh from CreatorIQ** in the sidebar if needed. "
+        "In demo mode, load sample data or add API secrets."
     )
     st.stop()
 
