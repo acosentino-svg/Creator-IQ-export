@@ -8,7 +8,7 @@ from .boosting_scorecard import CONTENT_RAW_COLUMNS, normalize_content_raw
 
 PLATFORMS = ["TikTok", "Instagram", "YouTube", "Pinterest"]
 CATEGORIES = ["Bedding", "Living Room", "Kitchen", "Outdoor", "Office"]
-CAMPAIGNS = ["Always-on", "Fall Refresh", "Way Day", "Spring Launch"]
+CAMPAIGNS = ["Wayfair Boosting Partnership"]
 
 
 def generate_demo_boosting_content(

@@ -398,7 +398,7 @@ def sync_all(config: AppConfig) -> dict[str, int]:
     record_sync(engine, "posts", now)
 
     existing_boosting = read_table(engine, "boosting_content")
-    boosting_df = posts_to_boosting_content(posts_df, config)
+    boosting_df = posts_to_boosting_content(posts_df, config, creators=roster_df)
     if not existing_boosting.empty:
         boosting_df = merge_api_with_supplements(boosting_df, existing_boosting)
     write_table(engine, "boosting_content", boosting_df)

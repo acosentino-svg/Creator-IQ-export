@@ -4,11 +4,10 @@ import pandas as pd
 import pytest
 
 from creatoriq_dashboard.boosting_creatoriq import (
-    filter_boosting_posts,
-    is_boosting_campaign,
     merge_api_with_supplements,
     posts_to_boosting_content,
 )
+from creatoriq_dashboard.boosting_rules import is_boosting_campaign
 from creatoriq_dashboard.boosting_demo_data import generate_demo_boosting_content
 from creatoriq_dashboard.boosting_scorecard import (
     build_creator_monthly,
@@ -23,9 +22,12 @@ from creatoriq_dashboard.config import AppConfig, Settings
 
 def make_config(**boosting_overrides) -> AppConfig:
     boosting = {
-        "campaign_name_contains": ["Boosting"],
+        "creator_tags": ["WBP"],
+        "campaign_names": ["Wayfair Boosting Partnership"],
+        "campaign_name_contains": [],
         "campaign_ids": [],
-        "default_eligible_if_in_campaign": True,
+        "eligible_hashtags": ["WayfairCreator", "wayfairelevate"],
+        "default_eligible_if_in_campaign": False,
         **boosting_overrides,
     }
     return AppConfig(
@@ -44,7 +46,7 @@ def make_config(**boosting_overrides) -> AppConfig:
 
 def test_is_boosting_campaign_by_name():
     config = make_config()
-    assert is_boosting_campaign("Wayfair Boosting Q3", "1", config)
+    assert is_boosting_campaign("Wayfair Boosting Partnership", "1", config)
     assert not is_boosting_campaign("Affiliate Always-on", "2", config)
 
 
@@ -61,16 +63,16 @@ def test_posts_to_boosting_content_maps_fields():
             "post_id": ["p1"],
             "creator_id": ["pub_001"],
             "campaign_id": ["c1"],
-            "campaign_name": ["Boosting Fall"],
+            "campaign_name": ["Wayfair Boosting Partnership"],
             "platform": ["TikTok"],
             "posted_at": [pd.Timestamp("2026-08-15", tz="UTC")],
             "post_url": ["https://tiktok.com/@x/video/1"],
+            "post_caption": ["Room refresh #WayfairCreator #wayfairelevate"],
             "views": [10000],
             "likes": [500],
             "comments": [40],
             "engagement": [0],
             "link_clicks": [120],
-            "boosting_eligible": [True],
             "boosting_selected": [True],
             "boosting_boosted": [True],
             "boosting_gift_card_cost": [100],
@@ -93,6 +95,55 @@ def test_posts_to_boosting_content_maps_fields():
     assert row["engagements"] == 540
 
 
+def test_posts_without_both_hashtags_not_eligible():
+    config = make_config()
+    posts = pd.DataFrame(
+        {
+            "post_id": ["p1"],
+            "creator_id": ["pub_001"],
+            "campaign_id": ["c1"],
+            "campaign_name": ["Wayfair Boosting Partnership"],
+            "platform": ["TikTok"],
+            "posted_at": [pd.Timestamp("2026-08-15", tz="UTC")],
+            "post_url": ["https://tiktok.com/@x/video/1"],
+            "post_caption": ["Only #WayfairCreator here"],
+            "views": [100],
+            "likes": [10],
+            "comments": [1],
+            "engagement": [0],
+            "link_clicks": [0],
+        }
+    )
+    out = posts_to_boosting_content(posts, config)
+    assert len(out) == 1
+    assert out.iloc[0]["eligible"] == False
+
+
+def test_wbp_tag_includes_creator_outside_campaign():
+    config = make_config()
+    posts = pd.DataFrame(
+        {
+            "post_id": ["p1"],
+            "creator_id": ["pub_wbp"],
+            "campaign_id": ["c9"],
+            "campaign_name": ["Affiliate Always-on"],
+            "platform": ["Instagram"],
+            "posted_at": [pd.Timestamp("2026-08-10", tz="UTC")],
+            "post_url": ["https://instagram.com/p/1"],
+            "post_caption": ["#WayfairCreator #wayfairelevate"],
+            "views": [1000],
+            "likes": [50],
+            "comments": [5],
+            "engagement": [0],
+            "link_clicks": [0],
+        }
+    )
+    creators = pd.DataFrame({"creator_id": ["pub_wbp"], "tags": ["WBP"]})
+    out = posts_to_boosting_content(posts, config, creators=creators)
+    assert len(out) == 1
+    assert out.iloc[0]["eligible"] == True
+
+
 def test_merge_api_with_supplements_keeps_csv_paid_metrics():
     api = normalize_content_raw(
         pd.DataFrame(
@@ -113,7 +164,7 @@ def test_merge_api_with_supplements_keeps_csv_paid_metrics():
                 "engagements": [0],
                 "clicks": [0],
                 "featured_category": [""],
-                "campaign": ["Boosting"],
+                "campaign": ["Wayfair Boosting Partnership"],
             }
         )
     )
@@ -149,7 +200,7 @@ def test_retention_movement_counts():
             "engagements": [0] * 5,
             "clicks": [0] * 5,
             "featured_category": [""] * 5,
-            "campaign": ["Boosting"] * 5,
+            "campaign": ["Wayfair Boosting Partnership"] * 5,
         }
     )
     content = normalize_content_raw(content)
@@ -181,7 +232,7 @@ def test_creator_monthly_active_not_same_as_selected():
                 "engagements": [0],
                 "clicks": [0],
                 "featured_category": [""],
-                "campaign": ["Boosting"],
+                "campaign": ["Wayfair Boosting Partnership"],
             }
         )
     )
@@ -211,7 +262,7 @@ def test_program_monthly_roas_excludes_gift_cards():
                 "engagements": [0],
                 "clicks": [0],
                 "featured_category": [""],
-                "campaign": ["Boosting"],
+                "campaign": ["Wayfair Boosting Partnership"],
             }
         )
     )
@@ -267,7 +318,7 @@ def test_merge_content_raw_by_url_month():
                 "engagements": [0],
                 "clicks": [0],
                 "featured_category": [""],
-                "campaign": ["Boosting"],
+                "campaign": ["Wayfair Boosting Partnership"],
             }
         )
     )

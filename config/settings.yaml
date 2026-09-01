@@ -47,15 +47,20 @@ geography:
   us_only_program: true
 
 boosting:
-  # Campaigns whose activity feeds the Boosting scorecard (see app/pages/12_Boosting_Scorecard.py).
-  # Match by name substring and/or explicit campaign IDs from CreatorIQ.
-  campaign_name_contains:
-    - boost
-    - Boosting
+  # Wayfair Boosting Partnership program rules.
+  # Creators: CRM tag WBP and/or roster in the campaign below.
+  # Eligible content: caption must include BOTH hashtags (case-insensitive).
+  creator_tags:
+    - WBP
+  campaign_names:
+    - Wayfair Boosting Partnership
+  campaign_name_contains: []
   campaign_ids: []
-  # When boosting_eligible isn't mapped in field_mappings.yaml, treat all posts
-  # in matching campaigns as eligible Boosting content.
-  default_eligible_if_in_campaign: true
+  eligible_hashtags:
+    - WayfairCreator
+    - wayfairelevate
+  # Only used when CreatorIQ exposes boosting_eligible via API; otherwise hashtags rule applies.
+  default_eligible_if_in_campaign: false
 
 live_sync:
   # Safety limits for pulling from the real CreatorIQ API (see
