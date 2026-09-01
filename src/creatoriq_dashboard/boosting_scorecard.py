@@ -13,6 +13,8 @@ import pandas as pd
 
 CONTENT_RAW_COLUMNS = [
     "creator_id",
+    "creator_name",
+    "creator_handle",
     "month",
     "content_url",
     "platform",
@@ -30,6 +32,22 @@ CONTENT_RAW_COLUMNS = [
     "featured_category",
     "campaign",
 ]
+
+_CREATOR_NAME_ALIASES = (
+    "creator_name",
+    "creator name",
+    "publisher name",
+    "publishername",
+    "name",
+)
+
+_CREATOR_HANDLE_ALIASES = (
+    "creator_handle",
+    "creator handle",
+    "handle",
+    "username",
+    "social handle",
+)
 
 _CREATOR_ID_ALIASES = (
     "creator_id",
@@ -162,6 +180,10 @@ def normalize_content_raw(df: pd.DataFrame) -> pd.DataFrame:
     out["creator_id"] = out["creator_id"].astype(str).str.strip()
     out = out[out["creator_id"].ne("") & out["creator_id"].ne("nan")]
 
+    for col in ("creator_name", "creator_handle"):
+        if col in out.columns:
+            out[col] = out[col].fillna("").astype(str).replace({"nan": "", "None": ""})
+
     out["month"] = out["month"].map(_parse_month)
     out = out[out["month"].notna()]
 
@@ -205,6 +227,8 @@ def parse_content_raw_csv(source: str | bytes | BinaryIO | pd.DataFrame) -> pd.D
     columns = list(raw.columns)
     mapping: dict[str, str | None] = {
         "creator_id": _find_column(columns, _CREATOR_ID_ALIASES),
+        "creator_name": _find_column(columns, _CREATOR_NAME_ALIASES),
+        "creator_handle": _find_column(columns, _CREATOR_HANDLE_ALIASES),
         "month": _find_column(columns, _MONTH_ALIASES),
         "content_url": _find_column(columns, _CONTENT_URL_ALIASES),
         "platform": _find_column(columns, _PLATFORM_ALIASES),
@@ -234,6 +258,14 @@ def parse_content_raw_csv(source: str | bytes | BinaryIO | pd.DataFrame) -> pd.D
             out[target] = np.nan
 
     return normalize_content_raw(out)
+
+
+def parse_upload_file(source: bytes | BinaryIO, filename: str = "") -> pd.DataFrame:
+    """Parse CSV or Excel monthly export."""
+    name = (filename or "").lower()
+    if name.endswith((".xlsx", ".xls")):
+        return parse_content_raw_csv(pd.read_excel(source))
+    return parse_content_raw_csv(source)
 
 
 def merge_content_raw(existing: pd.DataFrame, new: pd.DataFrame) -> pd.DataFrame:
@@ -297,6 +329,18 @@ def classify_creator_retention(
     return "Reactivated"
 
 
+def _consecutive_streak(eligible: pd.DataFrame, creator_id: str, month: str) -> int:
+    months_active = set(eligible[eligible["creator_id"] == creator_id]["month"].unique())
+    if month not in months_active:
+        return 0
+    streak = 0
+    current = _month_period(month)
+    while str(current) in months_active:
+        streak += 1
+        current = current - 1
+    return streak
+
+
 def build_creator_monthly(
     content: pd.DataFrame,
     creator_names: dict[str, str] | None = None,
@@ -340,14 +384,21 @@ def build_creator_monthly(
             gift_card = float(selected_grp["gift_card_cost"].sum())
             spend = float(grp["paid_spend"].sum())
             revenue = float(grp["boosted_revenue"].sum())
-            roas = _safe_div(revenue, spend)
+            roas = _safe_div(revenue, spend) if spend > 0 else None
+            engagement = int(grp["engagements"].sum()) if "engagements" in grp.columns else 0
+
+            name_series = grp["creator_name"] if "creator_name" in grp.columns else pd.Series(dtype=str)
+            handle_series = grp["creator_handle"] if "creator_handle" in grp.columns else pd.Series(dtype=str)
+            creator_name = next((str(v) for v in name_series if str(v).strip() not in {"", "nan"}), names.get(creator_id, ""))
+            creator_handle = next((str(v) for v in handle_series if str(v).strip() not in {"", "nan"}), "")
 
             status = classify_creator_retention(creator_id, month, active_by_month, first_active)
             rows.append(
                 {
                     "month": month,
                     "creator_id": creator_id,
-                    "creator_name": names.get(creator_id, ""),
+                    "creator_name": creator_name,
+                    "creator_handle": creator_handle,
                     "eligible_pieces": eligible_count,
                     "selected_pieces": selected_count,
                     "selection_rate": selection_rate,
@@ -355,7 +406,9 @@ def build_creator_monthly(
                     "paid_spend": spend,
                     "boosted_revenue": revenue,
                     "roas": roas,
-                    "active_last_month": creator_id in prior_active,
+                    "engagements": engagement,
+                    "active_this_month": True,
+                    "active_previous_month": creator_id in prior_active,
                     "retention_status": status,
                 }
             )
@@ -363,6 +416,12 @@ def build_creator_monthly(
     out = pd.DataFrame(rows)
     if out.empty:
         return out
+
+    # Consecutive active months ending in this month.
+    out["consecutive_active_months"] = out.apply(
+        lambda r: _consecutive_streak(eligible, r["creator_id"], r["month"]), axis=1
+    )
+    out["active_last_month"] = out["active_previous_month"]
 
     out["selection_rate_pct"] = (out["selection_rate"] * 100).round(1)
     out["roas_display"] = out["roas"].map(_format_roas)

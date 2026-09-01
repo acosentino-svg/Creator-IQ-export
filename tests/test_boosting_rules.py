@@ -1,4 +1,3 @@
-"""Tests for Wayfair Boosting program rules (WBP tag + hashtags)."""
 from __future__ import annotations
 
 from pathlib import Path
@@ -61,22 +60,19 @@ def test_hashtag_eligibility_requires_both():
     )
 
 
+def test_hashtag_case_insensitive_variants():
+    caption = "Check this out #WAYFAIRCREATOR and #WayfairElevate for the room"
+    assert post_has_required_hashtags(caption, ["WayfairCreator", "wayfairelevate"])
+    assert post_has_required_hashtags(caption, ["wayfaircreator", "WAYFAIRELEVATE"])
+
+
 def test_is_eligible_from_caption_series():
     config = make_config()
-    post = pd.Series(
-        {
-            "post_caption": "New room tour #wayfairelevate and #WayfairCreator",
-        }
-    )
+    post = pd.Series({"post_caption": "New room tour #wayfairelevate and #WayfairCreator"})
     assert is_eligible_boosting_content(post, config=config)
 
 
 def test_wbp_creator_ids_from_creators_table():
     config = make_config()
-    creators = pd.DataFrame(
-        {
-            "creator_id": ["1", "2"],
-            "tags": ["WBP, Curator", "Designer"],
-        }
-    )
+    creators = pd.DataFrame({"creator_id": ["1", "2"], "tags": ["WBP, Curator", "Designer"]})
     assert wbp_creator_ids(creators, config) == {"1"}

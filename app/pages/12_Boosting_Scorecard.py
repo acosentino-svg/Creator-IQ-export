@@ -1,4 +1,4 @@
-"""Boosting Program Scorecard — also available as standalone app via boosting_app.py."""
+"""Boosting scorecard — use the standalone Wayfair Boosting app (boosting_app.py)."""
 from __future__ import annotations
 
 import sys
@@ -12,14 +12,19 @@ for path in (str(APP_DIR), str(SRC_DIR)):
 
 import streamlit as st  # noqa: E402
 
-from boosting_standalone.scorecard_ui import render_boosting_scorecard  # noqa: E402
-from common import get_config  # noqa: E402
-
 st.set_page_config(page_title="Boosting Scorecard", page_icon="🚀", layout="wide")
-
-st.sidebar.info(
-    "This page is inside the **activation dashboard**. For a Boosting-only app, "
-    "deploy `boosting_app.py` on Streamlit Cloud (see docs/DEPLOY_BOOSTING_APP.md)."
+st.title("🚀 Wayfair Boosting Scorecard")
+st.info(
+    "The full Boosting scorecard lives in the **standalone app** deployed with main file **`boosting_app.py`** "
+    "(not this activation dashboard). See **Data Upload** in the sidebar there to upload monthly exports."
 )
+st.markdown(
+    """
+### Quick links in the Boosting app
+- **Overview** — executive KPIs
+- **Data Upload** — monthly CSV/Excel (recommended)
+- **Creator Health** · **Content Funnel** · **Performance** · **Retention** · **Data Quality**
 
-render_boosting_scorecard(get_config())
+Sidebar also has **Quick upload**, **Sync CreatorIQ API**, and **filters**.
+    """
+)

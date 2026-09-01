@@ -25,4 +25,4 @@ def test_boosting_standalone_shows_four_tabs():
     at.run(timeout=60)
     assert not at.exception
   # Tabs render as markdown headers in streamlit testing - check title
-    assert any("Boosting Program Scorecard" in t.value for t in at.title)
+    assert any("Wayfair Boosting" in t.value for t in at.title)
