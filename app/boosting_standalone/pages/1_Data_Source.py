@@ -33,7 +33,7 @@ st.markdown(
     """
 The scorecard **pulls directly from CreatorIQ** — no monthly CSV upload required.
 
-On each visit (live mode), the app syncs posts from the **Wayfair Boosting Partnership** campaign
+On each visit (live mode), the app syncs posts from **Wayfair Creators Boosting Partnership** (campaign 2206666)
 and identifies WBP-tagged creators. Eligibility is computed from post captions
 (`#WayfairCreator` + `#wayfairelevate`, any capitalization).
 

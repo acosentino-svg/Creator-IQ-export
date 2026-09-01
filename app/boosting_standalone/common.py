@@ -70,9 +70,8 @@ def run_api_sync(config: AppConfig) -> None:
         if df.empty:
             _flash(
                 "error",
-                "Sync finished but returned **0 rows**. Confirm the **Wayfair Boosting Partnership** "
-                "campaign exists in CreatorIQ and your API key has access. "
-                "Check `config/settings.yaml` → `boosting.campaign_names`.",
+                "Sync finished but returned **0 rows**. Confirm campaign **Wayfair Creators Boosting Partnership** "
+                "(ID 2206666) exists in CreatorIQ and has tracked posts. WBP-tagged creators are also included.",
             )
         else:
             _flash(
@@ -146,8 +145,8 @@ def render_sidebar(config: AppConfig | None = None) -> pd.DataFrame:
     st.sidebar.subheader("Data source")
 
     st.sidebar.markdown(
-        "The scorecard pulls posts from the **Wayfair Boosting Partnership** campaign "
-        "(and WBP-tagged creators) via the CreatorIQ API. It auto-syncs on load."
+        "The scorecard pulls posts from **Wayfair Creators Boosting Partnership** (campaign 2206666) "
+        "and WBP-tagged creators via the CreatorIQ API. It auto-syncs on load."
     )
 
     if st.sidebar.button("Refresh from CreatorIQ", use_container_width=True, disabled=config.is_demo, type="primary"):

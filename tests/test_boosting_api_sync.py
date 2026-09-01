@@ -17,7 +17,7 @@ from creatoriq_dashboard.config import AppConfig, Settings
 def make_config(**boosting_overrides) -> AppConfig:
     boosting = {
         "creator_tags": ["WBP"],
-        "campaign_names": ["Wayfair Boosting Partnership"],
+        "campaign_names": ["Wayfair Creators Boosting Partnership"],
         "campaign_name_contains": [],
         "campaign_ids": [],
         "eligible_hashtags": ["WayfairCreator", "wayfairelevate"],
@@ -57,7 +57,7 @@ def test_fetch_boosting_campaigns_ignores_inactive_status():
     config = make_config()
     client = MagicMock()
     client.fetch_all.return_value = [
-        {"CampaignId": "1", "CampaignName": "Wayfair Boosting Partnership", "CampaignStatus": "Completed"},
+        {"CampaignId": "1", "CampaignName": "Wayfair Creators Boosting Partnership", "CampaignStatus": "Completed"},
         {"CampaignId": "2", "CampaignName": "Affiliate", "CampaignStatus": "Active"},
     ]
     df = _fetch_boosting_campaigns(config, client)
@@ -68,8 +68,8 @@ def test_fetch_boosting_campaigns_respects_status_filter():
     config = make_config(campaign_status_filter=["Active"])
     client = MagicMock()
     client.fetch_all.return_value = [
-        {"CampaignId": "1", "CampaignName": "Wayfair Boosting Partnership", "CampaignStatus": "Completed"},
-        {"CampaignId": "2", "CampaignName": "Wayfair Boosting Partnership", "CampaignStatus": "Active"},
+        {"CampaignId": "1", "CampaignName": "Wayfair Creators Boosting Partnership", "CampaignStatus": "Completed"},
+        {"CampaignId": "2", "CampaignName": "Wayfair Creators Boosting Partnership", "CampaignStatus": "Active"},
     ]
     df = _fetch_boosting_campaigns(config, client)
     assert list(df["campaign_id"]) == ["2"]
@@ -79,14 +79,14 @@ def test_sync_boosting_from_creatoriq_fetches_campaign_posts():
     config = make_config()
     client = MagicMock()
     client.fetch_all.return_value = [
-        {"CampaignId": "c1", "CampaignName": "Wayfair Boosting Partnership", "CampaignStatus": "Active"},
+        {"CampaignId": "c1", "CampaignName": "Wayfair Creators Boosting Partnership", "CampaignStatus": "Active"},
     ]
     client.fetch_unpaginated_list.return_value = [{"PublisherId": "pub_1", "PublisherName": "Creator One"}]
     client.fetch_nested_all.return_value = [
         {
             "Id": "p1",
             "PublisherId": "pub_1",
-            "CampaignName": "Wayfair Boosting Partnership",
+            "CampaignName": "Wayfair Creators Boosting Partnership",
             "DateSubmitted": "2026-08-15T12:00:00Z",
             "PostUrl": "https://example.com/p/1",
             "Caption": "Room #WayfairCreator #wayfairelevate",
@@ -100,6 +100,28 @@ def test_sync_boosting_from_creatoriq_fetches_campaign_posts():
     assert out.iloc[0]["creator_name"] == "Creator One"
     assert out.iloc[0]["eligible"] == True
     client.fetch_nested_all.assert_called_once_with("campaign_activity", path_params={"campaign_id": "c1"})
+
+
+def test_sync_uses_configured_campaign_id_without_campaigns_list():
+    config = make_config(campaign_ids=["2206666"])
+    client = MagicMock()
+    client.fetch_all.return_value = []
+    client.fetch_unpaginated_list.return_value = []
+    client.fetch_nested_all.return_value = [
+        {
+            "Id": "p1",
+            "PublisherId": "pub_1",
+            "CampaignName": "Wayfair Creators Boosting Partnership",
+            "DateSubmitted": "2026-08-15T12:00:00Z",
+            "PostUrl": "https://example.com/p/1",
+            "Caption": "Room #WayfairCreator #wayfairelevate",
+        }
+    ]
+    client.iter_resource.return_value = []
+
+    out = sync_boosting_from_creatoriq(config, client=client)
+    assert len(out) == 1
+    client.fetch_nested_all.assert_called_once_with("campaign_activity", path_params={"campaign_id": "2206666"})
 
 
 def test_should_auto_sync_when_empty():

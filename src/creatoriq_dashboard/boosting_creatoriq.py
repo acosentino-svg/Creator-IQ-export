@@ -27,7 +27,7 @@ def filter_boosting_posts(
     *,
     creators: pd.DataFrame | None = None,
 ) -> pd.DataFrame:
-    """Posts from WBP-tagged creators or the Wayfair Boosting Partnership campaign."""
+    """Posts from WBP-tagged creators or the Wayfair Creators Boosting Partnership campaign."""
     if posts.empty:
         return posts.copy()
 
@@ -61,6 +61,20 @@ def _num(value, default: float = 0.0) -> float:
 
 def _boosting_settings(config: AppConfig) -> dict:
     return config.settings.get("boosting", default={}) or {}
+
+
+def _resolve_boosting_campaign_ids(config: AppConfig, boosting_campaigns: pd.DataFrame) -> list[str]:
+    """Configured IDs always sync; also include any campaigns matched from /campaigns."""
+    configured = [str(x) for x in (_boosting_settings(config).get("campaign_ids") or []) if str(x).strip()]
+    from_api: list[str] = []
+    if not boosting_campaigns.empty and "campaign_id" in boosting_campaigns.columns:
+        from_api = [str(x) for x in boosting_campaigns["campaign_id"].tolist() if str(x).strip() and str(x) != "nan"]
+
+    seen: list[str] = []
+    for cid in configured + from_api:
+        if cid not in seen:
+            seen.append(cid)
+    return seen
 
 
 def _fetch_boosting_campaigns(config: AppConfig, client: CreatorIQClient) -> pd.DataFrame:
@@ -329,7 +343,7 @@ def sync_boosting_from_creatoriq(
     post_mapping = config.field_mappings.get("posts", {})
 
     boosting_campaigns = _fetch_boosting_campaigns(config, client)
-    campaign_ids = boosting_campaigns["campaign_id"].tolist() if not boosting_campaigns.empty else []
+    campaign_ids = _resolve_boosting_campaign_ids(config, boosting_campaigns)
 
     if creators is None or creators.empty:
         creators = _fetch_boosting_creators(config, client, campaign_ids)
@@ -349,9 +363,11 @@ def sync_boosting_from_creatoriq(
         posts_df = posts_df.drop_duplicates(subset=["post_id"], keep="last")
 
     if not campaign_ids:
-        names = _boosting_settings(config).get("campaign_names") or ["Wayfair Boosting Partnership"]
+        names = _boosting_settings(config).get("campaign_names") or ["Wayfair Creators Boosting Partnership"]
+        ids = _boosting_settings(config).get("campaign_ids") or []
         logger.warning(
-            "No boosting campaigns matched config (%s). Check campaign_names / campaign_ids in settings.yaml.",
+            "No boosting campaigns to sync. Check boosting.campaign_ids (%s) and campaign_names (%s) in settings.yaml.",
+            ", ".join(str(i) for i in ids) or "none",
             ", ".join(str(n) for n in names),
         )
 

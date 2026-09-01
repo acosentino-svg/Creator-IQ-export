@@ -23,7 +23,7 @@ from creatoriq_dashboard.config import AppConfig, Settings
 def make_config(**boosting_overrides) -> AppConfig:
     boosting = {
         "creator_tags": ["WBP"],
-        "campaign_names": ["Wayfair Boosting Partnership"],
+        "campaign_names": ["Wayfair Creators Boosting Partnership"],
         "campaign_name_contains": [],
         "campaign_ids": [],
         "eligible_hashtags": ["WayfairCreator", "wayfairelevate"],
@@ -46,7 +46,7 @@ def make_config(**boosting_overrides) -> AppConfig:
 
 def test_is_boosting_campaign_by_name():
     config = make_config()
-    assert is_boosting_campaign("Wayfair Boosting Partnership", "1", config)
+    assert is_boosting_campaign("Wayfair Creators Boosting Partnership", "1", config)
     assert not is_boosting_campaign("Affiliate Always-on", "2", config)
 
 
@@ -63,7 +63,7 @@ def test_posts_to_boosting_content_maps_fields():
             "post_id": ["p1"],
             "creator_id": ["pub_001"],
             "campaign_id": ["c1"],
-            "campaign_name": ["Wayfair Boosting Partnership"],
+            "campaign_name": ["Wayfair Creators Boosting Partnership"],
             "platform": ["TikTok"],
             "posted_at": [pd.Timestamp("2026-08-15", tz="UTC")],
             "post_url": ["https://tiktok.com/@x/video/1"],
@@ -102,7 +102,7 @@ def test_posts_without_both_hashtags_not_eligible():
             "post_id": ["p1"],
             "creator_id": ["pub_001"],
             "campaign_id": ["c1"],
-            "campaign_name": ["Wayfair Boosting Partnership"],
+            "campaign_name": ["Wayfair Creators Boosting Partnership"],
             "platform": ["TikTok"],
             "posted_at": [pd.Timestamp("2026-08-15", tz="UTC")],
             "post_url": ["https://tiktok.com/@x/video/1"],
@@ -164,7 +164,7 @@ def test_merge_api_with_supplements_keeps_csv_paid_metrics():
                 "engagements": [0],
                 "clicks": [0],
                 "featured_category": [""],
-                "campaign": ["Wayfair Boosting Partnership"],
+                "campaign": ["Wayfair Creators Boosting Partnership"],
             }
         )
     )
@@ -200,7 +200,7 @@ def test_retention_movement_counts():
             "engagements": [0] * 5,
             "clicks": [0] * 5,
             "featured_category": [""] * 5,
-            "campaign": ["Wayfair Boosting Partnership"] * 5,
+            "campaign": ["Wayfair Creators Boosting Partnership"] * 5,
         }
     )
     content = normalize_content_raw(content)
@@ -232,7 +232,7 @@ def test_creator_monthly_active_not_same_as_selected():
                 "engagements": [0],
                 "clicks": [0],
                 "featured_category": [""],
-                "campaign": ["Wayfair Boosting Partnership"],
+                "campaign": ["Wayfair Creators Boosting Partnership"],
             }
         )
     )
@@ -262,7 +262,7 @@ def test_program_monthly_roas_excludes_gift_cards():
                 "engagements": [0],
                 "clicks": [0],
                 "featured_category": [""],
-                "campaign": ["Wayfair Boosting Partnership"],
+                "campaign": ["Wayfair Creators Boosting Partnership"],
             }
         )
     )
@@ -318,7 +318,7 @@ def test_merge_content_raw_by_url_month():
                 "engagements": [0],
                 "clicks": [0],
                 "featured_category": [""],
-                "campaign": ["Wayfair Boosting Partnership"],
+                "campaign": ["Wayfair Creators Boosting Partnership"],
             }
         )
     )

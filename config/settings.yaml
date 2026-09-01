@@ -47,22 +47,24 @@ geography:
   us_only_program: true
 
 boosting:
-  # Wayfair Boosting Partnership program rules.
+  # Wayfair Creators Boosting Partnership program rules.
   # Creators: CRM tag WBP and/or roster in the campaign below.
   # Eligible content: caption must include BOTH hashtags (case-insensitive).
   creator_tags:
     - WBP
   campaign_names:
-    - Wayfair Boosting Partnership
-  campaign_name_contains: []
-  campaign_ids: []
+    - Wayfair Creators Boosting Partnership
+  campaign_name_contains:
+    - Creators Boosting Partnership
+  campaign_ids:
+    - "2206666"
   eligible_hashtags:
     - WayfairCreator
     - wayfairelevate
   # Only used when CreatorIQ exposes boosting_eligible via API; otherwise hashtags rule applies.
   default_eligible_if_in_campaign: false
   # Boosting sync uses its own campaign status filter (not live_sync.campaign_status_filter).
-  # Empty list = include all statuses so "Wayfair Boosting Partnership" is found even when not Active.
+  # Empty list = include all statuses so the boosting campaign is found even when not Active.
   campaign_status_filter: []
   # Pull scorecard data from CreatorIQ on app load when cache is empty or stale.
   auto_sync_on_load: true

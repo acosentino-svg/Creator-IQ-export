@@ -30,7 +30,7 @@ show_flash()
 
 st.title("Overview")
 st.caption(
-    "Wayfair Boosting Partnership · Eligible content requires **#WayfairCreator** and **#wayfairelevate** "
+    "Wayfair Creators Boosting Partnership · Eligible content requires **#WayfairCreator** and **#wayfairelevate** "
     "(any capitalization, e.g. #wayfaircreator, #WayfairElevate)."
 )
 
