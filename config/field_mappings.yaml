@@ -54,12 +54,23 @@ posts:
   platform: SocialNetwork
   post_type: PostType
   posted_at: DateSubmitted
+  post_url: PostUrl # permalink when CreatorIQ exposes it; used as Content URL in Boosting scorecard
   views: Views_next
   likes: Likes
   comments: Comments
   shares: TotalShares
   engagement: Engagement
   link_clicks: LinkClicks # cumulative-to-date; see note above -- etl.py derives deltas for the links timeline
+  # Boosting program fields — adjust dotted paths to match your CreatorIQ account.
+  # If a field isn't in your API response, leave it unmapped; upload CSV for paid metrics.
+  boosting_eligible: CustomFields.Eligible
+  boosting_selected: CustomFields.Selected
+  boosting_selection_date: CustomFields.SelectionDate
+  boosting_boosted: CustomFields.Boosted
+  boosting_gift_card_cost: CustomFields.GiftCardCost
+  boosting_paid_spend: CustomFields.PaidSpend
+  boosting_revenue: CustomFields.BoostedRevenue
+  boosting_category: CustomFields.FeaturedCategory
 
 # There is no raw "links" API resource to map -- see the note above.
 # etl.py builds `link_clicks` rows from repeated `posts.link_clicks`

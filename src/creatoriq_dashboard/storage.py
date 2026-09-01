@@ -13,7 +13,16 @@ import pandas as pd
 from sqlalchemy import create_engine, text
 from sqlalchemy.engine import Engine
 
-TABLES = ("creators", "campaigns", "posts", "links", "link_clicks", "email_events", "active_member_links")
+TABLES = (
+    "creators",
+    "campaigns",
+    "posts",
+    "links",
+    "link_clicks",
+    "email_events",
+    "active_member_links",
+    "boosting_content",
+)
 LINK_SNAPSHOT_TABLE = "link_click_snapshots"
 
 
