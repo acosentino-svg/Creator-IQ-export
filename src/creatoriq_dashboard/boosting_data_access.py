@@ -27,7 +27,7 @@ def load_boosting_content(config: AppConfig) -> tuple[pd.DataFrame, dict[str, st
     boosting_status = get_last_synced_at(engine, "boosting_content") or sync_status.get("boosting_content")
 
     if stored.empty and not inputs.posts.empty:
-        built = posts_to_boosting_content(inputs.posts, config)
+        built = posts_to_boosting_content(inputs.posts, config, creators=inputs.creators)
         if not built.empty:
             stored = built
             write_table(engine, "boosting_content", stored)
@@ -42,7 +42,7 @@ def rebuild_boosting_from_cached_posts(config: AppConfig) -> pd.DataFrame:
     engine = get_engine(config.db_path)
     existing = normalize_content_raw(read_table(engine, "boosting_content"))
     inputs, _ = load_inputs(config)
-    api_content = posts_to_boosting_content(inputs.posts, config)
+    api_content = posts_to_boosting_content(inputs.posts, config, creators=inputs.creators)
     merged = merge_api_with_supplements(api_content, existing)
     write_table(engine, "boosting_content", merged)
     record_sync(engine, "boosting_content", datetime.now(timezone.utc))
@@ -52,8 +52,14 @@ def rebuild_boosting_from_cached_posts(config: AppConfig) -> pd.DataFrame:
 def sync_and_store_boosting_content(config: AppConfig) -> pd.DataFrame:
     """Pull boosting campaigns from CreatorIQ API and persist content raw."""
     engine = get_engine(config.db_path)
+    inputs, _ = load_inputs(config)
     existing = normalize_content_raw(read_table(engine, "boosting_content"))
-    merged = sync_boosting_from_creatoriq(config, existing_content=existing)
+    merged = sync_boosting_from_creatoriq(
+        config,
+        existing_content=existing,
+        extra_posts=inputs.posts,
+        creators=inputs.creators,
+    )
     write_table(engine, "boosting_content", merged)
     record_sync(engine, "boosting_content", datetime.now(timezone.utc))
     return merged

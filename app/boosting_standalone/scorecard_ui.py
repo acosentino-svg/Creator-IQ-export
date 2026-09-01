@@ -75,8 +75,8 @@ def render_boosting_scorecard(config: AppConfig) -> None:
 
     st.title("🚀 Boosting Program Scorecard")
     st.caption(
-        "Boosting program only — not the full creator activation dashboard. "
-        "Publisher ID is the stable creator key."
+        "Wayfair Boosting Partnership only. **Creators:** WBP tag or Wayfair Boosting Partnership campaign. "
+        "**Eligible content:** both #WayfairCreator and #wayfairelevate in the caption."
     )
 
     if config.is_demo:
@@ -109,6 +109,11 @@ def render_boosting_scorecard(config: AppConfig) -> None:
             if st.button("Reset to demo data"):
                 _set_content(generate_demo_boosting_content())
                 st.rerun()
+
+        st.markdown(
+            "**Program rules:** WBP tag or Wayfair Boosting Partnership campaign · "
+            "Eligible content must include **#WayfairCreator** and **#wayfairelevate**."
+        )
 
     tab_raw, tab_creator, tab_program, tab_dashboard = st.tabs(
         ["Content Raw", "Creator Monthly", "Program Monthly", "Dashboard"]
