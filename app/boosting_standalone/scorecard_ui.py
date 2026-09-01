@@ -80,40 +80,59 @@ def render_boosting_scorecard(config: AppConfig) -> None:
     )
 
     if config.is_demo:
-        st.info(
-            "**Demo mode** — sample Boosting data. Add your CreatorIQ API key in Streamlit secrets "
-            "and set `CREATORIQ_DASHBOARD_MODE=live`."
+        st.warning(
+            "**Demo mode** — Sync buttons are disabled until you connect CreatorIQ. "
+            "You can still explore sample data below, or upload a CSV on the **Content Raw** tab."
         )
+        with st.expander("How to enable sync (click here)", expanded=True):
+            st.markdown(
+                """
+1. Open [share.streamlit.io](https://share.streamlit.io) → your Boosting app → **Manage app**
+2. Go to **Settings** → **Secrets**
+3. Paste:
+
+```toml
+CREATORIQ_API_KEY = "your-key-here"
+CREATORIQ_BASE_URL = "https://api.creatoriq.com/api"
+CREATORIQ_DASHBOARD_MODE = "live"
+```
+
+4. Click **Save** → **Reboot app**
+5. Come back here — the sidebar should say **Live mode** and sync buttons will work.
+                """
+            )
     else:
         st.success(
             f"**Live mode** — posts synced: `{sync_info.get('posts') or 'never'}` · "
             f"boosting content: `{sync_info.get('boosting_content') or 'never'}`"
         )
 
-    with st.expander("Data sources & sync", expanded=not config.is_demo):
-        col_a, col_b, col_c = st.columns(3)
-        with col_a:
-            if st.button("Sync Boosting from CreatorIQ API", type="primary", disabled=config.is_demo):
-                with st.spinner("Fetching boosting campaign activity from CreatorIQ..."):
-                    try:
-                        _set_content(sync_and_store_boosting_content(config))
-                        st.rerun()
-                    except Exception as exc:  # noqa: BLE001
-                        st.error(f"API sync failed: {exc}")
-        with col_b:
-            if st.button("Rebuild from cached posts", disabled=config.is_demo):
-                with st.spinner("Rebuilding from warehouse posts..."):
-                    _set_content(rebuild_boosting_from_cached_posts(config))
+    st.subheader("Data sources & sync")
+    if config.is_demo:
+        st.caption("Sync is off in demo mode. Use the steps above, or upload a CSV on **Content Raw**.")
+    col_a, col_b, col_c = st.columns(3)
+    with col_a:
+        if st.button("Sync Boosting from CreatorIQ API", type="primary", disabled=config.is_demo):
+            with st.spinner("Fetching boosting campaign activity from CreatorIQ..."):
+                try:
+                    _set_content(sync_and_store_boosting_content(config))
                     st.rerun()
-        with col_c:
-            if st.button("Reset to demo data"):
-                _set_content(generate_demo_boosting_content())
+                except Exception as exc:  # noqa: BLE001
+                    st.error(f"API sync failed: {exc}")
+    with col_b:
+        if st.button("Rebuild from cached posts", disabled=config.is_demo):
+            with st.spinner("Rebuilding from warehouse posts..."):
+                _set_content(rebuild_boosting_from_cached_posts(config))
                 st.rerun()
+    with col_c:
+        if st.button("Reset to demo data"):
+            _set_content(generate_demo_boosting_content())
+            st.rerun()
 
-        st.markdown(
-            "**Program rules:** WBP tag or Wayfair Boosting Partnership campaign · "
-            "Eligible content must include **#WayfairCreator** and **#wayfairelevate**."
-        )
+    st.markdown(
+        "**Program rules:** WBP tag or Wayfair Boosting Partnership campaign · "
+        "Eligible content must include **#WayfairCreator** and **#wayfairelevate**."
+    )
 
     tab_raw, tab_creator, tab_program, tab_dashboard = st.tabs(
         ["Content Raw", "Creator Monthly", "Program Monthly", "Dashboard"]
