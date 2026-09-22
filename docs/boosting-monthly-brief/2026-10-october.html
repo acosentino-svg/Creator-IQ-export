@@ -2,413 +2,293 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <title>Wayfair Boosting Brief — October 2026</title>
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Fraunces:opsz,wght@9..144,600;9..144,700&display=swap" rel="stylesheet" />
+  <title>Wayfair Creators — October Boosting Brief</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <style>
     :root {
       --purple: #7f187f;
-      --purple-soft: #f4eaf7;
-      --purple-deep: #4a0d4d;
-      --ink: #2a2a30;
-      --muted: #5e5e68;
-      --meta: #0668e1;
-      --meta-soft: #e8f1fd;
-      --tiktok: #121212;
-      --tiktok-soft: #f0f0f0;
-      --good: #0d6b4d;
-      --good-bg: #e6f4ee;
-      --skip: #9b3d3d;
-      --skip-bg: #fceeee;
-      --radius: 12px;
+      --purple-light: #f0e3f4;
+      --purple-mid: #e8d4ee;
+      --ink: #1a1a1a;
+      --muted: #444;
     }
     * { box-sizing: border-box; }
     body {
       margin: 0;
-      font-family: "DM Sans", system-ui, sans-serif;
-      font-size: 10.5pt;
+      font-family: Inter, system-ui, sans-serif;
+      font-size: 8.5pt;
       color: var(--ink);
-      background: #ebe9e6;
-      line-height: 1.45;
+      background: #ccc;
+      line-height: 1.4;
     }
     .page {
       width: 8.5in;
-      min-height: 11in;
-      margin: 18px auto;
+      height: 11in;
+      max-height: 11in;
+      margin: 16px auto;
       background: #fff;
       page-break-after: always;
-      position: relative;
       overflow: hidden;
+      display: flex;
+      flex-direction: column;
     }
     .page:last-child { page-break-after: auto; }
-    .page-inner { padding: 0.5in 0.55in 0.45in; }
-    .serif { font-family: "Fraunces", Georgia, serif; }
-    /* —— Page 1 hero (distinct from tier PDF) —— */
+    /* Hero — campaign-brief style */
     .hero {
-      background: linear-gradient(120deg, var(--purple-deep) 0%, var(--purple) 55%, #a832a8 100%);
+      height: 2.15in;
+      background:
+        linear-gradient(to bottom, rgba(50, 15, 60, 0.2), rgba(50, 15, 60, 0.62)),
+        url("hero-bedroom.jpg") center/cover;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
       color: #fff;
-      padding: 0.45in 0.55in 0.5in;
-      position: relative;
+      padding: 0 0.5in;
     }
-    .hero .eyebrow {
-      font-size: 9pt;
+    .hero .partner {
+      font-size: 14pt;
       font-weight: 600;
-      letter-spacing: 0.14em;
-      text-transform: uppercase;
-      opacity: 0.85;
-      margin-bottom: 8px;
+      letter-spacing: 0.02em;
+      margin-bottom: 6px;
+      text-shadow: 0 1px 8px rgba(0,0,0,0.4);
     }
+    .hero .partner span { font-weight: 400; opacity: 0.95; }
     .hero h1 {
-      font-family: "Fraunces", Georgia, serif;
-      font-size: 28pt;
+      font-size: 26pt;
       font-weight: 700;
       margin: 0;
-      line-height: 1.08;
-      max-width: 11ch;
+      line-height: 1.1;
+      text-shadow: 0 2px 12px rgba(0,0,0,0.45);
     }
-    .hero .month-pill {
-      display: inline-block;
-      margin-top: 14px;
-      background: rgba(255,255,255,0.2);
-      border: 1px solid rgba(255,255,255,0.45);
-      border-radius: 999px;
-      padding: 6px 16px;
-      font-weight: 600;
-      font-size: 10pt;
-    }
-    .hero-deco {
-      position: absolute;
-      right: 0.4in;
-      top: 0.35in;
-      width: 1.4in;
-      height: 1.4in;
-      border-radius: 50%;
-      border: 3px solid rgba(255,255,255,0.25);
-    }
-    .intro {
-      padding: 0.35in 0.55in 0.1in;
-      color: var(--muted);
-      font-size: 10.5pt;
-    }
-    .intro strong { color: var(--ink); }
-    h2.section-title {
-      font-family: "Fraunces", Georgia, serif;
-      font-size: 15pt;
-      color: var(--purple-deep);
-      margin: 0.35in 0.55in 0.2in;
-      padding-bottom: 6px;
-      border-bottom: 3px solid var(--purple-soft);
-    }
-    .platform-row {
+    .columns {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 14px;
-      padding: 0 0.55in 0.35in;
+      gap: 0.28in;
+      padding: 0.22in 0.34in 0.12in;
+      flex: 1;
     }
-    .platform {
-      border-radius: var(--radius);
-      overflow: hidden;
-      box-shadow: 0 2px 12px rgba(0,0,0,0.06);
-    }
-    .platform .head {
-      padding: 10px 14px;
-      color: #fff;
-      font-weight: 700;
-      font-size: 11pt;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-    .platform .head .dot {
-      width: 8px; height: 8px; border-radius: 50%; background: #fff;
-    }
-    .platform.meta .head { background: var(--meta); }
-    .platform.tiktok .head { background: var(--tiktok); }
-    .platform .body {
-      padding: 12px 14px 14px;
-      font-size: 9.5pt;
-      background: #fff;
-      border: 1px solid #e8e5e1;
-      border-top: none;
-      border-radius: 0 0 var(--radius) var(--radius);
-    }
-    .platform ul { margin: 0; padding-left: 1.1em; }
-    .platform li { margin-bottom: 5px; }
-    .platform .when {
-      font-size: 8.5pt;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.06em;
-      color: var(--meta);
-      margin-top: 8px;
-    }
-    .platform.tiktok .when { color: var(--tiktok); }
-    .hook-bar {
-      margin: 0 0.55in 0.4in;
-      padding: 12px 16px;
-      background: var(--purple-soft);
-      border-radius: var(--radius);
-      font-size: 10pt;
-      border-left: 4px solid var(--purple);
-    }
-    /* —— Page 2: specs strip + fits —— */
-    .spec-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 10px;
-      margin-bottom: 22px;
-    }
-    .spec {
-      background: #faf9f7;
-      border-radius: 10px;
-      padding: 10px 12px;
-      text-align: center;
-      border: 1px solid #ece8e3;
-    }
-    .spec .num {
-      font-family: "Fraunces", serif;
-      font-size: 18pt;
+    .section { margin-bottom: 0.14in; }
+    .section h2 {
+      font-size: 9pt;
       font-weight: 700;
       color: var(--purple);
-      line-height: 1;
-    }
-    .spec .lbl { font-size: 8.5pt; color: var(--muted); margin-top: 4px; font-weight: 600; }
-    .fits-row {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 14px;
-    }
-    .fits-card {
-      border-radius: var(--radius);
-      padding: 14px 16px;
-      font-size: 9.5pt;
-    }
-    .fits-card.good { background: var(--good-bg); border: 1px solid #b8dfd0; }
-    .fits-card.skip { background: var(--skip-bg); border: 1px solid #e8c4c4; }
-    .fits-card h3 {
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
       margin: 0 0 8px;
-      font-size: 11pt;
-      font-weight: 700;
     }
-    .fits-card.good h3 { color: var(--good); }
-    .fits-card.skip h3 { color: var(--skip); }
-    .fits-card ul { margin: 0; padding-left: 1.15em; }
-    .tag-bar {
-      margin-top: 20px;
-      text-align: center;
-      padding: 14px;
-      border-radius: var(--radius);
-      background: linear-gradient(90deg, var(--purple-deep), var(--purple));
-      color: #fff;
-      font-weight: 700;
-      font-size: 12pt;
-      letter-spacing: 0.02em;
-    }
-    .tag-bar span { opacity: 0.75; font-weight: 500; font-size: 9pt; display: block; margin-bottom: 4px; }
-    /* —— Page 3: know panel (not FAQ clone) —— */
-    .know-panel {
-      background: #faf9f7;
-      border-radius: var(--radius);
-      padding: 18px 20px;
-      margin-bottom: 18px;
-      border: 1px solid #e5e2dd;
-    }
-    .know-panel h2 {
-      font-family: "Fraunces", serif;
-      font-size: 14pt;
-      color: var(--purple-deep);
-      margin: 0 0 12px;
-    }
-    .know-item {
-      display: grid;
-      grid-template-columns: 28px 1fr;
+    .section p { margin: 0 0 6px; color: var(--muted); font-size: 8.5pt; }
+    .numbered {
+      display: flex;
       gap: 10px;
-      margin-bottom: 12px;
-      font-size: 10pt;
+      align-items: flex-start;
+      background: var(--purple-light);
+      border-radius: 10px;
+      padding: 8px 10px;
+      margin-bottom: 7px;
     }
-    .know-item .n {
-      width: 28px; height: 28px;
+    .numbered .num {
+      flex-shrink: 0;
+      width: 22px;
+      height: 22px;
       background: var(--purple);
       color: #fff;
-      border-radius: 8px;
+      border-radius: 50%;
+      font-size: 9pt;
       font-weight: 700;
-      font-size: 10pt;
       display: flex;
       align-items: center;
       justify-content: center;
     }
-    .survey-note {
-      padding: 14px 16px;
-      border-radius: var(--radius);
-      background: var(--meta-soft);
-      border: 1px dashed var(--meta);
-      font-size: 10pt;
+    .numbered .txt { font-size: 8pt; color: var(--ink); line-height: 1.35; }
+    .love-box {
+      background: var(--purple-light);
+      border-radius: 10px;
+      padding: 8px 10px;
+      margin-bottom: 7px;
     }
-    /* —— Page 4 checklist —— */
-    .check-item {
-      display: flex;
-      gap: 12px;
-      align-items: flex-start;
-      padding: 11px 0;
-      border-bottom: 1px solid #eee;
-      font-size: 10pt;
+    .love-box strong {
+      display: block;
+      font-size: 8.5pt;
+      color: var(--ink);
+      margin-bottom: 3px;
     }
-    .check-item:last-child { border-bottom: none; }
-    .check-box {
-      flex-shrink: 0;
-      width: 18px; height: 18px;
-      border: 2px solid var(--purple);
-      border-radius: 4px;
-      margin-top: 2px;
-    }
-    .contact {
-      margin-top: 28px;
-      font-size: 9.5pt;
+    .love-box span { font-size: 7.8pt; color: var(--muted); }
+    .love-box.platform-meta { border-left: 3px solid #1877f2; }
+    .love-box.platform-tt { border-left: 3px solid #121212; }
+    ul.check {
+      margin: 0;
+      padding-left: 1.1em;
+      font-size: 8.5pt;
       color: var(--muted);
-      text-align: center;
     }
-    .contact a { color: var(--purple); font-weight: 600; text-decoration: none; }
+    ul.check li { margin-bottom: 4px; }
+    ul.check ul { margin-top: 4px; font-size: 8pt; }
+    .appendix a {
+      color: var(--ink);
+      text-decoration: underline;
+      font-size: 8.5pt;
+      display: block;
+      margin-bottom: 4px;
+    }
+    .skip-wrap {
+      padding: 0.1in 0.34in 0.08in;
+      border-top: 3px solid var(--purple-light);
+    }
+    .skip-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+    .skip-box {
+      border-radius: 10px;
+      padding: 10px 12px;
+      font-size: 8pt;
+    }
+    .skip-box.good { background: #e8f5ec; }
+    .skip-box.bad { background: #fce8e8; }
+    .skip-box h3 { margin: 0 0 6px; font-size: 9pt; color: var(--purple); text-transform: uppercase; letter-spacing: 0.04em; }
+    .footer-line {
+      text-align: center;
+      font-size: 7.5pt;
+      color: #666;
+      padding: 0 0.34in 0.14in;
+      margin-top: auto;
+    }
+    .footer-line a { color: var(--purple); text-decoration: none; font-weight: 600; }
     @media print {
       body { background: #fff; }
-      .page { margin: 0; box-shadow: none; }
+      .page { margin: 0; }
     }
   </style>
 </head>
 <body>
 
-  <!-- PAGE 1: priorities -->
   <section class="page">
     <header class="hero">
-      <div class="hero-deco" aria-hidden="true"></div>
-      <div class="eyebrow">Wayfair Creators · Paid boost</div>
-      <h1>Monthly Boosting Brief</h1>
-      <span class="month-pill">October 2026</span>
+      <div class="partner">wayfair <span>Creators</span></div>
+      <h1>October Boosting Brief</h1>
     </header>
-    <p class="intro">
-      This month’s brief tells you what our <strong>Meta</strong> and <strong>TikTok</strong> paid teams are
-      pulling for boost. Same creative bar on both: vertical, native, product-forward video —
-      <strong>not</strong> sale-code or promo-led ads.
-    </p>
-    <h2 class="section-title">Platform priorities</h2>
-    <div class="platform-row">
-      <div class="platform meta">
-        <div class="head"><span class="dot"></span> Meta</div>
-        <div class="body">
-          <p class="when">Early October</p>
-          <ul><li><strong>Fall &amp; Halloween</strong> — decor, porch, dining, cozy layers; product in the first 3 sec</li></ul>
-          <p class="when">Mid–late October</p>
-          <ul><li><strong>Holiday preview</strong> — trees, trim, guest-ready rooms, entertaining</li></ul>
-          <p class="when">All month</p>
-          <ul><li><strong>Evergreen</strong> — any in-room, in-use Wayfair story</li></ul>
+
+    <div class="columns">
+      <div class="col-left">
+        <div class="section">
+          <h2>Program overview</h2>
+          <p>
+            The Boosting Partnership turns your best <strong>WCP Elevate</strong> videos into paid ads on
+            <strong>Meta</strong> and <strong>TikTok</strong>. We select native creator content — vertical,
+            product-forward, and filmed in real spaces — not promo or sale-led spots.
+          </p>
+        </div>
+
+        <div class="section">
+          <h2>Messaging inspiration</h2>
+          <p>Content should feel authentic and lived-in, with Wayfair product naturally part of the story.</p>
+          <div class="numbered">
+            <div class="num">1</div>
+            <div class="txt"><strong>Hook in 1–3 seconds</strong> — problem, benefit, or discovery; show the product immediately.</div>
+          </div>
+          <div class="numbered">
+            <div class="num">2</div>
+            <div class="txt"><strong>Product in use</strong> — styled room, not unbox-only; one clear benefit or use case.</div>
+          </div>
+          <div class="numbered">
+            <div class="num">3</div>
+            <div class="txt"><strong>You on camera</strong> — face-to-camera, hands-on, or POV for trust and demo.</div>
+          </div>
+          <div class="numbered">
+            <div class="num">4</div>
+            <div class="txt"><strong>Evergreen over promo</strong> — seasonal mood is fine; codes and sale graphics aren’t our main boost pool.</div>
+          </div>
+        </div>
+
+        <div class="section appendix">
+          <h2>Appendix</h2>
+          <a href="https://www.instagram.com/reels/DdR5817pNId/">Boost-friendly example — in room + in use</a>
+          <a href="https://www.instagram.com/reels/DctN7D8RQub/">Boost-friendly example — clear product story</a>
+          <a href="https://www.instagram.com/reels/DdRcdZFNG2Z/">Usually skipped — unboxing only</a>
         </div>
       </div>
-      <div class="platform tiktok">
-        <div class="head"><span class="dot"></span> TikTok</div>
-        <div class="body">
-          <ul>
-            <li><strong>Pet</strong> — pet + product visible; beds, washable rugs, pet-friendly furniture</li>
-            <li><strong>Sideboards</strong> — styled dining, entry, or living; in use, not unbox-only</li>
-            <li><strong>Halloween</strong> — livable at-home styling; strong opening hook</li>
-            <li><strong>Wayfair Verified</strong> — feature Verified items; show badge when applicable</li>
+
+      <div class="col-right">
+        <div class="section">
+          <h2>Campaign overview</h2>
+          <p>
+            <strong>October goal:</strong> align your posts with what Paid is pulling this month. Meta continues
+            <strong>fall / Halloween</strong> into early October, then <strong>holiday preview</strong>; TikTok
+            prioritizes <strong>pet</strong>, <strong>sideboards</strong>, <strong>Halloween</strong>, and
+            <strong>Wayfair Verified</strong>. <strong>Evergreen</strong> in-room stories work on both platforms all month.
+          </p>
+        </div>
+
+        <div class="section">
+          <h2>Content we love</h2>
+          <div class="love-box platform-meta">
+            <strong>Meta · Fall &amp; Halloween (early Oct)</strong>
+            <span>Cozy decor, porch, dining, livable Halloween — product in the first 3 seconds.</span>
+          </div>
+          <div class="love-box platform-meta">
+            <strong>Meta · Holiday preview (mid–late Oct)</strong>
+            <span>Trees, trim, guest-ready rooms, entertaining — evergreen tone, no sale copy.</span>
+          </div>
+          <div class="love-box platform-tt">
+            <strong>TikTok · Pet &amp; sideboards</strong>
+            <span>Pet-friendly pieces with pet + product visible; sideboards styled and in use.</span>
+          </div>
+          <div class="love-box platform-tt">
+            <strong>TikTok · Halloween &amp; Verified</strong>
+            <span>At-home Halloween styling; feature Wayfair Verified products and badge when applicable.</span>
+          </div>
+          <div class="love-box">
+            <strong>Both · Evergreen</strong>
+            <span>Office, storage, bed &amp; bath, outdoor living — problem → product → benefit.</span>
+          </div>
+        </div>
+
+        <div class="section">
+          <h2>Deliverables checklist</h2>
+          <ul class="check">
+            <li>Vertical video, <strong>15–45 seconds</strong>, captioned (sound-off friendly)</li>
+            <li>Your captions:
+              <ul>
+                <li><strong>Reels / TikTok:</strong> include <strong>#WayfairCreator</strong> and <strong>#wayfairelevate</strong></li>
+                <li>Add <strong>#ad</strong> (or required disclosure) when applicable for paid partnership</li>
+              </ul>
+            </li>
+            <li>Wayfair product clear, in use, in a styled space</li>
+            <li>At least one post aligned with <strong>your platform’s October priority</strong> (see Content we love)</li>
+            <li>Creator link in caption or bio if product stickers fail</li>
           </ul>
         </div>
       </div>
     </div>
-    <div class="hook-bar">
-      <strong>Quick hook:</strong> 1–3 second open · Wayfair product early · you on camera or hands-on · captions on
-    </div>
-  </section>
 
-  <!-- PAGE 2: creative -->
-  <section class="page">
-    <div class="page-inner">
-      <h2 class="section-title" style="margin-left:0;margin-right:0;">Boost-ready specs</h2>
-      <div class="spec-grid">
-        <div class="spec"><div class="num">15–45s</div><div class="lbl">Length</div></div>
-        <div class="spec"><div class="num">9:16</div><div class="lbl">Vertical video</div></div>
-        <div class="spec"><div class="num">1–3s</div><div class="lbl">Product in hook</div></div>
-      </div>
-      <p style="font-size:10pt;color:var(--muted);margin:0 0 18px;">
-        Reels / TikTok only for paid boost (no carousels). Informal, bright, lived-in spaces. One clear product story.
-      </p>
-
-      <h2 class="section-title" style="margin-left:0;margin-right:0;">Great fits vs. usually skipped</h2>
-      <div class="fits-row">
-        <div class="fits-card good">
+    <div class="skip-wrap">
+      <div class="skip-grid">
+        <div class="skip-box good">
           <h3>Great fits</h3>
-          <ul>
-            <li>Product styled <strong>and</strong> in use</li>
-            <li>Problem → product → benefit</li>
-            <li>Native creator tone, easy to follow pacing</li>
+          <ul style="margin:0;padding-left:1.1em;">
+            <li>In room + in use</li>
+            <li>Clear, native creator story</li>
+            <li>Bright, easy-to-follow pacing</li>
           </ul>
-          <p style="margin:10px 0 0;font-size:8.5pt;">Examples: instagram.com/reels/DdR5817pNId · DctN7D8RQub</p>
         </div>
-        <div class="fits-card skip">
+        <div class="skip-box bad">
           <h3>Usually skipped</h3>
-          <ul>
-            <li>Unboxing only</li>
-            <li>Busy / off-brand text overlays</li>
+          <ul style="margin:0;padding-left:1.1em;">
+            <li>Unboxing only, busy overlays</li>
             <li>AI-looking or screen-record content</li>
             <li>Unclear which Wayfair product is featured</li>
           </ul>
         </div>
       </div>
-      <div class="tag-bar">
-        <span>Eligibility hashtags</span>
-        #WayfairCreator · #wayfairelevate
-      </div>
-      <p style="text-align:center;font-size:9pt;color:var(--muted);margin-top:8px;">
-        Add required paid partnership disclosure (e.g. #ad) when applicable.
-      </p>
     </div>
-  </section>
 
-  <!-- PAGE 3: context -->
-  <section class="page">
-    <div class="page-inner">
-      <div class="know-panel">
-        <h2>What to know about selection</h2>
-        <div class="know-item">
-          <div class="n">1</div>
-          <div>We get <strong>more eligible posts than we can boost</strong>. October picks follow the Meta and TikTok lists on page 1, plus creative fit and a mix of styles and price points.</div>
-        </div>
-        <div class="know-item">
-          <div class="n">2</div>
-          <div><strong>Eligible ≠ guaranteed.</strong> Matching this brief raises your odds when your category is in priority — it’s what Paid is actively pulling.</div>
-        </div>
-        <div class="know-item">
-          <div class="n">3</div>
-          <div><strong>Meta vs TikTok themes</strong> differ; creative standards are the same. Film for the platform you’re targeting when you can.</div>
-        </div>
-        <div class="know-item">
-          <div class="n">4</div>
-          <div><strong>Evergreen over promo.</strong> Seasonal mood is fine; codes and limited-time offer graphics aren’t our main boost pool.</div>
-        </div>
-        <div class="know-item">
-          <div class="n">5</div>
-          <div><strong>Linking issues?</strong> Use your creator link in caption/bio and mention it on video if stickers fail.</div>
-        </div>
-      </div>
-      <div class="survey-note">
-        <strong>From your September survey:</strong> clearer monthly direction was the #1 ask —
-        <strong>12 of 17</strong> creators said more guidance would help them post consistently. This brief is that shared direction (updated each month).
-      </div>
-    </div>
-  </section>
-
-  <!-- PAGE 4: action -->
-  <section class="page">
-    <div class="page-inner">
-      <h2 class="section-title" style="margin-left:0;margin-right:0;">Your October to-do</h2>
-      <div class="check-item"><div class="check-box"></div><div>1–2 <strong>fall / Halloween</strong> reels — Meta — product in first 3 seconds</div></div>
-      <div class="check-item"><div class="check-box"></div><div>At least one TikTok priority: <strong>pet</strong>, <strong>sideboard</strong>, <strong>Halloween</strong>, or <strong>Wayfair Verified</strong></div></div>
-      <div class="check-item"><div class="check-box"></div><div>Mid–late month: <strong>holiday preview</strong> (no sale copy)</div></div>
-      <div class="check-item"><div class="check-box"></div><div>Keep posting <strong>evergreen</strong> in-use room content anytime</div></div>
-      <div class="check-item"><div class="check-box"></div><div>Caption: <strong>#WayfairCreator</strong> + <strong>#wayfairelevate</strong> + disclosure</div></div>
-      <p class="contact">
-        Questions? <a href="mailto:wcp@wayfair.com">wcp@wayfair.com</a> · creator dashboard<br />
-        Thank you for creating with Wayfair.
-      </p>
-    </div>
+    <p class="footer-line">
+      Selection isn’t guaranteed — we receive more eligible posts than we can boost. Questions?
+      <a href="mailto:wcp@wayfair.com">wcp@wayfair.com</a>
+    </p>
   </section>
 
 </body>
