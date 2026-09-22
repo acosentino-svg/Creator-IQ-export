@@ -16,10 +16,10 @@
     body {
       margin: 0;
       font-family: Inter, system-ui, sans-serif;
-      font-size: 8.35pt;
+      font-size: 9pt;
       color: var(--ink);
       background: #ccc;
-      line-height: 1.38;
+      line-height: 1.4;
     }
     .page {
       width: 8.5in;
@@ -43,14 +43,12 @@
       flex: 1 1 0;
       display: flex;
       flex-direction: column;
-      justify-content: space-between;
-      min-height: calc(11in - 2.78in - 0.38in);
     }
     .page:last-child { page-break-after: auto; }
     /* Hero — campaign-brief style */
     .hero {
-      flex: 0 0 2.78in;
-      min-height: 2.78in;
+      flex: 0 0 2.5in;
+      min-height: 2.5in;
       background:
         linear-gradient(to bottom, rgba(50, 15, 60, 0.2), rgba(50, 15, 60, 0.62)),
         url("hero-bedroom.jpg") center/cover;
@@ -88,8 +86,7 @@
     .col-left, .col-right {
       display: flex;
       flex-direction: column;
-      justify-content: space-between;
-      gap: 0.14in;
+      gap: 0.2in;
     }
     .section { margin-bottom: 0; }
     .section h2 {
@@ -100,15 +97,15 @@
       letter-spacing: 0.06em;
       margin: 0 0 9px;
     }
-    .section p { margin: 0 0 6px; color: var(--muted); font-size: 8.35pt; }
+    .section p { margin: 0 0 6px; color: var(--muted); font-size: 9pt; }
     .numbered {
       display: flex;
       gap: 11px;
       align-items: flex-start;
       background: var(--purple-light);
       border-radius: 10px;
-      padding: 7px 10px;
-      margin-bottom: 6px;
+      padding: 8px 11px;
+      margin-bottom: 7px;
     }
     .numbered:last-child { margin-bottom: 0; }
     .numbered .num {
@@ -124,31 +121,31 @@
       align-items: center;
       justify-content: center;
     }
-    .numbered .txt { font-size: 8.2pt; color: var(--ink); line-height: 1.35; }
+    .numbered .txt { font-size: 8.75pt; color: var(--ink); line-height: 1.36; }
     .love-box {
       background: var(--purple-light);
       border-radius: 10px;
-      padding: 7px 10px;
-      margin-bottom: 6px;
+      padding: 8px 11px;
+      margin-bottom: 7px;
     }
     .love-box:last-child { margin-bottom: 0; }
     .love-box strong {
       display: block;
-      font-size: 8.35pt;
+      font-size: 9pt;
       color: var(--ink);
       margin-bottom: 4px;
     }
-    .love-box span { font-size: 8pt; color: var(--muted); line-height: 1.32; }
+    .love-box span { font-size: 8.5pt; color: var(--muted); line-height: 1.34; }
     .love-box.platform-meta { border-left: 3px solid #1877f2; }
     .love-box.platform-tt { border-left: 3px solid #121212; }
     ul.check {
       margin: 0;
       padding-left: 1.15em;
-      font-size: 8.35pt;
+      font-size: 9pt;
       color: var(--muted);
     }
-    ul.check li { margin-bottom: 4px; }
-    ul.check ul { margin-top: 3px; font-size: 8.1pt; }
+    ul.check li { margin-bottom: 5px; }
+    ul.check ul { margin-top: 4px; font-size: 8.75pt; }
     .appendix a {
       color: var(--ink);
       text-decoration: underline;
@@ -157,9 +154,10 @@
       margin-bottom: 4px;
     }
     .skip-wrap {
-      padding: 0.14in 0.38in 0.1in;
+      padding: 0.2in 0.38in 0.12in;
       border-top: 4px solid var(--purple-light);
       flex: 0 0 auto;
+      margin-top: 0.08in;
     }
     .skip-grid {
       display: grid;
@@ -169,8 +167,7 @@
     .skip-box {
       border-radius: 10px;
       padding: 10px 12px;
-      font-size: 8.35pt;
-      min-height: 0.95in;
+      font-size: 9pt;
     }
     .skip-box.good { background: #e8f5ec; }
     .skip-box.bad { background: #fce8e8; }
@@ -206,6 +203,16 @@
     <div class="columns">
       <div class="col-left">
         <div class="section">
+          <h2>October overview</h2>
+          <p>
+            Align your posts with what Paid is pulling <strong>this month</strong>. On <strong>Meta</strong>, we’re continuing
+            <strong>fall / Halloween</strong> into early October, then shifting to <strong>holiday preview</strong>. On
+            <strong>TikTok</strong>, we’re prioritizing <strong>pet</strong>, <strong>sideboards</strong>, <strong>Halloween</strong>, and
+            <strong>Wayfair Verified</strong>. <strong>Evergreen</strong> in-room stories work on both platforms all month.
+          </p>
+        </div>
+
+        <div class="section">
           <h2>Messaging inspiration</h2>
           <div class="numbered">
             <div class="num">1</div>
@@ -225,19 +232,15 @@
           </div>
         </div>
 
+        <div class="section appendix">
+          <h2>Example reels</h2>
+          <a href="https://www.instagram.com/reels/DdR5817pNId/">Boost-friendly — in room + in use</a>
+          <a href="https://www.instagram.com/reels/DctN7D8RQub/">Boost-friendly — clear product story</a>
+          <a href="https://www.instagram.com/reels/DdRcdZFNG2Z/">Usually skipped — unboxing only</a>
+        </div>
       </div>
 
       <div class="col-right">
-        <div class="section">
-          <h2>October overview</h2>
-          <p>
-            Align your posts with what Paid is pulling <strong>this month</strong>. On <strong>Meta</strong>, we’re continuing
-            <strong>fall / Halloween</strong> into early October, then shifting to <strong>holiday preview</strong>. On
-            <strong>TikTok</strong>, we’re prioritizing <strong>pet</strong>, <strong>sideboards</strong>, <strong>Halloween</strong>, and
-            <strong>Wayfair Verified</strong>. <strong>Evergreen</strong> in-room stories work on both platforms all month.
-          </p>
-        </div>
-
         <div class="section">
           <h2>Content we love</h2>
           <div class="love-box platform-meta">
@@ -256,6 +259,10 @@
             <strong>TikTok · Halloween &amp; Verified</strong>
             <span>At-home Halloween styling; feature Wayfair Verified products and badge when applicable.</span>
           </div>
+          <div class="love-box">
+            <strong>Both · Evergreen</strong>
+            <span>Office, storage, bed &amp; bath, outdoor living — problem → product → benefit.</span>
+          </div>
         </div>
 
         <div class="section">
@@ -269,7 +276,16 @@
               </ul>
             </li>
             <li>Product in use in a styled space; align with your platform’s October priority (above)</li>
+            <li>Creator link in caption or bio if product stickers fail</li>
           </ul>
+        </div>
+
+        <div class="section">
+          <h2>Good to know</h2>
+          <p>
+            We receive more eligible posts than we can boost each month. Matching this brief improves your odds when
+            your category is in priority — posting eligible content does not guarantee selection.
+          </p>
         </div>
       </div>
     </div>
@@ -289,8 +305,8 @@
           <ul style="margin:0;padding-left:1.1em;">
             <li>Unboxing only, busy overlays</li>
             <li>AI-looking or screen-record content</li>
+            <li>Unclear which Wayfair product is featured</li>
           </ul>
-          <p style="margin:8px 0 0;font-size:7.8pt;">Examples: instagram.com/reels/DdR5817pNId · DctN7D8RQub</p>
         </div>
       </div>
     </div>
