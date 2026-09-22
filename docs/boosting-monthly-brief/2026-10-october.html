@@ -30,6 +30,8 @@
       overflow: hidden;
       display: flex;
       flex-direction: column;
+      position: relative;
+      padding-bottom: 0.38in;
     }
     .page-body {
       flex: 1;
@@ -42,13 +44,13 @@
       display: flex;
       flex-direction: column;
       justify-content: space-between;
-      min-height: calc(11in - 2.68in);
+      min-height: calc(11in - 2.78in - 0.38in);
     }
     .page:last-child { page-break-after: auto; }
     /* Hero — campaign-brief style */
     .hero {
-      flex: 0 0 2.68in;
-      min-height: 2.68in;
+      flex: 0 0 2.78in;
+      min-height: 2.78in;
       background:
         linear-gradient(to bottom, rgba(50, 15, 60, 0.2), rgba(50, 15, 60, 0.62)),
         url("hero-bedroom.jpg") center/cover;
@@ -175,11 +177,14 @@
     .skip-box h3 { margin: 0 0 8px; font-size: 10pt; color: var(--purple); text-transform: uppercase; letter-spacing: 0.04em; }
     .skip-box li { margin-bottom: 5px; }
     .footer-line {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0.14in;
       text-align: center;
-      font-size: 8.5pt;
+      font-size: 8pt;
       color: #666;
-      padding: 0.1in 0.38in 0.18in;
-      flex: 0 0 auto;
+      padding: 0 0.38in;
     }
     .footer-line a { color: var(--purple); text-decoration: none; font-weight: 600; }
     @media print {
