@@ -16,15 +16,14 @@
     body {
       margin: 0;
       font-family: Inter, system-ui, sans-serif;
-      font-size: 8.5pt;
+      font-size: 9.25pt;
       color: var(--ink);
       background: #ccc;
-      line-height: 1.4;
+      line-height: 1.42;
     }
     .page {
       width: 8.5in;
       height: 11in;
-      max-height: 11in;
       margin: 16px auto;
       background: #fff;
       page-break-after: always;
@@ -32,10 +31,18 @@
       display: flex;
       flex-direction: column;
     }
+    .page-body {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      min-height: 0;
+    }
     .page:last-child { page-break-after: auto; }
     /* Hero — campaign-brief style */
     .hero {
-      height: 2.15in;
+      flex: 0 0 2.75in;
+      min-height: 2.75in;
       background:
         linear-gradient(to bottom, rgba(50, 15, 60, 0.2), rgba(50, 15, 60, 0.62)),
         url("hero-bedroom.jpg") center/cover;
@@ -48,7 +55,7 @@
       padding: 0 0.5in;
     }
     .hero .partner {
-      font-size: 14pt;
+      font-size: 16pt;
       font-weight: 600;
       letter-spacing: 0.02em;
       margin-bottom: 6px;
@@ -56,7 +63,7 @@
     }
     .hero .partner span { font-weight: 400; opacity: 0.95; }
     .hero h1 {
-      font-size: 26pt;
+      font-size: 30pt;
       font-weight: 700;
       margin: 0;
       line-height: 1.1;
@@ -65,33 +72,41 @@
     .columns {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 0.28in;
-      padding: 0.22in 0.34in 0.12in;
+      gap: 0.32in;
+      padding: 0.3in 0.4in 0.18in;
       flex: 1;
+      align-content: stretch;
     }
-    .section { margin-bottom: 0.14in; }
+    .col-left, .col-right {
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 0.12in;
+    }
+    .section { margin-bottom: 0; }
     .section h2 {
-      font-size: 9pt;
+      font-size: 10pt;
       font-weight: 700;
       color: var(--purple);
       text-transform: uppercase;
       letter-spacing: 0.06em;
-      margin: 0 0 8px;
+      margin: 0 0 9px;
     }
-    .section p { margin: 0 0 6px; color: var(--muted); font-size: 8.5pt; }
+    .section p { margin: 0 0 8px; color: var(--muted); font-size: 9.25pt; }
     .numbered {
       display: flex;
-      gap: 10px;
+      gap: 11px;
       align-items: flex-start;
       background: var(--purple-light);
       border-radius: 10px;
-      padding: 8px 10px;
-      margin-bottom: 7px;
+      padding: 10px 12px;
+      margin-bottom: 9px;
     }
+    .numbered:last-child { margin-bottom: 0; }
     .numbered .num {
       flex-shrink: 0;
-      width: 22px;
-      height: 22px;
+      width: 26px;
+      height: 26px;
       background: var(--purple);
       color: #fff;
       border-radius: 50%;
@@ -101,40 +116,42 @@
       align-items: center;
       justify-content: center;
     }
-    .numbered .txt { font-size: 8pt; color: var(--ink); line-height: 1.35; }
+    .numbered .txt { font-size: 9pt; color: var(--ink); line-height: 1.38; }
     .love-box {
       background: var(--purple-light);
       border-radius: 10px;
-      padding: 8px 10px;
-      margin-bottom: 7px;
+      padding: 10px 12px;
+      margin-bottom: 9px;
     }
+    .love-box:last-child { margin-bottom: 0; }
     .love-box strong {
       display: block;
-      font-size: 8.5pt;
+      font-size: 9.25pt;
       color: var(--ink);
-      margin-bottom: 3px;
+      margin-bottom: 4px;
     }
-    .love-box span { font-size: 7.8pt; color: var(--muted); }
+    .love-box span { font-size: 8.75pt; color: var(--muted); line-height: 1.35; }
     .love-box.platform-meta { border-left: 3px solid #1877f2; }
     .love-box.platform-tt { border-left: 3px solid #121212; }
     ul.check {
       margin: 0;
-      padding-left: 1.1em;
-      font-size: 8.5pt;
+      padding-left: 1.15em;
+      font-size: 9.25pt;
       color: var(--muted);
     }
-    ul.check li { margin-bottom: 4px; }
-    ul.check ul { margin-top: 4px; font-size: 8pt; }
+    ul.check li { margin-bottom: 6px; }
+    ul.check ul { margin-top: 5px; font-size: 9pt; }
     .appendix a {
       color: var(--ink);
       text-decoration: underline;
-      font-size: 8.5pt;
+      font-size: 9.25pt;
       display: block;
-      margin-bottom: 4px;
+      margin-bottom: 6px;
     }
     .skip-wrap {
-      padding: 0.1in 0.34in 0.08in;
-      border-top: 3px solid var(--purple-light);
+      padding: 0.2in 0.4in 0.14in;
+      border-top: 4px solid var(--purple-light);
+      flex: 0 0 auto;
     }
     .skip-grid {
       display: grid;
@@ -143,18 +160,20 @@
     }
     .skip-box {
       border-radius: 10px;
-      padding: 10px 12px;
-      font-size: 8pt;
+      padding: 14px 16px;
+      font-size: 9.25pt;
+      min-height: 1.05in;
     }
     .skip-box.good { background: #e8f5ec; }
     .skip-box.bad { background: #fce8e8; }
-    .skip-box h3 { margin: 0 0 6px; font-size: 9pt; color: var(--purple); text-transform: uppercase; letter-spacing: 0.04em; }
+    .skip-box h3 { margin: 0 0 8px; font-size: 10pt; color: var(--purple); text-transform: uppercase; letter-spacing: 0.04em; }
+    .skip-box li { margin-bottom: 5px; }
     .footer-line {
       text-align: center;
-      font-size: 7.5pt;
+      font-size: 8.5pt;
       color: #666;
-      padding: 0 0.34in 0.14in;
-      margin-top: auto;
+      padding: 0.12in 0.4in 0.22in;
+      flex: 0 0 auto;
     }
     .footer-line a { color: var(--purple); text-decoration: none; font-weight: 600; }
     @media print {
@@ -171,6 +190,7 @@
       <h1>October Boosting Brief</h1>
     </header>
 
+    <div class="page-body">
     <div class="columns">
       <div class="col-left">
         <div class="section">
@@ -289,6 +309,7 @@
       Selection isn’t guaranteed — we receive more eligible posts than we can boost. Questions?
       <a href="mailto:wcp@wayfair.com">wcp@wayfair.com</a>
     </p>
+    </div>
   </section>
 
 </body>
