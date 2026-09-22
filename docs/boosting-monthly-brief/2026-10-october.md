@@ -10,13 +10,22 @@
 
 Paid social is continuing **fall and Halloween**-leaning creator videos from recent batches into **early October**, then shifting toward **holiday preview** content to warm up the season. Throughout the month we also want **evergreen** videos — strong product stories that are **not** tied to a specific sale or holiday hook.
 
-**October mix (Meta / TikTok)**
+**October mix — Meta**
 
 | Priority | What to film | When |
 |----------|----------------|------|
 | **1 — Fall & Halloween** | Cozy layers, fall decor, entryway/porch, dining setup, spooky-neutral Halloween styling | **Early October** (carryover from September selections) |
 | **2 — Holiday preview** | First holiday touches: trees & trim, entertaining prep, guest-ready spaces, giftable furniture/decor shown in room | **Mid–late October** |
 | **3 — Evergreen** | Any strong in-room, in-use Wayfair story (office, bedroom, outdoor living, storage, rugs, seating) | **All month** |
+
+**October priorities — TikTok (paid boost)**
+
+| Theme | What to film |
+|-------|----------------|
+| **Pet** | Pet-friendly furniture, beds, washable rugs, storage; pet + product clearly visible |
+| **Sideboards** | Styled dining, entry, or living; sideboard/console in use (not unbox-only) |
+| **Halloween** | Livable at-home styling; product in the first few seconds |
+| **Wayfair Verified** | Feature **Wayfair Verified** products when possible; show applicable badge on eligible items |
 
 **Reminder:** We boost content that feels like **native creator video** and could run as a paid ad. **Evergreen** storytelling wins over promo language (codes, “limited time,” sale graphics). Seasonal *mood* is welcome; **sale-specific** creative is not our main boost pool.
 
@@ -117,11 +126,12 @@ We heard you in the **September 2026 boosting survey** (17 responses). Top barri
 
 ## Your October checklist
 
-1. **Early month:** Ship 1–2 **fall/Halloween** reels with product in the first 3 seconds.  
-2. **Mid–late month:** Ship 1–2 **holiday preview** reels (evergreen tone, no sale copy).  
-3. **Anytime:** Ship **evergreen** in-use room content (outdoor, office, storage still welcome).  
-4. Caption: **`#WayfairCreator`** + **`#wayfairelevate`** + required disclosure.  
-5. **15–45 sec**, vertical, captioned, you on camera or hands-on.
+1. **Early month:** Ship 1–2 **fall/Halloween** reels with product in the first 3 seconds (Meta).  
+2. **TikTok:** Ship content aligned with **pet**, **sideboards**, **Halloween**, and **Wayfair Verified** where it fits your home.  
+3. **Mid–late month:** Ship 1–2 **holiday preview** reels (evergreen tone, no sale copy).  
+4. **Anytime:** Ship **evergreen** in-use room content (outdoor, office, storage still welcome).  
+5. Caption: **`#WayfairCreator`** + **`#wayfairelevate`** + required disclosure.  
+6. **15–45 sec**, vertical, captioned, you on camera or hands-on.
 
 Thank you for building with Wayfair — we’re excited to see what you make this October.
 
@@ -135,6 +145,6 @@ Thank you for building with Wayfair — we’re excited to see what you make thi
 Melis / team plan: continue **fall/Halloween** from September batch into early October; add **holiday preview** mid-month; always pull **evergreen** not tied to holiday/sale moments.
 
 **Cross-team**  
-- Sync TikTok owner on same priority stack.  
+- **TikTok:** pet, sideboards, Halloween, Wayfair Verified (confirmed Oct priorities).  
 - Confirm Way Day / GTM dates with sales — brief creators on **moments**, not promo creative.  
 - Optional: share priority SKUs or categories if merchandising has October focuses.

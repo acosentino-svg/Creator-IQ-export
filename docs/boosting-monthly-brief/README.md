@@ -7,7 +7,9 @@ Use these files to publish a **monthly creator brief** for the Wayfair Creators 
 | File | Purpose |
 |------|---------|
 | [`TEMPLATE.md`](TEMPLATE.md) | Copy each month; replace placeholders and sync with Paid Media before send. |
-| [`2026-10-october.md`](2026-10-october.md) | October 2026 draft (fall/Halloween → holiday preview + evergreen). |
+| [`2026-10-october.md`](2026-10-october.md) | October 2026 draft (Meta + TikTok priorities). |
+| [`2026-10-october.html`](2026-10-october.html) | Canva-style layout (open in browser → Print → Save as PDF). |
+| [`Wayfair-Boosting-Brief-October-2026.pdf`](Wayfair-Boosting-Brief-October-2026.pdf) | **Downloadable PDF** for creators (4 pages). |
 
 ## Before you send (internal checklist)
 

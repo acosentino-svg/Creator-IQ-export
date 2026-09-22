@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Wayfair Boosting Brief — October 2026</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=League+Spartan:wght@500;600;700;800&family=Source+Sans+3:wght@400;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --wf-purple: #7f187f;
+      --wf-purple-dark: #5c1160;
+      --wf-lilac: #f3e8f8;
+      --wf-cream: #faf8f5;
+      --wf-ink: #1f1f23;
+      --wf-muted: #5c5c66;
+      --meta-blue: #1877f2;
+      --tiktok: #010101;
+      --accent-fall: #c45c26;
+      --radius: 16px;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Source Sans 3", system-ui, sans-serif;
+      color: var(--wf-ink);
+      background: #e8e6e3;
+      line-height: 1.45;
+    }
+    .page {
+      width: 816px;
+      min-height: 1056px;
+      margin: 24px auto;
+      background: #fff;
+      box-shadow: 0 8px 40px rgba(0,0,0,.12);
+      overflow: hidden;
+      page-break-after: always;
+      position: relative;
+    }
+    .page:last-child { page-break-after: auto; }
+    h1, h2, h3 {
+      font-family: "League Spartan", sans-serif;
+      letter-spacing: -0.02em;
+      margin: 0 0 0.35em;
+    }
+    h1 { font-size: 2.75rem; line-height: 1.05; font-weight: 800; }
+    h2 { font-size: 1.65rem; font-weight: 700; color: var(--wf-purple-dark); }
+    h3 { font-size: 1.1rem; font-weight: 700; }
+    p { margin: 0 0 0.75em; }
+    ul { margin: 0.4em 0 0.8em; padding-left: 1.15em; }
+    li { margin-bottom: 0.35em; }
+    .cover {
+      background: linear-gradient(145deg, var(--wf-purple) 0%, #9b2d9b 45%, #4a0e4e 100%);
+      color: #fff;
+      padding: 56px 52px 48px;
+      min-height: 1056px;
+      display: flex;
+      flex-direction: column;
+    }
+    .cover .badge {
+      display: inline-block;
+      background: rgba(255,255,255,.18);
+      border: 1px solid rgba(255,255,255,.35);
+      border-radius: 999px;
+      padding: 8px 18px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 28px;
+    }
+    .cover h1 { color: #fff; max-width: 14ch; }
+    .cover .subtitle {
+      font-size: 1.25rem;
+      opacity: 0.95;
+      max-width: 28ch;
+      margin-top: 12px;
+      font-weight: 600;
+    }
+    .cover .meta-line {
+      margin-top: auto;
+      padding-top: 40px;
+      font-size: 0.95rem;
+      opacity: 0.9;
+      border-top: 1px solid rgba(255,255,255,.25);
+    }
+    .cover-shapes {
+      position: absolute;
+      right: -40px;
+      top: 120px;
+      width: 320px;
+      height: 320px;
+      border-radius: 50%;
+      background: rgba(255,255,255,.08);
+    }
+    .cover-shapes::after {
+      content: "";
+      position: absolute;
+      left: -80px;
+      bottom: -60px;
+      width: 200px;
+      height: 200px;
+      border-radius: 24px;
+      background: rgba(255,255,255,.12);
+      transform: rotate(12deg);
+    }
+    .body-pad { padding: 44px 48px 40px; }
+    .lead {
+      font-size: 1.05rem;
+      color: var(--wf-muted);
+      margin-bottom: 1.25rem;
+    }
+    .platform-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 18px;
+      margin: 1rem 0 1.25rem;
+    }
+    .platform-card {
+      border-radius: var(--radius);
+      overflow: hidden;
+      border: 1px solid #e5e2de;
+    }
+    .platform-card header {
+      padding: 14px 16px;
+      color: #fff;
+      font-family: "League Spartan", sans-serif;
+      font-weight: 700;
+      font-size: 1.15rem;
+    }
+    .platform-card.meta header { background: var(--meta-blue); }
+    .platform-card.tiktok header { background: var(--tiktok); }
+    .platform-card .inner {
+      padding: 14px 16px 16px;
+      background: var(--wf-cream);
+      font-size: 0.92rem;
+    }
+    .tag-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin: 10px 0 4px;
+    }
+    .tag {
+      background: var(--wf-lilac);
+      color: var(--wf-purple-dark);
+      font-size: 0.78rem;
+      font-weight: 700;
+      padding: 5px 10px;
+      border-radius: 999px;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    .tag.fall { background: #fde8d8; color: #8a3d12; }
+    .section-band {
+      background: var(--wf-lilac);
+      margin: 0 -48px 20px;
+      padding: 14px 48px;
+    }
+    .section-band h2 { margin: 0; }
+    .callout {
+      background: #fff8e6;
+      border-left: 4px solid var(--accent-fall);
+      padding: 12px 14px;
+      border-radius: 0 12px 12px 0;
+      font-size: 0.92rem;
+      margin: 1rem 0;
+    }
+    table.simple {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.88rem;
+      margin: 0.5rem 0 1rem;
+    }
+    table.simple th {
+      text-align: left;
+      background: var(--wf-purple);
+      color: #fff;
+      padding: 10px 12px;
+      font-family: "League Spartan", sans-serif;
+    }
+    table.simple td {
+      padding: 10px 12px;
+      border-bottom: 1px solid #ece8e4;
+      vertical-align: top;
+    }
+    table.simple tr:nth-child(even) td { background: #faf8f6; }
+    .dos-donts {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+      margin-top: 12px;
+    }
+    .dos, .donts {
+      border-radius: var(--radius);
+      padding: 14px 16px;
+      font-size: 0.88rem;
+    }
+    .dos { background: #e8f5ec; border: 1px solid #b8dcc4; }
+    .donts { background: #fce8e8; border: 1px solid #e8b4b4; }
+    .dos h3 { color: #1a6b38; }
+    .donts h3 { color: #9b2c2c; }
+    .checklist {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+    .checklist li {
+      padding: 12px 14px 12px 44px;
+      background: var(--wf-cream);
+      border-radius: 12px;
+      margin-bottom: 10px;
+      position: relative;
+      font-weight: 600;
+    }
+    .checklist li::before {
+      content: "✓";
+      position: absolute;
+      left: 14px;
+      top: 10px;
+      width: 22px;
+      height: 22px;
+      background: var(--wf-purple);
+      color: #fff;
+      border-radius: 6px;
+      font-size: 0.75rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+    }
+    .hashtags {
+      text-align: center;
+      padding: 20px;
+      background: linear-gradient(90deg, var(--wf-purple-dark), var(--wf-purple));
+      color: #fff;
+      border-radius: var(--radius);
+      margin-top: 16px;
+      font-family: "League Spartan", sans-serif;
+      font-size: 1.35rem;
+      font-weight: 700;
+    }
+    .footer-note {
+      font-size: 0.8rem;
+      color: var(--wf-muted);
+      margin-top: 20px;
+      text-align: center;
+    }
+    @media print {
+      body { background: #fff; }
+      .page { margin: 0; box-shadow: none; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- COVER -->
+  <section class="page cover">
+    <div class="cover-shapes" aria-hidden="true"></div>
+    <span class="badge">Wayfair Creators · Boosting</span>
+    <h1>October<br />Boosting Brief</h1>
+    <p class="subtitle">What we’re looking for on Meta &amp; TikTok this month — plus how to make your reels boost-ready.</p>
+    <p class="meta-line"><strong>For:</strong> Boosting Partnership creators &nbsp;·&nbsp; <strong>October 2026</strong></p>
+  </section>
+
+  <!-- PRIORITIES -->
+  <section class="page body-pad">
+    <div class="section-band"><h2>What we’re boosting this month</h2></div>
+    <p class="lead">We boost <strong>native creator video</strong> (15–45 sec, vertical) that could run as a paid ad. Seasonal <em>vibes</em> are great — sale codes and promo-heavy creative are not our main pool.</p>
+
+    <div class="platform-grid">
+      <div class="platform-card meta">
+        <header>Meta</header>
+        <div class="inner">
+          <p><strong>Early October</strong> — Keep leaning into <strong>fall &amp; Halloween</strong> (carryover from September batch).</p>
+          <p><strong>Mid–late October</strong> — Add <strong>holiday preview</strong> (trees, trim, entertaining, guest-ready spaces).</p>
+          <p><strong>All month</strong> — <strong>Evergreen</strong> in-room, in-use stories (any category).</p>
+          <div class="tag-row">
+            <span class="tag fall">Fall</span>
+            <span class="tag fall">Halloween</span>
+            <span class="tag">Holiday preview</span>
+            <span class="tag">Evergreen</span>
+          </div>
+        </div>
+      </div>
+      <div class="platform-card tiktok">
+        <header>TikTok</header>
+        <div class="inner">
+          <p>Priority themes we’re pulling for paid boost:</p>
+          <ul>
+            <li><strong>Pet</strong> — pet-friendly furniture, beds, washable rugs, storage; pet + product clearly in frame</li>
+            <li><strong>Sideboards</strong> — styled dining / entry / living; product in use, not unbox-only</li>
+            <li><strong>Halloween</strong> — livable, styled at-home (product visible early)</li>
+            <li><strong>Wayfair Verified</strong> — feature Verified products when you can; call out the badge on applicable items</li>
+          </ul>
+          <div class="tag-row">
+            <span class="tag">Pet</span>
+            <span class="tag">Sideboards</span>
+            <span class="tag fall">Halloween</span>
+            <span class="tag">Wayfair Verified</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="callout">
+      <strong>Hook in 1–3 seconds.</strong> Show the Wayfair product early, in a real styled space, with you on camera or hands-on. Captions on — many people watch with sound off.
+    </div>
+
+    <h3>Ideas by moment (not a shot list)</h3>
+    <table class="simple">
+      <thead>
+        <tr><th>Theme</th><th>Film this</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Fall refresh</td><td>Throws, rugs, lighting, entryway, porch</td></tr>
+        <tr><td>Holiday preview</td><td>Tree setup, guest room, entertaining, giftable accents</td></tr>
+        <tr><td>Evergreen</td><td>Office, storage, bed &amp; bath, outdoor living</td></tr>
+        <tr><td>Inspiration</td><td>Fall nesting, hosting prep, Way Day projects — <em>without</em> sale copy</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- STANDARDS -->
+  <section class="page body-pad">
+    <div class="section-band"><h2>Boost-friendly creative</h2></div>
+    <table class="simple">
+      <thead><tr><th>Must have</th><th>Details</th></tr></thead>
+      <tbody>
+        <tr><td>Format</td><td>Vertical video · 15–45 seconds · Reels / TikTok (not carousels for paid boost)</td></tr>
+        <tr><td>Product</td><td>Clear Wayfair item, shown in use in a lived-in space</td></tr>
+        <tr><td>Creator</td><td>Face-to-camera, hands-on, or POV</td></tr>
+        <tr><td>Pacing</td><td>Brisk, easy to follow; hold shots long enough to see detail</td></tr>
+        <tr><td>Text</td><td>Simple, readable captions — no tiny or decorative fonts</td></tr>
+      </tbody>
+    </table>
+
+    <div class="dos-donts">
+      <div class="dos">
+        <h3>Great fits</h3>
+        <ul>
+          <li>Product in room + in use</li>
+          <li>Clear story: problem → product → benefit</li>
+          <li>Bright, native, creator tone</li>
+        </ul>
+      </div>
+      <div class="donts">
+        <h3>Usually skipped</h3>
+        <ul>
+          <li>Unboxing only</li>
+          <li>Hard-to-read overlays / AI-looking footage</li>
+          <li>Unclear which Wayfair product is featured</li>
+        </ul>
+      </div>
+    </div>
+
+    <p style="margin-top:14px;font-size:0.88rem;color:var(--wf-muted);">
+      Example reels (boost-friendly): instagram.com/reels/DdR5817pNId · DctN7D8RQub
+    </p>
+
+    <div class="section-band" style="margin-top:28px;"><h2>Selection &amp; your voice</h2></div>
+    <p class="lead" style="font-size:0.95rem;">We receive more eligible posts than we can boost. October picks follow the <strong>Meta</strong> and <strong>TikTok</strong> priorities above, plus creative fit and a mix of styles and price points. Posting eligible content doesn’t guarantee boost — but matching this brief is what Paid teams are pulling right now.</p>
+    <p style="font-size:0.92rem;">From your September survey: clearer guidance helps — <strong>12 of 17</strong> creators said more direction would increase posting. This brief is that shared direction.</p>
+  </section>
+
+  <!-- CHECKLIST -->
+  <section class="page body-pad">
+    <div class="section-band"><h2>Your October checklist</h2></div>
+    <ul class="checklist">
+      <li>Film 1–2 <strong>fall / Halloween</strong> reels (Meta) — product in the first 3 seconds</li>
+      <li>Try a <strong>TikTok priority</strong>: pet, sideboard styling, Halloween, or <strong>Wayfair Verified</strong> product</li>
+      <li>Mid–late month: 1–2 <strong>holiday preview</strong> pieces (evergreen tone, no promo codes)</li>
+      <li>Keep shipping <strong>evergreen</strong> in-use room content anytime</li>
+      <li><strong>15–45 sec</strong> · vertical · captioned · you on camera or hands-on</li>
+    </ul>
+    <div class="hashtags">#WayfairCreator &nbsp; #wayfairelevate</div>
+    <p style="text-align:center;margin-top:10px;font-size:0.9rem;">Add your required paid partnership disclosure (e.g. #ad) when applicable.</p>
+    <p class="footer-note">Questions? Reach out through your usual Wayfair Creators / Boosting channel.<br />Thank you for creating with us.</p>
+  </section>
+
+</body>
+</html>
