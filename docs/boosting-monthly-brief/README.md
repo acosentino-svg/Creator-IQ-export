@@ -1,0 +1,24 @@
+# Boosting program monthly brief
+
+Use these files to publish a **monthly creator brief** for the Wayfair Creators Boosting Partnership (WBP). The brief aligns creators with paid social (Meta/TikTok) priorities, seasonal GTM moments, and clear creative standards.
+
+## Files
+
+| File | Purpose |
+|------|---------|
+| [`TEMPLATE.md`](TEMPLATE.md) | Copy each month; replace placeholders and sync with Paid Media before send. |
+| [`2026-10-october.md`](2026-10-october.md) | October 2026 draft (fall/Halloween → holiday preview + evergreen). |
+
+## Before you send (internal checklist)
+
+1. **Paid Media** — Confirm category mix and timing with Meta/TikTok boosting owners (e.g. what carries over from the prior month’s batch vs. what’s new).
+2. **GTM / Sales** — Note relevant moments (e.g. Way Day, fall refresh); remind creators we boost **evergreen** stories, not promo/code-led ads.
+3. **WCP / gifting** — If gifting windows or Elevate video rules changed, add one short paragraph; avoid promises the ops team cannot keep.
+4. **Hashtags & disclosure** — Keep eligibility tags aligned with CreatorIQ/dashboard copy (`#WayfairCreator` + `#wayfairelevate` per program config).
+5. **Survey themes** — Optionally add a “You asked, we’re improving” line when you ship product fixes (tracking, gifting updates, etc.).
+
+## Suggested distribution
+
+- Email to WBP roster + post in creator community / town hall slide
+- Pin the brief where creators already check program rules
+- Link boost-friendly examples every month (2–3 reels max)
