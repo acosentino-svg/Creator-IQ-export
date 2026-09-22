@@ -35,14 +35,20 @@
       flex: 1;
       display: flex;
       flex-direction: column;
+      min-height: 0;
+    }
+    .page-fill {
+      flex: 1 1 0;
+      display: flex;
+      flex-direction: column;
       justify-content: space-between;
       min-height: 0;
     }
     .page:last-child { page-break-after: auto; }
     /* Hero — campaign-brief style */
     .hero {
-      flex: 0 0 3.05in;
-      min-height: 3.05in;
+      flex: 0 0 2.85in;
+      min-height: 2.85in;
       background:
         linear-gradient(to bottom, rgba(50, 15, 60, 0.2), rgba(50, 15, 60, 0.62)),
         url("hero-bedroom.jpg") center/cover;
@@ -72,18 +78,16 @@
     .columns {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 0.34in;
-      padding: 0.32in 0.42in 0.22in;
-      flex: 1 1 auto;
-      min-height: 5.85in;
-      align-content: stretch;
+      gap: 0.32in;
+      padding: 0.28in 0.4in 0.12in;
+      flex: 1 1 0;
+      align-items: stretch;
     }
     .col-left, .col-right {
       display: flex;
       flex-direction: column;
       justify-content: space-between;
-      gap: 0.18in;
-      height: 100%;
+      gap: 0.16in;
     }
     .section { margin-bottom: 0; }
     .section h2 {
@@ -151,7 +155,7 @@
       margin-bottom: 6px;
     }
     .skip-wrap {
-      padding: 0.24in 0.42in 0.18in;
+      padding: 0.22in 0.4in 0.16in;
       border-top: 4px solid var(--purple-light);
       flex: 0 0 auto;
     }
@@ -164,7 +168,7 @@
       border-radius: 10px;
       padding: 14px 16px;
       font-size: 9.25pt;
-      min-height: 1.22in;
+      min-height: 1.15in;
     }
     .skip-box.good { background: #e8f5ec; }
     .skip-box.bad { background: #fce8e8; }
@@ -193,6 +197,7 @@
     </header>
 
     <div class="page-body">
+    <div class="page-fill">
     <div class="columns">
       <div class="col-left">
         <div class="section">
@@ -305,6 +310,7 @@
           </ul>
         </div>
       </div>
+    </div>
     </div>
 
     <p class="footer-line">
