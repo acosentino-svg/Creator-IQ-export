@@ -16,10 +16,10 @@
     body {
       margin: 0;
       font-family: Inter, system-ui, sans-serif;
-      font-size: 9.25pt;
+      font-size: 8.35pt;
       color: var(--ink);
       background: #ccc;
-      line-height: 1.42;
+      line-height: 1.38;
     }
     .page {
       width: 8.5in;
@@ -42,13 +42,13 @@
       display: flex;
       flex-direction: column;
       justify-content: space-between;
-      min-height: calc(11in - 2.85in);
+      min-height: calc(11in - 2.72in);
     }
     .page:last-child { page-break-after: auto; }
     /* Hero — campaign-brief style */
     .hero {
-      flex: 0 0 2.85in;
-      min-height: 2.85in;
+      flex: 0 0 2.72in;
+      min-height: 2.72in;
       background:
         linear-gradient(to bottom, rgba(50, 15, 60, 0.2), rgba(50, 15, 60, 0.62)),
         url("hero-bedroom.jpg") center/cover;
@@ -78,8 +78,8 @@
     .columns {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 0.32in;
-      padding: 0.28in 0.4in 0.12in;
+      gap: 0.3in;
+      padding: 0.26in 0.38in 0.1in;
       flex: 1 1 0;
       align-items: stretch;
     }
@@ -87,7 +87,7 @@
       display: flex;
       flex-direction: column;
       justify-content: space-between;
-      gap: 0.16in;
+      gap: 0.14in;
     }
     .section { margin-bottom: 0; }
     .section h2 {
@@ -98,15 +98,15 @@
       letter-spacing: 0.06em;
       margin: 0 0 9px;
     }
-    .section p { margin: 0 0 8px; color: var(--muted); font-size: 9.25pt; }
+    .section p { margin: 0 0 6px; color: var(--muted); font-size: 8.35pt; }
     .numbered {
       display: flex;
       gap: 11px;
       align-items: flex-start;
       background: var(--purple-light);
       border-radius: 10px;
-      padding: 11px 13px;
-      margin-bottom: 10px;
+      padding: 7px 10px;
+      margin-bottom: 6px;
     }
     .numbered:last-child { margin-bottom: 0; }
     .numbered .num {
@@ -122,37 +122,37 @@
       align-items: center;
       justify-content: center;
     }
-    .numbered .txt { font-size: 9pt; color: var(--ink); line-height: 1.38; }
+    .numbered .txt { font-size: 8.2pt; color: var(--ink); line-height: 1.35; }
     .love-box {
       background: var(--purple-light);
       border-radius: 10px;
-      padding: 11px 13px;
-      margin-bottom: 10px;
+      padding: 7px 10px;
+      margin-bottom: 6px;
     }
     .love-box:last-child { margin-bottom: 0; }
     .love-box strong {
       display: block;
-      font-size: 9.25pt;
+      font-size: 8.35pt;
       color: var(--ink);
       margin-bottom: 4px;
     }
-    .love-box span { font-size: 8.75pt; color: var(--muted); line-height: 1.35; }
+    .love-box span { font-size: 8pt; color: var(--muted); line-height: 1.32; }
     .love-box.platform-meta { border-left: 3px solid #1877f2; }
     .love-box.platform-tt { border-left: 3px solid #121212; }
     ul.check {
       margin: 0;
       padding-left: 1.15em;
-      font-size: 9.25pt;
+      font-size: 8.35pt;
       color: var(--muted);
     }
-    ul.check li { margin-bottom: 6px; }
-    ul.check ul { margin-top: 5px; font-size: 9pt; }
+    ul.check li { margin-bottom: 4px; }
+    ul.check ul { margin-top: 3px; font-size: 8.1pt; }
     .appendix a {
       color: var(--ink);
       text-decoration: underline;
-      font-size: 9.25pt;
+      font-size: 8.2pt;
       display: block;
-      margin-bottom: 6px;
+      margin-bottom: 4px;
     }
     .skip-wrap {
       padding: 0.22in 0.4in 0.16in;
@@ -166,9 +166,9 @@
     }
     .skip-box {
       border-radius: 10px;
-      padding: 14px 16px;
-      font-size: 9.25pt;
-      min-height: 1.28in;
+      padding: 10px 12px;
+      font-size: 8.35pt;
+      min-height: 0.95in;
     }
     .skip-box.good { background: #e8f5ec; }
     .skip-box.bad { background: #fce8e8; }
