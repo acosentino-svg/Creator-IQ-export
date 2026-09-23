@@ -1,74 +1,109 @@
 # October 2026 — messaging inspiration (fall)
 
-Story angles and hook ideas for **what to say and film** this month. Boost specs stay on the one-sheet (**We boost** / **We pass on**).
+Concrete hooks, on-screen text, and film beats. Boost specs stay on the one-sheet (**We boost** / **We pass on**).
 
 ---
 
-## Fall styling
+## 1 · Fall styling
 
-**Angle:** Warm, lived-in autumn — layers and small swaps, not a full room reno.
+**Who it’s for:** Creators refreshing rooms for autumn without a full reno.
 
-**Hook examples:**
+**Opening lines (voiceover or on-screen):**
 
-- “Cozy layers without redoing the whole room”
-- “Porch / entryway refresh for fall”
-- “The textiles that made this room feel like autumn”
+- “Two swaps and this room finally feels like fall.”
+- “I didn’t repaint — I just changed these three things.”
+- “Entryway / porch refresh: what stayed vs. what went back.”
 
-**Beats:** One space · Wayfair piece in use · how it feels day-to-day.
+**On-screen text ideas:** `fall layers` · `cozy without clutter` · `porch reset`
 
----
+**Film beat (15–45 sec):**
 
-## Halloween decorating
+1. Hook: hands placing throw or pillow on sofa — **product in first 3 sec**.  
+2. Quick cuts: dining runner or chair moment; entry rug / boot tray if relevant.  
+3. Wide shot of room “after” — one line why it works for daily life.
 
-**Angle:** At-home, **spooky-neutral** — festive and approachable, not horror or costume catalog.
-
-**Hook examples:**
-
-- “Spooky-neutral Halloween at home”
-- “Porch moment before trick-or-treaters”
-- “Dining table Halloween without going overboard”
-
-**Beats:** Strong opening · décor + product clear early · mood you’d actually live with.
+**Products that fit:** Seating, textiles, rugs, lighting, entryway furniture, outdoor lounge for mild fall nights.
 
 ---
 
-## Setting up for the holidays
+## 2 · Halloween decorating
 
-**Angle:** **Holiday preview** (mid–late October on Meta) — guest-ready and entertaining, early trim/tree moments.
+**Who it’s for:** At-home Halloween that feels fun and lived-in — **spooky-neutral**, not horror or promo.
 
-**Hook examples:**
+**Opening lines:**
 
-- “Guest room before everyone arrives”
-- “Where we’re hosting this year”
-- “Pieces I’m using for holiday hosting” (call out **Wayfair Verified** on screen when the product qualifies)
+- “Spooky-neutral porch — festive from the street, not a haunted house.”
+- “Halloween tablescape my kids aren’t scared of.”
+- “Front door moment without buying 47 plastic spiders.”
 
-**Beats:** One upgrade · one clear guest or hosting benefit · preview vibe, not promo/code-led. If the SKU is Verified, show the badge — quick trust beat, not a separate ad read.
+**On-screen text ideas:** `spooky-neutral` · `Halloween at home` · `still feels like us`
 
----
+**Film beat:**
 
-## Fall hosting
+1. Hook: wide porch, table, or mantle with pumpkins/garland — **Wayfair piece visible early**.  
+2. You styling one detail (placing decor, adjusting chair, lighting lamp).  
+3. Close on product in the scene — moody-but-bright, readable with sound off.
 
-**Angle:** Dinners, guests, cooler nights — dining, seating, storage, outdoor hangouts.
-
-**Hook examples:**
-
-- “Fall dinner table setup”
-- “Extra seating when the whole crew shows up”
-- “Backyard / patio still usable as it gets cold”
-
-**Beats:** Problem (tight space, bare table, cold patio) → product in use → ready for people.
+**TikTok note:** Strong first beat matters here — same story works on Meta early October.
 
 ---
 
-## TikTok (when it fits your story)
+## 3 · Setting up for the holidays
 
-Layer into the fall angles above when natural — don’t force a separate “theme” post:
+**Who it’s for:** Mid–late October **holiday preview** on Meta — guest-ready, not Black Friday energy.
 
-- **Pet** in frame with beds, rugs, or pet-friendly furniture  
-- **Sideboard** styling in dining, entry, or living  
+**Opening lines:**
+
+- “Guest room reset before the in-laws weekend.”
+- “The spare room I’ve been ignoring — done in an afternoon.”
+- “Entertaining nook I’ll actually use (not just for photos).”
+
+**On-screen text ideas:** `guest-ready` · `holiday preview` · `hosting season`
+
+**Film beat:**
+
+1. Hook: before/after pan of guest room or nook — product on nightstand, bed frame, lamp, or storage piece.  
+2. Show **in use**: making bed, setting glasses on sideboard, styling a tray.  
+3. If SKU is **Wayfair Verified**: quick on-screen badge or point to badge — “why I trusted this pick,” not a spec read.
+
+**Products that fit:** Bedroom furniture, sideboards, bar carts, dining storage, giftable decor shown in room.
 
 ---
 
-## Tone
+## 4 · Fall hosting
 
-Your voice, not a catalog read. Short on-screen text that matches what you’d say. One story, one benefit.
+**Who it’s for:** Dinners, friends, cooler nights — seating, table, patio, storage.
+
+**Opening lines:**
+
+- “Fall dinner when you’re one chair short.”
+- “How we fit eight at this table.”
+- “Patio still usable now that nights are cold.”
+- “Where all the hosting clutter actually goes.”
+
+**On-screen text ideas:** `fall hosting` · `extra seats` · `outside before winter`
+
+**Film beat:**
+
+1. Hook: table partially set or empty patio — then bring in Wayfair piece (chairs, bench, fire-pit seating, storage ottoman).  
+2. **In use:** pulling out extra seating, opening storage, wrapping in throw on outdoor chair.  
+3. Optional: **pet** on washable rug or pet bed if that’s the product — pet in frame early for TikTok.
+
+**TikTok note:** **Sideboard** styling fits here too — dining, entry, or living; in use, not unbox.
+
+---
+
+## Caption openers (optional)
+
+- “Fall at our house looks like…”  
+- “Hosting hack I wish I did sooner…”  
+- “Wayfair piece that’s getting us through October…”  
+
+Keep **#WayfairCreator** + **#wayfairelevate** and **#ad** when required per deliverables.
+
+---
+
+## What this is not
+
+- Sale codes, LTO language, or “link in bio for % off” as the story.  
+- Generic “fall vibes” with no product story — tie every hook to something **in use** in your space.
