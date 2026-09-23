@@ -10,7 +10,7 @@ Use this when you want a **light touch** without an attachment, or as the **top 
 **TikTok:** **Pet**, **sideboards**, **Halloween**, **Wayfair Verified** when applicable.  
 **Both:** Evergreen in-room, in-use video all month.
 
-**Film it boost-ready:** 15–45 sec vertical · hook in 1–3 sec · product in a styled, in-use space · captions on · you on camera or hands-on. Seasonal mood yes; sale-code-led creative is not our main boost pool.
+**Film it boost-ready:** 15–45 sec vertical (not carousel) · hook in 1–3 sec with product on screen · you on camera/hands-on/POV · in use in a styled space · simple on-screen text. Seasonal/GTM OK; pass on sale/code/LTO-led creative.
 
 **Captions:** `#WayfairCreator` + `#wayfairelevate` · `#ad` when required · creator link in caption/bio if stickers fail.
 

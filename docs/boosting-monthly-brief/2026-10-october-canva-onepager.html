@@ -93,21 +93,26 @@
     ul.deliver ul { font-size: 8.75pt; margin-top: 3px; }
     .footer {
       border-top: 3px solid var(--purple-light);
-      padding: 0.14in 0.38in 0.22in;
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 0.2in;
+      padding: 0.12in 0.38in 0.2in;
+      display: flex;
+      flex-direction: column;
+      gap: 0.1in;
     }
-    .fits { background: #e8f5ec; border-radius: 10px; padding: 9px 11px; font-size: 7.65pt; line-height: 1.32; }
-    .skip { background: #fce8e8; border-radius: 10px; padding: 9px 11px; font-size: 7.65pt; line-height: 1.32; }
-    .fits h3, .skip h3 { margin: 0 0 5px; font-size: 8.5pt; color: var(--purple); text-transform: uppercase; }
-    .fits ul, .skip ul { margin: 0; padding-left: 1.05em; }
-    .fits li, .skip li { margin-bottom: 2px; }
+    .criteria {
+      background: var(--purple-light);
+      border-radius: 10px;
+      border-left: 4px solid var(--purple);
+      padding: 10px 12px;
+      font-size: 8.25pt;
+      line-height: 1.38;
+      color: var(--muted);
+    }
+    .criteria p { margin: 0 0 6px; }
+    .criteria p:last-child { margin-bottom: 0; }
+    .criteria strong { color: #1a1a1a; }
     .appendix {
-      grid-column: 1 / -1;
-      padding-top: 0.1in;
+      padding-top: 0.06in;
       border-top: 1px solid #e5e5e5;
-      margin-top: 0.08in;
     }
     .appendix a { font-size: 8.75pt; color: #1a1a1a; text-decoration: underline; display: block; margin-bottom: 4px; }
     .appendix span { font-size: 8.75pt; color: var(--muted); display: block; }
@@ -134,12 +139,10 @@
           </ul>
         </section>
 
-        <section style="margin-top:0.18in;">
-          <h2>Messaging inspiration</h2>
-          <div class="pill"><span class="n">1</span><span><strong>Hook in 1–3 seconds</strong> — problem, benefit, or discovery; show the product immediately.</span></div>
-          <div class="pill"><span class="n">2</span><span><strong>Product in use</strong> — styled room, not unbox-only; one clear benefit or use case.</span></div>
-          <div class="pill"><span class="n">3</span><span><strong>You on camera</strong> — face-to-camera, hands-on, or POV for trust and demo.</span></div>
-          <div class="pill"><span class="n">4</span><span><strong>Evergreen tone</strong> — seasonal mood is fine; sale codes and promo graphics aren’t our main boost pool.</span></div>
+        <section style="margin-top:0.16in;">
+          <h2>Story structure</h2>
+          <div class="pill"><span class="n">1</span><span><strong>Problem → product → benefit → soft CTA</strong> — one clear arc; no filler.</span></div>
+          <div class="pill"><span class="n">2</span><span><strong>Match October themes</strong> — use the overview list; film native, in-room stories (not sale-led spots).</span></div>
         </section>
       </div>
 
@@ -147,15 +150,11 @@
         <section>
           <h2>Deliverables checklist</h2>
           <ul class="deliver">
-            <li>Vertical video, <strong>15–45 seconds</strong>, captioned (sound-off friendly)</li>
-            <li>Your captions:
-              <ul>
-                <li>Reels / TikTok: <strong>#WayfairCreator</strong> and <strong>#wayfairelevate</strong></li>
-                <li><strong>#ad</strong> when required for paid partnership disclosure</li>
-              </ul>
-            </li>
-            <li>Wayfair product clear and in use in a styled space</li>
-            <li>Link in caption or bio if product stickers fail</li>
+            <li><strong>15–45 sec</strong> vertical video (Reels / TikTok) — <em>not</em> a carousel</li>
+            <li><strong>Hook in 1–3 sec</strong> — show the Wayfair product; you on camera, hands-on, or POV</li>
+            <li><strong>Sound-off ready</strong> — simple on-screen text; readable fonts; on screen long enough</li>
+            <li>Caption hashtags: <strong>#WayfairCreator</strong> + <strong>#wayfairelevate</strong>; <strong>#ad</strong> when required</li>
+            <li>Creator link in caption or bio if product stickers fail</li>
           </ul>
         </section>
 
@@ -169,31 +168,10 @@
     </div>
 
     <footer class="footer">
-      <div class="fits">
-        <h3>Great fits</h3>
-        <ul>
-          <li><strong>15–45 sec</strong> vertical video — problem → product → benefit → CTA; no filler</li>
-          <li><strong>Hook 1–3 sec</strong> — problem, benefit, or discovery; product shown; no delayed reveal</li>
-          <li><strong>Creator-native</strong> — informal tone, styled lived-in space, bright clear footage</li>
-          <li><strong>You in it</strong> — face-to-camera, hands-on, or POV</li>
-          <li><strong>Product focus</strong> — visible early, in use in a real space (not unbox-only); one clear benefit</li>
-          <li><strong>Pacing</strong> — brisk, easy to follow; purposeful cuts; hold shots to see product</li>
-          <li><strong>Sound-off</strong> — simple readable on-screen text; on screen long enough</li>
-          <li><strong>Evergreen</strong> — seasonal/GTM mood OK; not promo-led (codes, limited-time offers)</li>
-        </ul>
-      </div>
-      <div class="skip">
-        <h3>Usually skipped</h3>
-        <ul>
-          <li>Carousels or wrong format/length</li>
-          <li>Looks like a commercial — not creator content</li>
-          <li>Unboxing only; product not in use; unclear which Wayfair item</li>
-          <li>Weak or late hook; product not visible early</li>
-          <li>No creator presence; dark or cluttered footage</li>
-          <li>Chaotic pacing; can’t see the product</li>
-          <li>Hard-to-read, cursive, or decorative on-screen text</li>
-          <li>Promo-specific: sales, codes, limited-time offer creative</li>
-        </ul>
+      <div class="criteria">
+        <h2 style="margin-bottom:6px;">Core video criteria</h2>
+        <p><strong>We boost</strong> creator-native vertical video: informal tone, bright clear footage, styled lived-in space; product visible early and <strong>in use</strong> (not unbox-only) with one clear benefit; brisk pacing and purposeful cuts — hold shots long enough to see the product. Seasonal or GTM moments are fine; we mainly boost <strong>evergreen</strong> stories, not promo-specific creative.</p>
+        <p><strong>We usually pass on</strong> carousels, commercial-style ads, unboxing-only or unclear product, weak/late hooks, missing creator presence, dark or chaotic footage, decorative/hard-to-read on-screen text, and videos led by sales, codes, or limited-time offers.</p>
       </div>
       <div class="appendix">
         <h2>Appendix</h2>
