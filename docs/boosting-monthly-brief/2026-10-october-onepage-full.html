@@ -14,150 +14,207 @@
       height: 11in;
       margin: 12px auto;
       background: #fff;
-      padding: 0.32in 0.36in 0.28in;
       display: flex;
       flex-direction: column;
-      gap: 0.11in;
       overflow: hidden;
     }
-    .foot { margin-top: auto; }
-    .head {
-      background: linear-gradient(90deg, #4a0d4d, var(--p));
-      color: #fff;
-      border-radius: 8px;
-      padding: 10px 14px 11px;
+    .hero {
+      flex-shrink: 0;
+      height: 1.85in;
+      background:
+        linear-gradient(to bottom, rgba(40, 12, 48, 0.2), rgba(40, 12, 48, 0.62)),
+        url("hero-bedroom.jpg") center/cover;
       display: flex;
-      justify-content: space-between;
-      align-items: flex-end;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      color: #fff;
+      padding: 0 0.4in;
     }
-    .head h1 { margin: 0; font-size: 17pt; font-weight: 700; line-height: 1.1; }
-    .head .sub { font-size: 8.5pt; opacity: 0.92; text-align: right; line-height: 1.35; }
+    .hero .eyebrow { font-size: 8.5pt; font-weight: 600; letter-spacing: 0.04em; opacity: 0.95; }
+    .hero h1 { margin: 5px 0 0; font-size: 22pt; font-weight: 700; line-height: 1.05; text-shadow: 0 2px 10px rgba(0,0,0,0.35); }
+    .hero .when { margin-top: 6px; font-size: 8.5pt; opacity: 0.92; }
+    .main {
+      flex: 1;
+      min-height: 0;
+      padding: 0.2in 0.36in 0.14in;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.22in;
+      align-content: start;
+    }
     h2 {
-      margin: 0 0 5px;
-      font-size: 8pt;
+      margin: 0 0 6px;
+      font-size: 8.25pt;
       font-weight: 700;
       color: var(--p);
       text-transform: uppercase;
       letter-spacing: 0.06em;
     }
-    .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 0.2in; align-content: start; }
-    .grid3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.14in; }
-    p, li { font-size: 7.85pt; line-height: 1.32; color: var(--mu); margin: 0; }
-    ul { margin: 0; padding-left: 1.05em; }
-    li { margin-bottom: 2px; }
-    table { width: 100%; border-collapse: collapse; font-size: 7.65pt; }
-    th, td { border: 1px solid #c8c8c8; padding: 4px 6px; vertical-align: top; }
-    th { background: var(--pl); color: var(--p); font-weight: 700; text-align: left; }
-    .box { background: var(--pl); border-radius: 6px; padding: 7px 9px; }
-    .box p { font-size: 7.75pt; line-height: 1.34; }
-    .box strong { color: var(--ink); }
-    .ideas { font-size: 7.65pt; line-height: 1.32; color: var(--mu); }
-    .ideas b { color: var(--ink); font-size: 7.75pt; }
+    h3 {
+      margin: 0 0 5px;
+      font-size: 7.5pt;
+      font-weight: 700;
+      color: var(--ink);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    p, li { font-size: 8pt; line-height: 1.38; color: var(--mu); margin: 0; }
+    ul.check { margin: 0; padding-left: 1.05em; }
+    ul.check li { margin-bottom: 4px; }
+    .card {
+      background: var(--pl);
+      border-radius: 8px;
+      padding: 7px 9px;
+      margin-bottom: 6px;
+      font-size: 7.85pt;
+      line-height: 1.36;
+      color: var(--mu);
+    }
+    .card strong { color: var(--ink); font-size: 8pt; }
+    .card .hint { display: block; margin-top: 2px; font-size: 7.65pt; }
+    .pill {
+      display: flex;
+      gap: 8px;
+      align-items: flex-start;
+      background: var(--pl);
+      border-radius: 8px;
+      padding: 6px 9px;
+      margin-bottom: 5px;
+      font-size: 7.85pt;
+      line-height: 1.34;
+      color: var(--mu);
+    }
+    .pill .n {
+      width: 18px; height: 18px; flex-shrink: 0;
+      background: var(--p); color: #fff; border-radius: 50%;
+      font-size: 7.5pt; font-weight: 700;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .pill strong { color: var(--ink); }
+    .platform { margin-bottom: 0.1in; }
+    .platform:last-child { margin-bottom: 0; }
+    .bottom {
+      flex-shrink: 0;
+      padding: 0 0.36in 0.22in;
+      display: flex;
+      flex-direction: column;
+      gap: 0.1in;
+    }
+    .criteria {
+      background: var(--pl);
+      border-radius: 8px;
+      border-left: 4px solid var(--p);
+      padding: 8px 10px;
+    }
+    .criteria p { font-size: 7.75pt; line-height: 1.34; }
+    .criteria p + p { margin-top: 5px; }
+    .criteria strong { color: var(--ink); }
     footer.foot {
       border-top: 2px solid var(--pl);
       padding-top: 7px;
       display: grid;
-      grid-template-columns: 1.2fr 1fr;
-      gap: 0.16in;
-      font-size: 7.5pt;
+      grid-template-columns: 1.15fr 1fr;
+      gap: 0.14in;
+      font-size: 7.45pt;
       color: var(--mu);
+      line-height: 1.32;
     }
-    .foot a { color: var(--ink); text-decoration: underline; }
-    .contact { font-weight: 700; color: var(--p); font-size: 8pt; margin-top: 4px; }
+    .foot a { color: var(--ink); text-decoration: underline; display: block; margin-bottom: 2px; font-size: 7.45pt; }
+    .contact { font-weight: 700; color: var(--p); font-size: 7.85pt; margin-top: 3px; }
     @media print { body { background: #fff; } .page { margin: 0; } }
   </style>
 </head>
 <body>
   <article class="page">
-    <header class="head">
-      <div>
-        <div style="font-size:8.5pt;font-weight:600;opacity:0.9;">wayfair Creators · Boosting Partnership</div>
-        <h1>October Boosting Brief</h1>
-      </div>
-      <div class="sub">Paid boost on Meta &amp; TikTok<br />October 2026</div>
+    <header class="hero">
+      <div class="eyebrow">Wayfair Creators · Boosting Partnership</div>
+      <h1>October Boosting Brief</h1>
+      <div class="when">Paid boost on Meta &amp; TikTok · October 2026</div>
     </header>
 
-    <section class="grid2">
-      <div>
-        <h2>October overview</h2>
-        <p style="margin-bottom:5px;">Align posts with what Paid is pulling <strong>this month</strong>:</p>
-        <ul>
-          <li><strong>Meta (early Oct):</strong> fall &amp; Halloween — product in the first 3 seconds</li>
-          <li><strong>Meta (mid–late Oct):</strong> holiday preview — trees, guest-ready, entertaining</li>
-          <li><strong>TikTok:</strong> pet, sideboards, Halloween, Wayfair Verified</li>
-          <li><strong>Both:</strong> evergreen in-room, in-use stories all month</li>
+    <div class="main">
+      <div class="col">
+        <h2>What to film this month</h2>
+        <p style="margin-bottom:7px;">Match what Paid is pulling <strong>now</strong> — native, in-room, product <strong>in use</strong> (not sale-led spots).</p>
+
+        <div class="platform">
+          <h3>Meta</h3>
+          <div class="card">
+            <strong>Early October — fall &amp; Halloween</strong>
+            <span class="hint">Porch, dining, livable spooky-neutral styling · product in the first 3 seconds</span>
+          </div>
+          <div class="card">
+            <strong>Mid–late October — holiday preview</strong>
+            <span class="hint">Trees, trim, guest rooms, entertaining setups</span>
+          </div>
+          <div class="card">
+            <strong>All month — evergreen</strong>
+            <span class="hint">Office, bath, outdoor, storage, seating — any category, in-use story</span>
+          </div>
+        </div>
+
+        <div class="platform">
+          <h3>TikTok</h3>
+          <div class="card">
+            <strong>Pet</strong>
+            <span class="hint">Pet + product in frame — beds, washable rugs, pet-friendly furniture</span>
+          </div>
+          <div class="card">
+            <strong>Sideboards</strong>
+            <span class="hint">Styled dining, entry, or living — in use, not unbox-only</span>
+          </div>
+          <div class="card">
+            <strong>Halloween &amp; Verified</strong>
+            <span class="hint">At-home styling with a strong opening; show Verified badge on eligible SKUs</span>
+          </div>
+        </div>
+
+        <h2 style="margin-top:4px;">Shot ideas</h2>
+        <div class="card"><strong>Fall</strong> Porch refresh · cozy layers · dining · entryway · livable Halloween</div>
+        <div class="card"><strong>Holiday</strong> Tree &amp; trim · spare room · bath upgrades · entertaining · giftable accents</div>
+        <div class="card" style="margin-bottom:0;"><strong>Evergreen</strong> Pet nook · sideboard styling · office/storage · outdoor · Verified SKU</div>
+      </div>
+
+      <div class="col">
+        <h2>How to film it</h2>
+        <div class="pill"><span class="n">1</span><span><strong>One arc</strong> — problem → product → benefit → soft CTA; no filler</span></div>
+        <div class="pill"><span class="n">2</span><span><strong>Hook in 1–3 sec</strong> — Wayfair product on screen; you on camera, hands-on, or POV</span></div>
+        <div class="pill"><span class="n">3</span><span><strong>Sound-off ready</strong> — simple on-screen text; readable fonts; on screen long enough</span></div>
+
+        <h2 style="margin-top:0.12in;">Deliverables</h2>
+        <ul class="check">
+          <li><strong>15–45 sec</strong> vertical Reels / TikTok — <em>not</em> a carousel</li>
+          <li>Styled, lived-in space; bright, clear footage; brisk pacing — hold shots long enough to see the product</li>
+          <li>Hashtags: <strong>#WayfairCreator</strong> + <strong>#wayfairelevate</strong> · <strong>#ad</strong> when required</li>
+          <li>Creator link in caption or bio if product stickers fail</li>
         </ul>
       </div>
-      <div>
-        <h2>Story structure &amp; deliverables</h2>
-        <ul style="margin-bottom:6px;">
-          <li><strong>Arc:</strong> problem → product → benefit → soft CTA — one story, no filler</li>
-          <li><strong>15–45 sec</strong> vertical Reels/TikTok — <em>not</em> a carousel</li>
-          <li><strong>Hook 1–3 sec</strong> — show Wayfair product; you on camera, hands-on, or POV</li>
-          <li><strong>Sound-off:</strong> simple on-screen text; readable fonts; on screen long enough</li>
-          <li><strong>Hashtags:</strong> #WayfairCreator + #wayfairelevate · #ad when required</li>
-          <li>Creator link in caption/bio if product stickers fail</li>
-        </ul>
-      </div>
-    </section>
+    </div>
 
-    <section class="grid2">
-      <div>
-        <h2>Meta priorities</h2>
-        <table>
-          <tr><th>When</th><th>Film</th></tr>
-          <tr><td>Early Oct</td><td>Fall &amp; Halloween decor, porch, dining, livable spooky-neutral styling</td></tr>
-          <tr><td>Mid–late Oct</td><td>Holiday preview: trees, trim, guest rooms, entertaining setups</td></tr>
-          <tr><td>All month</td><td>Evergreen any category — office, bath, outdoor, storage, seating</td></tr>
-        </table>
-      </div>
-      <div>
-        <h2>TikTok priorities</h2>
-        <table>
-          <tr><th>Theme</th><th>Film</th></tr>
-          <tr><td>Pet</td><td>Pet + product visible; beds, washable rugs, pet-friendly furniture</td></tr>
-          <tr><td>Sideboards</td><td>Styled dining, entry, or living; in use, not unbox-only</td></tr>
-          <tr><td>Halloween</td><td>At-home styling; strong opening; product clear early</td></tr>
-          <tr><td>Verified</td><td>Wayfair Verified products; show badge when applicable</td></tr>
-        </table>
-      </div>
-    </section>
+    <div class="bottom">
+      <section class="criteria">
+        <h2>Core video criteria</h2>
+        <p><strong>We boost</strong> creator-native vertical video — informal tone, product visible early and <strong>in use</strong> with one clear benefit. Seasonal/GTM moments are fine; we mainly boost <strong>evergreen</strong> stories, not promo-specific creative (sales, codes, limited-time offers).</p>
+        <p><strong>We usually pass on</strong> carousels, commercial-style ads, unboxing-only or unclear product, weak/late hooks, missing creator presence, dark or chaotic footage, decorative/hard-to-read on-screen text, and videos led by sales, codes, or LTO offers.</p>
+      </section>
 
-    <section class="grid3 ideas">
-      <div>
-        <h2>Film ideas — fall</h2>
-        Porch refresh · cozy layers · dining setup · entryway · livable Halloween
-      </div>
-      <div>
-        <h2>Film ideas — holiday</h2>
-        Tree &amp; trim · spare room · bath upgrades · entertaining · giftable accents
-      </div>
-      <div>
-        <h2>Film ideas — evergreen</h2>
-        Pet nook · sideboard styling · office/storage · outdoor living · Verified SKU
-      </div>
-    </section>
-
-    <section class="box">
-      <h2>Core video criteria</h2>
-      <p><strong>We boost</strong> creator-native vertical video — informal tone, bright clear footage, styled lived-in space. Product visible early and <strong>in use</strong> (not unbox-only) with one clear benefit. Brisk pacing, purposeful cuts; hold shots long enough to see the product. Seasonal/GTM moments are fine; we mainly boost <strong>evergreen</strong> stories, not promo-specific creative (sales, codes, limited-time offers).</p>
-      <p style="margin-top:5px;"><strong>We usually pass on</strong> carousels, commercial-style ads, unboxing-only or unclear product, weak/late hooks, missing creator presence, dark or chaotic footage, decorative/hard-to-read on-screen text, and videos led by sales, codes, or LTO offers.</p>
-    </section>
-
-    <footer class="foot">
-      <div>
-        <h2>Selection note</h2>
-        We receive more eligible posts than we can boost. October picks follow the priorities above plus creative fit. Posting eligible content does not guarantee boost. Sept survey: <strong>12 of 17</strong> creators asked for clearer monthly guidance — this brief is that guidance.
-      </div>
-      <div>
-        <h2>Appendix</h2>
-        <a href="https://www.instagram.com/reels/DdR5817pNId/">Example — boost-friendly (in room + in use)</a>
-        <a href="https://www.instagram.com/reels/DctN7D8RQub/">Example — boost-friendly (clear product story)</a>
-        <a href="https://www.instagram.com/reels/DdRcdZFNG2Z/">Example — usually skipped (unboxing only)</a>
-        <span style="display:block;margin-top:3px;">Content guidelines · FTC disclosures (creator dashboard)</span>
-        <div class="contact">Questions? wcp@wayfair.com</div>
-      </div>
-    </footer>
+      <footer class="foot">
+        <div>
+          <h2>Selection note</h2>
+          We receive more eligible posts than we can boost. October picks follow the priorities above plus creative fit — posting eligible content does not guarantee boost. Sept survey: <strong>12 of 17</strong> creators asked for clearer monthly guidance; this brief is that guidance.
+        </div>
+        <div>
+          <h2>Examples &amp; resources</h2>
+          <a href="https://www.instagram.com/reels/DdR5817pNId/">Boost-friendly — in room + in use</a>
+          <a href="https://www.instagram.com/reels/DctN7D8RQub/">Boost-friendly — clear product story</a>
+          <a href="https://www.instagram.com/reels/DdRcdZFNG2Z/">Usually skipped — unboxing only</a>
+          <span>Content guidelines · FTC disclosures (creator dashboard)</span>
+          <div class="contact">Questions? wcp@wayfair.com</div>
+        </div>
+      </footer>
+    </div>
   </article>
 </body>
 </html>
