@@ -2,197 +2,131 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <title>Wayfair Creators — Boosting Partnership compensation</title>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet" />
+  <title>Boosting Partnership — Compensation &amp; tiers</title>
   <style>
-    :root { --p: #7f187f; --pl: #f0e3f4; --ink: #1a1a1a; --mu: #3d3d3d; }
+    :root { --p: #7f187f; --ink: #1a1a1a; --mu: #444; }
     * { box-sizing: border-box; }
-    @page { size: letter; margin: 0; }
-    body { margin: 0; font-family: Inter, Arial, sans-serif; background: #bbb; color: var(--ink); }
-    .page {
-      width: 8.5in;
-      height: 11in;
-      margin: 12px auto;
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, "Segoe UI", Arial, sans-serif;
+      font-size: 11pt;
+      line-height: 1.5;
+      color: var(--ink);
+      background: #f5f5f5;
+    }
+    .doc {
+      max-width: 7.5in;
+      margin: 24px auto;
+      padding: 0.55in 0.6in 0.65in;
       background: #fff;
-      display: flex;
-      flex-direction: column;
-      overflow: hidden;
+      box-shadow: 0 1px 4px rgba(0,0,0,.08);
     }
-    .hero {
-      flex-shrink: 0;
-      height: 1.65in;
-      background: linear-gradient(135deg, #4a0d4d, #7f187f);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      text-align: center;
-      color: #fff;
-      padding: 0 0.4in;
-    }
-    .hero .eyebrow { font-size: 9pt; font-weight: 600; opacity: 0.95; }
-    .hero h1 { margin: 6px 0 0; font-size: 21pt; font-weight: 700; line-height: 1.08; }
-    .body { flex: 1; padding: 0.18in 0.38in 0.2in; display: flex; flex-direction: column; gap: 0.11in; }
-    h2 {
-      margin: 0 0 6px;
-      font-size: 9pt;
+    h1 {
+      margin: 0 0 0.35em;
+      font-size: 1.45rem;
       font-weight: 700;
       color: var(--p);
-      text-transform: uppercase;
-      letter-spacing: 0.07em;
+      line-height: 1.2;
     }
-    .lavender {
-      background: var(--pl);
-      border-radius: 12px;
-      padding: 10px 12px;
-      font-size: 8.85pt;
-      line-height: 1.42;
-      color: var(--mu);
+    .subtitle { margin: 0 0 1.25em; color: var(--mu); font-size: 0.95rem; }
+    h2 {
+      margin: 1.35em 0 0.5em;
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: var(--p);
     }
-    .lavender p { margin: 0; }
-    .lavender strong { color: var(--ink); }
-    table.tiers {
+    h2:first-of-type { margin-top: 0; }
+    h3 {
+      margin: 1em 0 0.35em;
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--ink);
+    }
+    p { margin: 0 0 0.65em; color: var(--mu); }
+    table {
       width: 100%;
       border-collapse: collapse;
-      font-size: 8.35pt;
-      line-height: 1.38;
-      color: var(--mu);
+      margin: 0.5em 0 0.75em;
+      font-size: 0.92rem;
     }
-    table.tiers th, table.tiers td {
-      border: 1px solid #d4c4dc;
-      padding: 7px 8px;
-      vertical-align: top;
+    th, td {
+      border: 1px solid #ccc;
+      padding: 8px 10px;
       text-align: left;
+      vertical-align: top;
     }
-    table.tiers th {
-      background: var(--pl);
+    th {
+      background: #f3eaf5;
       color: var(--p);
       font-weight: 700;
-      font-size: 8.5pt;
     }
-    table.tiers td:first-child { font-weight: 700; color: var(--ink); width: 18%; }
-    .mid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.2in; align-items: start; }
-    .tier-card {
-      background: var(--pl);
-      border-radius: 12px;
-      padding: 10px 12px;
-      margin-bottom: 8px;
-      font-size: 8.5pt;
-      line-height: 1.4;
-      color: var(--mu);
+    ul { margin: 0.25em 0 0.65em; padding-left: 1.25em; color: var(--mu); }
+    li { margin-bottom: 0.35em; }
+    .fine {
+      font-size: 0.85rem;
+      color: #666;
+      margin-top: 0.5em;
     }
-    .tier-card h3 {
-      margin: 0 0 6px;
-      font-size: 9.25pt;
-      font-weight: 700;
-      color: var(--p);
-    }
-    .tier-card ul { margin: 0; padding-left: 1.1em; }
-    .tier-card li { margin-bottom: 4px; }
-    .tier-card strong { color: var(--ink); }
-    ul.simple { margin: 0; padding-left: 1.1em; font-size: 8.85pt; line-height: 1.42; color: var(--mu); }
-    ul.simple li { margin-bottom: 5px; }
-    .note { font-size: 8pt; color: #555; line-height: 1.38; margin-top: 6px; }
-    .contact { font-weight: 700; color: var(--p); font-size: 9pt; margin-top: 6px; }
-    @media print { body { background: #fff; } .page { margin: 0; } }
+    hr { border: none; border-top: 1px solid #e0e0e0; margin: 1.25em 0; }
+    a { color: var(--p); }
   </style>
 </head>
 <body>
-  <article class="page">
-    <header class="hero">
-      <div class="eyebrow">wayfair Creators</div>
-      <h1>Boosting Partnership<br />Compensation &amp; tiers</h1>
-    </header>
+  <main class="doc">
+    <h1>Boosting Partnership — compensation &amp; tiers</h1>
+    <p class="subtitle">Wayfair Creators · paid boost on Meta &amp; TikTok</p>
 
-    <div class="body">
-      <section>
-        <h2>Program overview</h2>
-        <div class="lavender">
-          <p>The <strong>Boosting Partnership (WBP)</strong> pays creators when eligible content is selected for paid boost on Meta and TikTok. Your <strong>tier</strong> sets base rates, extras, and program perks. <strong>Monthly briefs</strong> and <strong>town halls</strong> share what Paid is pulling that month so you can align posts with boost priorities.</p>
-        </div>
-      </section>
+    <h2>How you get paid</h2>
+    <p>When your post is <strong>selected for paid boost</strong>, you receive boost compensation based on your <strong>tier</strong>. Rates below are per <strong>calendar month</strong>: one payment for the first selected boost that month, then a lower rate for each additional selected boost in the same month.</p>
 
-      <section>
-        <h2>Compensation at a glance</h2>
-        <div class="lavender" style="padding: 0; overflow: hidden;">
-          <table class="tiers">
-            <tr>
-              <th>Tier</th>
-              <th>Initial boost<br />(first selected post)</th>
-              <th>Each additional boost<br />(same calendar month)</th>
-              <th>Tier perks</th>
-            </tr>
-            <tr>
-              <td>Entry</td>
-              <td><strong>$100</strong></td>
-              <td><strong>$50</strong> each</td>
-              <td>Monthly boosting brief · Creator town halls</td>
-            </tr>
-            <tr>
-              <td>Tier 2</td>
-              <td><strong>$150</strong></td>
-              <td><strong>$50</strong> each</td>
-              <td><strong>$25–$50</strong> bonus on selected posts · <strong>Category product gifting</strong> when a brief calls for it (e.g. sideboards for a TikTok push)</td>
-            </tr>
-            <tr>
-              <td>Tier 3</td>
-              <td><strong>$200</strong></td>
-              <td><strong>$75</strong> each</td>
-              <td><strong>@wayfaircreators</strong> link exposure on selected boosts · <strong>Highlighted</strong> creator each month · Program <strong>competitions</strong> when offered</td>
-            </tr>
-          </table>
-        </div>
-        <p class="note">“Initial” = first eligible post selected for paid boost in that calendar month; “additional” = each further eligible selection in the same month. Bonuses and gifting apply only when noted for a given boost or brief.</p>
-      </section>
+    <table>
+      <thead>
+        <tr>
+          <th>Tier</th>
+          <th>First boost in month</th>
+          <th>Each additional boost (same month)</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>Entry</strong></td><td>$100</td><td>$50</td></tr>
+        <tr><td><strong>Tier 2</strong></td><td>$150</td><td>$50</td></tr>
+        <tr><td><strong>Tier 3</strong></td><td>$200</td><td>$75</td></tr>
+      </tbody>
+    </table>
 
-      <div class="mid">
-        <div>
-          <h2>What each tier includes</h2>
-          <div class="tier-card">
-            <h3>Entry</h3>
-            <ul>
-              <li>Core boost pay: <strong>$100</strong> first selection / <strong>$50</strong> additional per month</li>
-              <li><strong>Monthly boosting brief</strong> (email) with Meta &amp; TikTok priorities</li>
-              <li>Access to <strong>Creator town halls</strong></li>
-            </ul>
-          </div>
-          <div class="tier-card">
-            <h3>Tier 2</h3>
-            <ul>
-              <li>Higher base: <strong>$150</strong> initial / <strong>$50</strong> additional per month</li>
-              <li><strong>$25–$50 bonus</strong> on selected content (when applicable)</li>
-              <li><strong>Category gifting</strong> for briefed needs — product seeded in the relevant category when the monthly brief asks for specific content (e.g. sideboards, pet, holiday)</li>
-            </ul>
-          </div>
-          <div class="tier-card">
-            <h3>Tier 3</h3>
-            <ul>
-              <li>Top base: <strong>$200</strong> initial / <strong>$75</strong> additional per month</li>
-              <li><strong>@wayfaircreators</strong> exposure for selected boosted posts</li>
-              <li><strong>Monthly highlight</strong> in program comms</li>
-              <li>Invited to <strong>competitions</strong> and special challenges when the program runs them</li>
-            </ul>
-          </div>
-        </div>
+    <hr />
 
-        <div>
-          <h2>How it works</h2>
-          <ul class="simple">
-            <li><strong>Selection ≠ payment until boost runs.</strong> Pay follows program rules when your post is selected and boosted.</li>
-            <li><strong>Align with the monthly brief</strong> to improve fit when your category is in the Paid priority pool.</li>
-            <li><strong>Category gifting (Tier 2+)</strong> is tied to active brief needs — not every post; team coordinates when a category push is live.</li>
-            <li><strong>Bonuses (Tier 2+)</strong> apply only on designated selected content.</li>
-            <li><strong>Tier 3 visibility</strong> — featured posts and monthly highlight are chosen from boosted content that meets creative and brand standards.</li>
-          </ul>
+    <h2>Tier benefits</h2>
 
-          <h2 style="margin-top: 0.14in;">Questions</h2>
-          <div class="lavender">
-            <p>Tier placement, boost status, or compensation details: <strong>wcp@wayfair.com</strong></p>
-            <p class="note" style="margin-top: 8px;">Program terms and tier criteria are set by the WBP team and may be updated; this sheet summarizes current structure for creators.</p>
-          </div>
-        </div>
-      </div>
-    </div>
-  </article>
+    <h3>Entry</h3>
+    <ul>
+      <li>Monthly <strong>boosting brief</strong> (what Paid is pulling on Meta &amp; TikTok)</li>
+      <li>Access to <strong>Creator town halls</strong></li>
+    </ul>
+
+    <h3>Tier 2</h3>
+    <ul>
+      <li><strong>$25–$50 bonus</strong> on selected content, when applicable</li>
+      <li><strong>Category product gifting</strong> when the monthly brief calls for specific content — e.g. sideboards for a TikTok push; product is gifted within that category, not for every post</li>
+    </ul>
+
+    <h3>Tier 3</h3>
+    <ul>
+      <li><strong>@wayfaircreators</strong> link exposure on selected boosted posts</li>
+      <li><strong>Highlighted creator</strong> in program communications each month</li>
+      <li><strong>Competitions</strong> and special challenges when the program runs them</li>
+    </ul>
+
+    <hr />
+
+    <h2>Good to know</h2>
+    <ul>
+      <li>Selection follows the monthly brief and creative fit; not every eligible post is boosted.</li>
+      <li>Bonuses and gifting apply only when the team designates a post or brief need — not automatic on every boost.</li>
+      <li>Tier placement and program rules are set by the WBP team and may be updated.</li>
+    </ul>
+
+    <p class="fine">Questions: <a href="mailto:wcp@wayfair.com">wcp@wayfair.com</a></p>
+  </main>
 </body>
 </html>
