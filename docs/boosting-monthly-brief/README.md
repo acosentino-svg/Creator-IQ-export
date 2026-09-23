@@ -13,6 +13,10 @@ Use these files to publish a **monthly creator brief** for the Wayfair Creators 
 | [`October-Boosting-Brief-DECK.pdf`](October-Boosting-Brief-DECK.pdf) | **5-slide deck** (landscape) — town hall / full detail |
 | [`October-Boosting-Brief-2-PAGES.pdf`](October-Boosting-Brief-2-PAGES.pdf) | **2-page PDF** — email with FAQ + examples |
 | [`FORMAT-GUIDE.md`](FORMAT-GUIDE.md) | When to use 1-pager vs deck vs 2-page |
+| [`October-Canva-One-Pager.pdf`](October-Canva-One-Pager.pdf) | **Canva-style 1-pager** (import to Canva or email as PDF/PNG) |
+| [`2026-10-october-canva-onepager.html`](2026-10-october-canva-onepager.html) | Source to edit / print |
+| [`SHORT-BRIEF-OCTOBER-2026.md`](SHORT-BRIEF-OCTOBER-2026.md) | Short text brief (no attachment) |
+| [`SEND-OPTIONS.md`](SEND-OPTIONS.md) | Options A / B / C for how to send |
 
 ## Before you send (internal checklist)
 
