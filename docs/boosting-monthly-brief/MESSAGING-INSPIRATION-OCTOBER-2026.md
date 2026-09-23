@@ -1,66 +1,75 @@
-# October 2026 — messaging inspiration
+# October 2026 — messaging inspiration (fall)
 
-Use for **story angles, hooks, and on-screen text ideas**. Technical boost rules stay on the one-sheet (**We boost** / **We pass on** + deliverables).
-
----
-
-## 1. Fall & Halloween hosting
-
-**Angle:** Cozy, guest-ready, curb-to-table — livable fall, not horror or promo.
-
-**Hook / open examples (adapt):**
-
-- “Quick porch reset before everyone shows up…”
-- “The dining setup I’m using all fall”
-- “Spooky-neutral — still feels like home”
-
-**Story beat:** Small problem (blank porch, flat table, dark corner) → Wayfair piece in use → how it feels to live with it.
+Story angles and hook ideas for **what to say and film** this month. Boost specs stay on the one-sheet (**We boost** / **We pass on**).
 
 ---
 
-## 2. Holiday preview
+## Fall styling
 
-**Angle:** Early holiday *preview* on Meta mid–late October — guest-ready, entertaining, trim — not a sale or code message.
+**Angle:** Warm, lived-in autumn — layers and small swaps, not a full room reno.
 
-**Hook / open examples:**
+**Hook examples:**
 
-- “Guest room before the weekend”
-- “First tree / trim moment of the season”
+- “Cozy layers without redoing the whole room”
+- “Porch / entryway refresh for fall”
+- “The textiles that made this room feel like autumn”
+
+**Beats:** One space · Wayfair piece in use · how it feels day-to-day.
+
+---
+
+## Halloween decorating
+
+**Angle:** At-home, **spooky-neutral** — festive and approachable, not horror or costume catalog.
+
+**Hook examples:**
+
+- “Spooky-neutral Halloween at home”
+- “Porch moment before trick-or-treaters”
+- “Dining table Halloween without going overboard”
+
+**Beats:** Strong opening · décor + product clear early · mood you’d actually live with.
+
+---
+
+## Setting up for the holidays
+
+**Angle:** **Holiday preview** (mid–late October on Meta) — guest-ready and entertaining, early trim/tree moments.
+
+**Hook examples:**
+
+- “Guest room before everyone arrives”
+- “First tree / trim of the season”
 - “Where we’re hosting this year”
 
-**Story beat:** One space, one upgrade, one clear “why this helps when people come over.”
+**Beats:** One upgrade · one clear guest or hosting benefit · preview vibe, not promo/code-led.
 
 ---
 
-## 3. TikTok-native beats
+## Fall hosting
 
-**Angle:** What Paid is pulling on TikTok this month.
+**Angle:** Dinners, guests, cooler nights — dining, seating, storage, outdoor hangouts.
 
-| Theme | Messaging idea |
-|--------|----------------|
-| **Pet** | Pet in frame with the product — bed, washable rug, pet-friendly piece in the real routine |
-| **Sideboards** | “How I styled this wall” — dining, entry, or living; in use, not unbox |
-| **Halloween** | At-home styling reveal — strong first beat, product obvious early |
-| **Verified** | Quick trust beat when eligible — badge visible, why you picked the SKU |
+**Hook examples:**
 
----
+- “Fall dinner table setup”
+- “Extra seating when the whole crew shows up”
+- “Backyard / patio still usable as it gets cold”
 
-## 4. Evergreen problem → fix
-
-**Angle:** Any category, any room — office, bath, outdoor, storage, seating.
-
-**Hook / open examples:**
-
-- “This one swap fixed my [morning routine / WFH corner / entry chaos]”
-- “Small upgrade, big daily win”
-- “I didn’t want to replace the whole room — just this”
-
-**Story beat:** One real use case, one benefit — seasonal mood is fine; don’t lead with codes or limited-time offers.
+**Beats:** Problem (tight space, bare table, cold patio) → product in use → ready for people.
 
 ---
 
-## Tone reminders
+## TikTok (when it fits your story)
 
-- Sound like **you**, not a catalog or ad read.
-- **Problem → product → benefit** in one short arc; soft CTA if you use one.
-- On-screen text: short phrases that match what you’d say out loud.
+Layer these into the angles above when natural — don’t force a separate “theme” post:
+
+- **Pet** in frame with beds, rugs, or pet-friendly furniture  
+- **Sideboard** styling in dining, entry, or living  
+- **Wayfair Verified** badge when the SKU qualifies  
+
+---
+
+## Tone
+
+Your voice, not a catalog read. Short on-screen text that matches what you’d say. One story, one benefit.
