@@ -39,10 +39,10 @@ Story angles and hook ideas for **what to say and film** this month. Boost specs
 **Hook examples:**
 
 - “Guest room before everyone arrives”
-- “First tree / trim of the season”
 - “Where we’re hosting this year”
+- “Pieces I’m using for holiday hosting” (call out **Wayfair Verified** on screen when the product qualifies)
 
-**Beats:** One upgrade · one clear guest or hosting benefit · preview vibe, not promo/code-led.
+**Beats:** One upgrade · one clear guest or hosting benefit · preview vibe, not promo/code-led. If the SKU is Verified, show the badge — quick trust beat, not a separate ad read.
 
 ---
 
@@ -62,11 +62,10 @@ Story angles and hook ideas for **what to say and film** this month. Boost specs
 
 ## TikTok (when it fits your story)
 
-Layer these into the angles above when natural — don’t force a separate “theme” post:
+Layer into the fall angles above when natural — don’t force a separate “theme” post:
 
 - **Pet** in frame with beds, rugs, or pet-friendly furniture  
 - **Sideboard** styling in dining, entry, or living  
-- **Wayfair Verified** badge when the SKU qualifies  
 
 ---
 
