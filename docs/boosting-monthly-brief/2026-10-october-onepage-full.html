@@ -9,6 +9,7 @@
       --p: #7f187f;
       --pl: #f0e3f4;
       --green: #d8f0dc;
+      --red: #f5d4d4;
       --ink: #1a1a1a;
       --mu: #3d3d3d;
     }
@@ -95,16 +96,30 @@
       display: flex; align-items: center; justify-content: center;
     }
     .pill strong { color: var(--ink); }
-    .green {
-      background: var(--green);
+    .dos-donts {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+    .criteria-box {
       border-radius: 12px;
-      padding: 10px 13px;
-      font-size: 9pt;
-      line-height: 1.42;
+      padding: 9px 11px;
+      font-size: 8.35pt;
+      line-height: 1.38;
       color: var(--mu);
     }
-    .green ul { margin: 0; padding-left: 1.1em; }
-    .green li { margin-bottom: 4px; }
+    .criteria-box.boost { background: var(--green); }
+    .criteria-box.pass { background: var(--red); }
+    .criteria-box h3 {
+      margin: 0 0 5px;
+      font-size: 8.5pt;
+      font-weight: 700;
+      color: var(--ink);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    .criteria-box ul { margin: 0; padding-left: 1.05em; }
+    .criteria-box li { margin-bottom: 3px; }
     .deliver h2 { margin-bottom: 10px; }
     ul.deliver {
       margin: 0;
@@ -149,12 +164,27 @@
           <div class="pill"><span class="n">2</span><span><strong>Product in use</strong> — styled room, not unbox-only; one clear benefit</span></div>
           <div class="pill"><span class="n">3</span><span><strong>You on camera</strong> — face-to-camera, hands-on, or POV</span></div>
           <div class="pill"><span class="n">4</span><span><strong>Evergreen</strong> — seasonal mood is fine; sale/code-led posts aren’t in our main boost pool</span></div>
-          <div class="green">
-            <ul>
-              <li>In room + in use</li>
-              <li>Clear, native creator story</li>
-              <li>Bright, easy-to-follow pacing</li>
-            </ul>
+          <div class="dos-donts">
+            <div class="criteria-box boost">
+              <h3>We boost</h3>
+              <ul>
+                <li>Creator-native vertical video; informal tone</li>
+                <li>In room + in use — product clear early</li>
+                <li>You on camera, hands-on, or POV</li>
+                <li>Bright, clear pacing; simple on-screen text</li>
+                <li>Evergreen stories (seasonal OK)</li>
+              </ul>
+            </div>
+            <div class="criteria-box pass">
+              <h3>We usually pass on</h3>
+              <ul>
+                <li>Carousels &amp; commercial-style ads</li>
+                <li>Unboxing-only or unclear product</li>
+                <li>Weak/late hooks; no creator presence</li>
+                <li>Dark, chaotic, or hard-to-read footage</li>
+                <li>Sales, codes, or LTO-led creative</li>
+              </ul>
+            </div>
           </div>
         </div>
 
@@ -172,13 +202,6 @@
           </ul>
         </div>
       </div>
-
-      <section>
-        <h2>Core video criteria</h2>
-        <div class="lavender">
-          <p><strong>We boost</strong> informal, in-use vertical video with the product visible early. <strong>We usually pass on</strong> carousels, unbox-only, weak hooks, dark footage, and sale/code/LTO-led creative.</p>
-        </div>
-      </section>
 
       <section>
         <h2>Appendix</h2>
