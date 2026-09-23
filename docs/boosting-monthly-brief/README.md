@@ -9,7 +9,10 @@ Use these files to publish a **monthly creator brief** for the Wayfair Creators 
 | [`TEMPLATE.md`](TEMPLATE.md) | Copy each month; replace placeholders and sync with Paid Media before send. |
 | [`2026-10-october.md`](2026-10-october.md) | October 2026 draft (Meta + TikTok priorities). |
 | [`2026-10-october.html`](2026-10-october.html) | Layout matched to WCP tier PDFs (purple headings, bordered tables). |
-| [`Wayfair-Boosting-Brief-October-2026.pdf`](Wayfair-Boosting-Brief-October-2026.pdf) | **Downloadable PDF** for creators (4 pages). |
+| [`Wayfair-Boosting-Brief-October-2026.pdf`](Wayfair-Boosting-Brief-October-2026.pdf) | **1-page** email / Canva summary |
+| [`October-Boosting-Brief-DECK.pdf`](October-Boosting-Brief-DECK.pdf) | **5-slide deck** (landscape) — town hall / full detail |
+| [`October-Boosting-Brief-2-PAGES.pdf`](October-Boosting-Brief-2-PAGES.pdf) | **2-page PDF** — email with FAQ + examples |
+| [`FORMAT-GUIDE.md`](FORMAT-GUIDE.md) | When to use 1-pager vs deck vs 2-page |
 
 ## Before you send (internal checklist)
 
