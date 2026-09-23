@@ -40,6 +40,30 @@ Align your posts with what Paid is pulling this month. On Meta, we’re continui
 
 ---
 
+## Great fits vs. usually skipped (footer — paste into two boxes)
+
+**Great fits**
+- **15–45 sec** vertical video — problem → product → benefit → CTA; no filler  
+- **Hook 1–3 sec** — problem, benefit, or discovery; show the product; don’t delay the reveal  
+- **Creator-native** — informal tone, styled lived-in space, bright clear footage  
+- **You in it** — face-to-camera, hands-on, or POV  
+- **Product focus** — visible early, in use in a real space (not unbox-only); one clear benefit  
+- **Pacing** — brisk, easy to follow; purposeful cuts; hold shots long enough to see product  
+- **Sound-off** — simple readable on-screen text; on screen long enough (no cursive/decorative fonts)  
+- **Evergreen** — seasonal/GTM moments fine; not promo-specific (sales, codes, limited-time offers)  
+
+**Usually skipped**
+- Carousels or wrong format/length  
+- Looks like a commercial, not creator content  
+- Unboxing only; product not in use; unclear which Wayfair item  
+- Weak or late hook; product not visible early  
+- No creator presence; dark or cluttered footage  
+- Chaotic pacing; can’t see the product  
+- Hard-to-read, cursive, or decorative on-screen text  
+- Promo-specific: sales, codes, limited-time offer creative  
+
+---
+
 ## What we cut (because it felt repetitive)
 
 | Remove | Why |
