@@ -13,6 +13,7 @@ Use these files to publish a **monthly creator brief** for the Wayfair Creators 
 | [`October-Boosting-Brief-DECK.pdf`](October-Boosting-Brief-DECK.pdf) | **5-slide deck** (landscape) — town hall / full detail |
 | [`October-Boosting-Brief-2-PAGES.pdf`](October-Boosting-Brief-2-PAGES.pdf) | **2-page PDF** — email with FAQ + examples |
 | [`FORMAT-GUIDE.md`](FORMAT-GUIDE.md) | When to use 1-pager vs deck vs 2-page |
+| [`WBP-COMPENSATION-TIERS.pdf`](WBP-COMPENSATION-TIERS.pdf) | **Boosting Partnership** — Entry / Tier 2 / Tier 3 pay &amp; perks |
 | [`OCTOBER-ONE-PAGER.pdf`](OCTOBER-ONE-PAGER.pdf) | **Full one-page brief** (all sections, dense layout) |
 | [`OCTOBER-ONE-PAGER.png`](OCTOBER-ONE-PAGER.png) | Same — image for phone / email inline |
 | [`2026-10-october-onepage-full.html`](2026-10-october-onepage-full.html) | Source to edit → Print to PDF |
