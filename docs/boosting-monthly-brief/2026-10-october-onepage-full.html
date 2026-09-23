@@ -15,11 +15,12 @@
       margin: 12px auto;
       background: #fff;
       padding: 0.32in 0.36in 0.28in;
-      display: grid;
-      grid-template-rows: auto auto 1fr auto auto;
-      gap: 0.14in;
+      display: flex;
+      flex-direction: column;
+      gap: 0.11in;
       overflow: hidden;
     }
+    .foot { margin-top: auto; }
     .head {
       background: linear-gradient(90deg, #4a0d4d, var(--p));
       color: #fff;
@@ -52,7 +53,7 @@
     .box strong { color: var(--ink); }
     .ideas { font-size: 7.65pt; line-height: 1.32; color: var(--mu); }
     .ideas b { color: var(--ink); font-size: 7.75pt; }
-    .foot {
+    footer.foot {
       border-top: 2px solid var(--pl);
       padding-top: 7px;
       display: grid;
