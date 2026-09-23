@@ -53,7 +53,7 @@
       padding: 0.2in 0.4in 0.24in;
       display: flex;
       flex-direction: column;
-      gap: 0.15in;
+      gap: 0.12in;
     }
     h2 {
       margin: 0 0 7px;
@@ -98,6 +98,13 @@
       display: flex; align-items: center; justify-content: center;
     }
     .pill strong { color: var(--ink); }
+    .section-note {
+      margin: 0 0 8px;
+      font-size: 8.35pt;
+      line-height: 1.35;
+      color: var(--mu);
+    }
+    .section-note strong { color: var(--ink); }
     .boost-pass {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -107,8 +114,8 @@
     .criteria {
       border-radius: 10px;
       overflow: hidden;
-      font-size: 8.15pt;
-      line-height: 1.36;
+      font-size: 7.9pt;
+      line-height: 1.34;
       color: var(--mu);
       box-shadow: 0 1px 3px rgba(0,0,0,0.08);
     }
@@ -125,7 +132,7 @@
     .criteria.pass .bar { background: var(--pass-head); }
     .criteria.boost .body-c { background: var(--boost-bg); }
     .criteria.pass .body-c { background: var(--pass-bg); }
-    .criteria .body-c { padding: 8px 9px 9px; }
+    .criteria .body-c { padding: 7px 8px 8px; }
     .criteria ul { margin: 0; padding-left: 1.05em; }
     .criteria li { margin-bottom: 3px; }
     .criteria strong { color: var(--ink); }
@@ -169,21 +176,23 @@
       <div class="mid">
         <div class="left">
           <h2>Messaging inspiration</h2>
-          <div class="pill"><span class="n">1</span><span><strong>Hook in 1–3 seconds</strong> — problem, benefit, or discovery; show the product immediately</span></div>
-          <div class="pill"><span class="n">2</span><span><strong>Product in use</strong> — styled room, not unbox-only; one clear benefit</span></div>
-          <div class="pill"><span class="n">3</span><span><strong>You on camera</strong> — face-to-camera, hands-on, or POV</span></div>
-          <div class="pill"><span class="n">4</span><span><strong>Evergreen</strong> — seasonal mood is fine; sale/code-led posts aren’t in our main boost pool</span></div>
+          <p class="section-note">Ideas for <strong>what to film</strong> this month — story angles, not specs.</p>
+          <div class="pill"><span class="n">1</span><span><strong>Fall &amp; Halloween</strong> — porch refresh, dining, cozy layers, livable spooky-neutral styling</span></div>
+          <div class="pill"><span class="n">2</span><span><strong>Holiday preview</strong> — tree &amp; trim, guest-ready rooms, entertaining setups</span></div>
+          <div class="pill"><span class="n">3</span><span><strong>TikTok angles</strong> — pet + product in frame; sideboard moment; Halloween at home; Verified when eligible</span></div>
+          <div class="pill"><span class="n">4</span><span><strong>Evergreen rooms</strong> — office, bath, outdoor, storage, seating — one real use case per video</span></div>
 
           <div class="boost-pass" aria-label="We boost versus we pass on">
             <div class="criteria boost">
               <div class="bar">We boost</div>
               <div class="body-c">
                 <ul>
-                  <li>Creator-native <strong>vertical video</strong>; informal tone</li>
-                  <li>In room + <strong>in use</strong> — product clear early</li>
-                  <li>You on camera, hands-on, or POV</li>
-                  <li>Bright pacing; simple on-screen text</li>
-                  <li>Evergreen stories (seasonal OK)</li>
+                  <li><strong>Vertical video</strong> (Reels/TikTok) — creator-native, not ad-like</li>
+                  <li>Product on screen in the <strong>first 3 seconds</strong></li>
+                  <li>Shown <strong>in use</strong> in a styled room — not unbox-only</li>
+                  <li>Creator on screen, hands-on, or POV</li>
+                  <li>Bright, clear footage; steady pacing; shots held long enough to see the product</li>
+                  <li>Simple on-screen text that reads with sound off</li>
                 </ul>
               </div>
             </div>
@@ -191,11 +200,11 @@
               <div class="bar">We pass on</div>
               <div class="body-c">
                 <ul>
-                  <li><strong>Carousels</strong> &amp; commercial ads</li>
-                  <li>Unboxing-only / unclear product</li>
-                  <li>Weak hooks; no creator presence</li>
-                  <li>Dark or hard-to-read footage</li>
-                  <li><strong>Sales, codes, LTO</strong>-led creative</li>
+                  <li><strong>Carousels</strong> and commercial-style spots</li>
+                  <li>Unboxing-only or product not clear</li>
+                  <li>Late/weak hooks; no creator presence</li>
+                  <li>Dark, chaotic, or hard-to-read footage/text</li>
+                  <li>Creative led by <strong>sales, codes, or LTO</strong></li>
                 </ul>
               </div>
             </div>
