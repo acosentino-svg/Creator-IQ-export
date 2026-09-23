@@ -22,7 +22,7 @@
 ## Build it yourself (always works)
 
 1. In the repo, folder: `docs/boosting-monthly-brief/`  
-2. Double-click **`2026-10-october-canva-onepager.html`**  
+2. Double-click **`2026-10-october-onepage-full.html`** (current brief — not the old `canva-onepager` file)  
 3. **Ctrl+P** / **Cmd+P** → **Save as PDF**
 
 Keep **`hero-bedroom.jpg`** in that same folder.

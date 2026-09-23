@@ -8,10 +8,10 @@
     :root {
       --p: #7f187f;
       --pl: #f0e3f4;
-      --green: #d8f0dc;
-      --red: #f4c4c4;
-      --red-border: #c23b3b;
-      --green-border: #3d8b4a;
+      --boost-bg: #d8f0dc;
+      --boost-head: #2d6a3e;
+      --pass-bg: #f4c4c4;
+      --pass-head: #a82828;
       --ink: #1a1a1a;
       --mu: #3d3d3d;
     }
@@ -29,7 +29,7 @@
     }
     .hero {
       flex-shrink: 0;
-      height: 2.1in;
+      height: 2in;
       background:
         linear-gradient(to bottom, rgba(20, 20, 30, 0.15), rgba(20, 20, 30, 0.45)),
         url("hero-bedroom.jpg") center/cover;
@@ -50,13 +50,13 @@
     }
     .body {
       flex: 1;
-      padding: 0.22in 0.4in 0.28in;
+      padding: 0.2in 0.4in 0.24in;
       display: flex;
       flex-direction: column;
-      gap: 0.18in;
+      gap: 0.15in;
     }
     h2 {
-      margin: 0 0 8px;
+      margin: 0 0 7px;
       font-size: 9.5pt;
       font-weight: 700;
       color: var(--p);
@@ -76,7 +76,7 @@
     .mid {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 0.26in;
+      gap: 0.24in;
       align-items: start;
     }
     .pill {
@@ -98,38 +98,37 @@
       display: flex; align-items: center; justify-content: center;
     }
     .pill strong { color: var(--ink); }
-    .dos-donts {
+    .boost-pass {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 0.14in;
+      gap: 8px;
+      margin-top: 4px;
     }
-    .criteria-box {
-      border-radius: 12px;
-      padding: 10px 12px;
-      font-size: 8.5pt;
-      line-height: 1.4;
+    .criteria {
+      border-radius: 10px;
+      overflow: hidden;
+      font-size: 8.15pt;
+      line-height: 1.36;
       color: var(--mu);
-      border: 2px solid transparent;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.08);
     }
-    .criteria-box.boost {
-      background: var(--green);
-      border-color: var(--green-border);
-    }
-    .criteria-box.pass {
-      background: var(--red);
-      border-color: var(--red-border);
-    }
-    .criteria-box h3 {
-      margin: 0 0 6px;
-      font-size: 9.5pt;
+    .criteria .bar {
+      padding: 7px 8px;
+      text-align: center;
+      font-size: 9pt;
       font-weight: 700;
-      color: var(--ink);
-      letter-spacing: 0.02em;
+      color: #fff;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
     }
-    .criteria-box.boost h3 { color: #1f5c2e; }
-    .criteria-box.pass h3 { color: #8b1e1e; }
-    .criteria-box ul { margin: 0; padding-left: 1.05em; }
-    .criteria-box li { margin-bottom: 3px; }
+    .criteria.boost .bar { background: var(--boost-head); }
+    .criteria.pass .bar { background: var(--pass-head); }
+    .criteria.boost .body-c { background: var(--boost-bg); }
+    .criteria.pass .body-c { background: var(--pass-bg); }
+    .criteria .body-c { padding: 8px 9px 9px; }
+    .criteria ul { margin: 0; padding-left: 1.05em; }
+    .criteria li { margin-bottom: 3px; }
+    .criteria strong { color: var(--ink); }
     .deliver h2 { margin-bottom: 10px; }
     ul.deliver {
       margin: 0;
@@ -168,12 +167,39 @@
       </section>
 
       <div class="mid">
-        <div>
+        <div class="left">
           <h2>Messaging inspiration</h2>
           <div class="pill"><span class="n">1</span><span><strong>Hook in 1–3 seconds</strong> — problem, benefit, or discovery; show the product immediately</span></div>
           <div class="pill"><span class="n">2</span><span><strong>Product in use</strong> — styled room, not unbox-only; one clear benefit</span></div>
           <div class="pill"><span class="n">3</span><span><strong>You on camera</strong> — face-to-camera, hands-on, or POV</span></div>
           <div class="pill"><span class="n">4</span><span><strong>Evergreen</strong> — seasonal mood is fine; sale/code-led posts aren’t in our main boost pool</span></div>
+
+          <div class="boost-pass" aria-label="We boost versus we pass on">
+            <div class="criteria boost">
+              <div class="bar">We boost</div>
+              <div class="body-c">
+                <ul>
+                  <li>Creator-native <strong>vertical video</strong>; informal tone</li>
+                  <li>In room + <strong>in use</strong> — product clear early</li>
+                  <li>You on camera, hands-on, or POV</li>
+                  <li>Bright pacing; simple on-screen text</li>
+                  <li>Evergreen stories (seasonal OK)</li>
+                </ul>
+              </div>
+            </div>
+            <div class="criteria pass">
+              <div class="bar">We pass on</div>
+              <div class="body-c">
+                <ul>
+                  <li><strong>Carousels</strong> &amp; commercial ads</li>
+                  <li>Unboxing-only / unclear product</li>
+                  <li>Weak hooks; no creator presence</li>
+                  <li>Dark or hard-to-read footage</li>
+                  <li><strong>Sales, codes, LTO</strong>-led creative</li>
+                </ul>
+              </div>
+            </div>
+          </div>
         </div>
 
         <div class="lavender deliver">
@@ -190,32 +216,6 @@
           </ul>
         </div>
       </div>
-
-      <section class="criteria-section">
-        <h2>Core video criteria</h2>
-        <div class="dos-donts">
-          <div class="criteria-box boost">
-            <h3>We boost</h3>
-            <ul>
-              <li>Creator-native <strong>vertical video</strong> — informal tone, bright clear footage</li>
-              <li>Styled lived-in space; product visible early and <strong>in use</strong> (not unbox-only)</li>
-              <li>One clear benefit; you on camera, hands-on, or POV</li>
-              <li>Brisk pacing; simple, readable on-screen text (sound-off friendly)</li>
-              <li>Evergreen stories — seasonal/GTM moments OK; not promo-led</li>
-            </ul>
-          </div>
-          <div class="criteria-box pass">
-            <h3>We pass on</h3>
-            <ul>
-              <li><strong>Carousels</strong> and commercial-style ads</li>
-              <li>Unboxing-only or unclear product</li>
-              <li>Weak/late hooks; missing creator presence</li>
-              <li>Dark, chaotic footage; decorative or hard-to-read text</li>
-              <li>Videos led by <strong>sales, codes, or LTO</strong> offers</li>
-            </ul>
-          </div>
-        </div>
-      </section>
 
       <section>
         <h2>Appendix</h2>
