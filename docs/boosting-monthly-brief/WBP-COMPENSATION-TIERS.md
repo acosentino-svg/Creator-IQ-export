@@ -6,10 +6,6 @@
 
 An **eligible post** meets program content standards (monthly brief + boost criteria), and includes **#WayfairCreator** and **#wayfairelevate** in the caption (plus **#ad** when required).
 
-### Content buckets (monthly)
-
-The **monthly boosting brief** lists what Paid is pulling on Meta and TikTok. Align eligible posts with those **content buckets** when you can.
-
 ### Tier activity — eligible posts per month
 
 | Tier | Eligible posts / month | Notes |
