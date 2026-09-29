@@ -78,3 +78,21 @@ def test_export_csv_dir_writes_data_quality(tmp_path: Path):
     dq = pd.read_csv(out / "01_data_quality.csv")
     assert "Check" in dq.columns
     assert len(dq) == 5
+
+
+def test_build_zip_bytes(tmp_path: Path):
+    from creatoriq_dashboard.boosting_halo_effect import build_halo_effect_zip_bytes
+    import zipfile
+    import io
+
+    posted = (
+        "Post Id,Creator Name,SocialHandle,Post Description,Post Link,Post Date,Publisher Id\n"
+        '1,a,x,"#WayfairCreator #wayfairelevate",https://tiktok.com/@x/video/99/,2026-01-10 12:00:00,1\n'
+    )
+    selected = "Creator Name,Content Used,Duration of Usage\na,https://www.tiktok.com/@x/video/99,1/5/2026\n"
+    data, diag = build_halo_effect_zip_bytes(posted.encode(), selected.encode())
+    assert len(data) > 100
+    with zipfile.ZipFile(io.BytesIO(data)) as zf:
+        names = zf.namelist()
+    assert "01_data_quality.csv" in names
+    assert diag["posted_rows"] == 1

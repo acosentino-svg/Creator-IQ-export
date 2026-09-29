@@ -1,7 +1,9 @@
 """Merge CreatorIQ 'posted' export + internal 'selected for boosting' tracker."""
 from __future__ import annotations
 
+import io
 import re
+import zipfile
 from urllib.parse import urlparse
 
 import pandas as pd
@@ -405,6 +407,53 @@ Tip: You can also upload the whole folder to Google Drive, then open each CSV wi
     diagnostics["output_dir"] = str(out_dir)
     diagnostics["csv_files"] = written
     return diagnostics
+
+
+def build_halo_effect_zip_bytes(
+    posted_source: str | bytes | pd.DataFrame,
+    selected_source: str | bytes | pd.DataFrame,
+    *,
+    drought_days: int = 90,
+    active_days: int = 30,
+    config: AppConfig | None = None,
+) -> tuple[bytes, dict]:
+    """Build Google Sheets CSV bundle in memory for browser download."""
+    import tempfile
+    from pathlib import Path
+
+    with tempfile.TemporaryDirectory() as tmp:
+        posted_path = Path(tmp) / "posted.csv"
+        selected_path = Path(tmp) / "selected.csv"
+        if isinstance(posted_source, pd.DataFrame):
+            posted_source.to_csv(posted_path, index=False)
+        elif isinstance(posted_source, bytes):
+            posted_path.write_bytes(posted_source)
+        else:
+            posted_path.write_text(str(posted_source), encoding="utf-8")
+        if isinstance(selected_source, pd.DataFrame):
+            selected_source.to_csv(selected_path, index=False)
+        elif isinstance(selected_source, bytes):
+            selected_path.write_bytes(selected_source)
+        else:
+            selected_path.write_text(str(selected_source), encoding="utf-8")
+
+        out_dir = Path(tmp) / "out"
+        diagnostics = export_halo_effect_csv_dir(
+            str(posted_path),
+            str(selected_path),
+            str(out_dir),
+            drought_days=drought_days,
+            active_days=active_days,
+            config=config,
+        )
+
+        buffer = io.BytesIO()
+        with zipfile.ZipFile(buffer, "w", compression=zipfile.ZIP_DEFLATED) as zf:
+            for path in sorted(out_dir.iterdir()):
+                if path.is_file():
+                    zf.write(path, arcname=path.name)
+        buffer.seek(0)
+        return buffer.getvalue(), diagnostics
 
 
 def export_halo_effect_workbook(
