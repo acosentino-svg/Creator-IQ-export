@@ -433,6 +433,29 @@ GOOGLE_SHEETS_CSV_FILES: tuple[tuple[str, str], ...] = (
     ("all_posts", "07_all_posts.csv"),
 )
 
+# For meetings / manager updates — import 3 tabs instead of 7.
+GOOGLE_SHEETS_MINIMAL_CSV_FILES: tuple[tuple[str, str], ...] = (
+    ("summary_pack", "01_summary.csv"),
+    ("creator_timeline", "02_creator_timeline.csv"),
+    ("selected_not_in_posted", "03_selected_not_in_posted.csv"),
+)
+
+
+def build_summary_pack_csv(frames: dict[str, pd.DataFrame]) -> pd.DataFrame:
+    """One importable sheet: settings, data quality, segments, days-since-selection."""
+    blocks: list[pd.DataFrame] = []
+    for title, key in (
+        ("SETTINGS", "settings"),
+        ("DATA QUALITY", "data_quality"),
+        ("SEGMENT SUMMARY", "segment_summary"),
+        ("DAYS SINCE LAST SELECTION", "days_since_selection"),
+    ):
+        block = frames[key].copy()
+        block.insert(0, "section", title)
+        blocks.append(block)
+        blocks.append(pd.DataFrame({"section": [""], "Check": [""]}))
+    return pd.concat(blocks, ignore_index=True)
+
 
 def export_halo_effect_csv_dir(
     posted_path: str,
@@ -443,6 +466,7 @@ def export_halo_effect_csv_dir(
     active_days: int = 30,
     post_date_start: str | None = None,
     post_date_end: str | None = None,
+    minimal: bool = False,
     config: AppConfig | None = None,
 ) -> dict:
     """Write one CSV per report table — import each into a Google Sheets tab."""
@@ -461,25 +485,37 @@ def export_halo_effect_csv_dir(
     out_dir.mkdir(parents=True, exist_ok=True)
 
     written: list[str] = []
-    for key, filename in GOOGLE_SHEETS_CSV_FILES:
+    if minimal:
+        frames["summary_pack"] = build_summary_pack_csv(frames)
+        file_map = GOOGLE_SHEETS_MINIMAL_CSV_FILES
+    else:
+        file_map = GOOGLE_SHEETS_CSV_FILES
+
+    for key, filename in file_map:
         path = out_dir / filename
         frames[key].to_csv(path, index=False)
         written.append(str(path))
 
     readme = out_dir / "README_google_sheets.txt"
-    readme.write_text(
-        """Import into Google Sheets
-==========================
-1. Go to sheets.google.com → Blank spreadsheet.
-2. For each CSV in this folder (in order 01 … 07):
-   File → Import → Upload → select the CSV
-   Import location: "Insert new sheet(s)" (or "Replace current sheet" for 01 only on a blank book).
-3. Start with 01_data_quality.csv — that is the Check / Result table.
+    if minimal:
+        readme_body = """Import into Google Sheets (minimal — 3 tabs)
+============================================
+1. sheets.google.com → Blank spreadsheet.
+2. Import 01_summary.csv → Replace spreadsheet (settings + quality + segments + days-since-selection).
+3. Import 02_creator_timeline.csv → Insert new sheet.
+4. Import 03_selected_not_in_posted.csv → Insert new sheet (skip if you don't need match gaps).
 
-Tip: You can also upload the whole folder to Google Drive, then open each CSV with Google Sheets.
-""",
-        encoding="utf-8",
-    )
+Post-level detail (07_all_posts) is omitted in minimal mode.
+"""
+    else:
+        readme_body = """Import into Google Sheets (full — 7 tabs)
+==========================================
+1. sheets.google.com → Blank spreadsheet.
+2. Import 01 … 07 in order (01 replaces sheet; 02–07 insert new sheets).
+
+Use --minimal on the export script for only 3 files.
+"""
+    readme.write_text(readme_body, encoding="utf-8")
     written.append(str(readme))
 
     diagnostics["output_dir"] = str(out_dir)

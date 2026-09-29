@@ -40,6 +40,11 @@ def main() -> None:
         default=None,
         help="Only posts on/before this date (e.g. 2026-09-30)",
     )
+    parser.add_argument(
+        "--minimal",
+        action="store_true",
+        help="Only 3 CSVs: summary, creator timeline, selected-not-in-posted",
+    )
     args = parser.parse_args()
 
     diag = export_halo_effect_csv_dir(
@@ -50,6 +55,7 @@ def main() -> None:
         active_days=args.active_days,
         post_date_start=args.post_date_start,
         post_date_end=args.post_date_end,
+        minimal=args.minimal,
     )
     print(f"Wrote CSV bundle to {diag['output_dir']}")
     print("  Open 01_data_quality.csv in Google Sheets for the Check / Result table.")

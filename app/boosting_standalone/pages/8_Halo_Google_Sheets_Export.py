@@ -18,7 +18,11 @@ from boosting_standalone.common import get_config, render_sidebar, show_flash
 from creatoriq_dashboard.boosting_halo_effect import (
     build_data_quality_checklist,
     build_halo_effect_zip_bytes,
+    export_halo_effect_csv_dir,
 )
+import tempfile
+import zipfile
+import io
 
 st.set_page_config(page_title="Google Sheets Export", page_icon="📊", layout="wide")
 config = get_config()
@@ -38,6 +42,7 @@ selected = st.file_uploader("Selected CSV (boosting tracker)", type=["csv"], key
 
 drought_days = st.slider("Selection drought (days)", 30, 365, 90, 15)
 active_days = st.slider("Still posting window (days)", 7, 120, 30, 7)
+minimal_export = st.checkbox("Minimal export (3 files for Google Sheets — recommended)", value=True)
 use_dates = st.checkbox("Only include posts in a date range", value=True)
 start_date = st.date_input("Post date from", value=dt.date(2026, 7, 1), disabled=not use_dates)
 end_date = st.date_input("Post date through", value=dt.date(2026, 9, 30), disabled=not use_dates)
@@ -47,15 +52,40 @@ post_end = end_date.isoformat() if use_dates else None
 if posted and selected:
     if st.button("Build export", type="primary"):
         try:
-            zip_bytes, diag = build_halo_effect_zip_bytes(
-                posted.getvalue(),
-                selected.getvalue(),
-                drought_days=drought_days,
-                active_days=active_days,
-                post_date_start=post_start,
-                post_date_end=post_end,
-                config=config,
-            )
+            if minimal_export:
+                with tempfile.TemporaryDirectory() as tmp:
+                    p_path = Path(tmp) / "posted.csv"
+                    s_path = Path(tmp) / "selected.csv"
+                    p_path.write_bytes(posted.getvalue())
+                    s_path.write_bytes(selected.getvalue())
+                    out = Path(tmp) / "out"
+                    diag = export_halo_effect_csv_dir(
+                        str(p_path),
+                        str(s_path),
+                        str(out),
+                        drought_days=drought_days,
+                        active_days=active_days,
+                        post_date_start=post_start,
+                        post_date_end=post_end,
+                        minimal=True,
+                        config=config,
+                    )
+                    buf = io.BytesIO()
+                    with zipfile.ZipFile(buf, "w", compression=zipfile.ZIP_DEFLATED) as zf:
+                        for f in sorted(out.iterdir()):
+                            if f.is_file():
+                                zf.write(f, arcname=f.name)
+                    zip_bytes = buf.getvalue()
+            else:
+                zip_bytes, diag = build_halo_effect_zip_bytes(
+                    posted.getvalue(),
+                    selected.getvalue(),
+                    drought_days=drought_days,
+                    active_days=active_days,
+                    post_date_start=post_start,
+                    post_date_end=post_end,
+                    config=config,
+                )
             st.session_state["halo_gs_zip"] = zip_bytes
             st.session_state["halo_gs_diag"] = diag
         except ValueError as exc:

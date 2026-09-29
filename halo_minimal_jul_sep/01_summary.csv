@@ -1,0 +1,23 @@
+section,Setting,Value,Check,Result,segment,creators,still_posting,pct_still_posting,days_since_last_selection_bucket,bucket_start_days
+SETTINGS,Posted file,/home/ubuntu/.cursor/projects/workspace/uploads/boosting_halo_effect_-_2026_posted_93f9.csv,,,,,,,,
+SETTINGS,Selected file,/home/ubuntu/.cursor/projects/workspace/uploads/boosting_halo_effect_-_2026_selected_8ab7.csv,,,,,,,,
+SETTINGS,Selection drought (days),90,,,,,,,,
+SETTINGS,Still posting window (days),30,,,,,,,,
+SETTINGS,Post date start,2026-07-01,,,,,,,,
+SETTINGS,Post date end,2026-09-30,,,,,,,,
+,,,,,,,,,,
+DATA QUALITY,,,Post date filter,2026-07-01 through 2026-09-30,,,,,,
+DATA QUALITY,,,Posts in posted file,"1,862",,,,,,
+DATA QUALITY,,,Unique selected assets in tracker,"1,403",,,,,,
+DATA QUALITY,,,Posts flagged selected,146 (7.8% of posts; matches tracker on post URL),,,,,,
+DATA QUALITY,,,Eligible posts (both hashtags),"1,824",,,,,,
+DATA QUALITY,,,Selected rows not in posted export,"1,257 — widen CreatorIQ date range or pull a longer posts export",,,,,,
+,,,,,,,,,,
+SEGMENT SUMMARY,,,,,Never selected — still posting,107.0,107.0,1.0,,
+SEGMENT SUMMARY,,,,,Never selected — went dark,66.0,0.0,0.0,,
+SEGMENT SUMMARY,,,,,Recently selected,79.0,58.0,0.7341772151898734,,
+,,,,,,,,,,
+DAYS SINCE LAST SELECTION,,,,,,25.0,25.0,1.0,0–29 days,0.0
+DAYS SINCE LAST SELECTION,,,,,,36.0,24.0,0.6666666666666666,30–59 days,30.0
+DAYS SINCE LAST SELECTION,,,,,,18.0,9.0,0.5,60–89 days,60.0
+,,,,,,,,,,

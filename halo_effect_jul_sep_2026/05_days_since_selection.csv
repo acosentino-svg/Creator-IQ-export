@@ -1,0 +1,4 @@
+days_since_last_selection_bucket,bucket_start_days,creators,still_posting,pct_still_posting
+0–29 days,0,25,25,1.0
+30–59 days,30,36,24,0.6666666666666666
+60–89 days,60,18,9,0.5
