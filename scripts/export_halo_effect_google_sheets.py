@@ -30,6 +30,16 @@ def main() -> None:
     )
     parser.add_argument("--drought-days", type=int, default=90)
     parser.add_argument("--active-days", type=int, default=30)
+    parser.add_argument(
+        "--post-date-start",
+        default=None,
+        help="Only posts on/after this date (e.g. 2026-07-01)",
+    )
+    parser.add_argument(
+        "--post-date-end",
+        default=None,
+        help="Only posts on/before this date (e.g. 2026-09-30)",
+    )
     args = parser.parse_args()
 
     diag = export_halo_effect_csv_dir(
@@ -38,6 +48,8 @@ def main() -> None:
         str(Path(args.output_dir).expanduser()),
         drought_days=args.drought_days,
         active_days=args.active_days,
+        post_date_start=args.post_date_start,
+        post_date_end=args.post_date_end,
     )
     print(f"Wrote CSV bundle to {diag['output_dir']}")
     print("  Open 01_data_quality.csv in Google Sheets for the Check / Result table.")

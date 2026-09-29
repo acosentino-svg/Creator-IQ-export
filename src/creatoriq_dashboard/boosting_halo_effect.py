@@ -230,10 +230,66 @@ def merge_halo_effect_posts_and_selections(
     return content, diagnostics
 
 
-def load_halo_effect_from_paths(posted_path: str, selected_path: str, *, config: AppConfig | None = None) -> tuple[pd.DataFrame, dict]:
+def filter_content_by_post_dates(
+    content: pd.DataFrame,
+    *,
+    start: pd.Timestamp | str | None = None,
+    end: pd.Timestamp | str | None = None,
+) -> pd.DataFrame:
+    """Keep only rows whose post_date falls in [start, end] (inclusive, UTC)."""
+    if content is None or content.empty:
+        return normalize_content_raw(content)
+    out = normalize_content_raw(content)
+    out["post_date"] = pd.to_datetime(out["post_date"], errors="coerce", utc=True)
+    if start is not None:
+        start_ts = pd.Timestamp(start).tz_convert("UTC") if pd.Timestamp(start).tzinfo else pd.Timestamp(start, tz="UTC")
+        out = out[out["post_date"] >= start_ts]
+    if end is not None:
+        end_ts = pd.Timestamp(end).tz_convert("UTC") if pd.Timestamp(end).tzinfo else pd.Timestamp(end, tz="UTC")
+        if end_ts == end_ts.normalize():
+            end_ts = end_ts + pd.Timedelta(days=1) - pd.Timedelta(seconds=1)
+        out = out[out["post_date"] <= end_ts]
+    return out.reset_index(drop=True)
+
+
+def filter_posted_df_by_post_dates(
+    posted: pd.DataFrame,
+    *,
+    start: pd.Timestamp | str | None = None,
+    end: pd.Timestamp | str | None = None,
+) -> pd.DataFrame:
+    if posted.empty:
+        return posted
+    out = posted.copy()
+    out["post_date"] = pd.to_datetime(out["post_date"], errors="coerce", utc=True)
+    if start is not None:
+        start_ts = pd.Timestamp(start).tz_convert("UTC") if pd.Timestamp(start).tzinfo else pd.Timestamp(start, tz="UTC")
+        out = out[out["post_date"] >= start_ts]
+    if end is not None:
+        end_ts = pd.Timestamp(end).tz_convert("UTC") if pd.Timestamp(end).tzinfo else pd.Timestamp(end, tz="UTC")
+        if end_ts == end_ts.normalize():
+            end_ts = end_ts + pd.Timedelta(days=1) - pd.Timedelta(seconds=1)
+        out = out[out["post_date"] <= end_ts]
+    return out.reset_index(drop=True)
+
+
+def load_halo_effect_from_paths(
+    posted_path: str,
+    selected_path: str,
+    *,
+    config: AppConfig | None = None,
+    post_date_start: str | None = None,
+    post_date_end: str | None = None,
+) -> tuple[pd.DataFrame, dict]:
     posted = parse_halo_posted_csv(posted_path)
     selected = parse_halo_selected_csv(selected_path)
-    return merge_halo_effect_posts_and_selections(posted, selected, config=config)
+    if post_date_start or post_date_end:
+        posted = filter_posted_df_by_post_dates(posted, start=post_date_start, end=post_date_end)
+    content, diagnostics = merge_halo_effect_posts_and_selections(posted, selected, config=config)
+    if post_date_start or post_date_end:
+        diagnostics["post_date_start"] = post_date_start
+        diagnostics["post_date_end"] = post_date_end
+    return content, diagnostics
 
 
 def build_data_quality_checklist(diagnostics: dict) -> pd.DataFrame:
@@ -244,7 +300,16 @@ def build_data_quality_checklist(diagnostics: dict) -> pd.DataFrame:
     rate_note = f"{rate * 100:.1f}% of posts" if rate is not None else ""
     not_in = diagnostics.get("selected_not_in_posted", 0)
 
-    rows = [
+    rows = []
+    if diagnostics.get("post_date_start") or diagnostics.get("post_date_end"):
+        rows.append(
+            (
+                "Post date filter",
+                f"{diagnostics.get('post_date_start', '…')} through {diagnostics.get('post_date_end', '…')}",
+            )
+        )
+    rows.extend(
+        [
         ("Posts in posted file", f"{posted:,}"),
         ("Unique selected assets in tracker", f"{diagnostics.get('selected_unique_assets', 0):,}"),
         (
@@ -261,6 +326,7 @@ def build_data_quality_checklist(diagnostics: dict) -> pd.DataFrame:
             else "0",
         ),
     ]
+    )
     return pd.DataFrame(rows, columns=["Check", "Result"])
 
 
@@ -298,6 +364,8 @@ def build_halo_effect_report_frames(
     *,
     drought_days: int = 90,
     active_days: int = 30,
+    post_date_start: str | None = None,
+    post_date_end: str | None = None,
     config: AppConfig | None = None,
 ) -> tuple[dict[str, pd.DataFrame], dict]:
     """Build named tables for Excel or Google Sheets (one CSV per table)."""
@@ -309,7 +377,12 @@ def build_halo_effect_report_frames(
 
     posted = parse_halo_posted_csv(posted_path)
     selected = parse_halo_selected_csv(selected_path)
+    if post_date_start or post_date_end:
+        posted = filter_posted_df_by_post_dates(posted, start=post_date_start, end=post_date_end)
     content, diagnostics = merge_halo_effect_posts_and_selections(posted, selected, config=config)
+    if post_date_start or post_date_end:
+        diagnostics["post_date_start"] = post_date_start
+        diagnostics["post_date_end"] = post_date_end
 
     checklist = build_data_quality_checklist(diagnostics)
     not_in_posted = build_selected_not_in_posted(posted, selected)
@@ -326,15 +399,16 @@ def build_halo_effect_report_frames(
         posts_out["eligible"] = posts_out["eligible"].map(lambda v: "Yes" if v else "No")
         posts_out["selected"] = posts_out["selected"].map(lambda v: "Yes" if v else "No")
 
-    settings = pd.DataFrame(
-        [
-            ("Posted file", posted_path),
-            ("Selected file", selected_path),
-            ("Selection drought (days)", drought_days),
-            ("Still posting window (days)", active_days),
-        ],
-        columns=["Setting", "Value"],
-    )
+    settings_rows = [
+        ("Posted file", posted_path),
+        ("Selected file", selected_path),
+        ("Selection drought (days)", drought_days),
+        ("Still posting window (days)", active_days),
+    ]
+    if post_date_start or post_date_end:
+        settings_rows.append(("Post date start", post_date_start or ""))
+        settings_rows.append(("Post date end", post_date_end or ""))
+    settings = pd.DataFrame(settings_rows, columns=["Setting", "Value"])
 
     frames = {
         "data_quality": checklist,
@@ -367,6 +441,8 @@ def export_halo_effect_csv_dir(
     *,
     drought_days: int = 90,
     active_days: int = 30,
+    post_date_start: str | None = None,
+    post_date_end: str | None = None,
     config: AppConfig | None = None,
 ) -> dict:
     """Write one CSV per report table — import each into a Google Sheets tab."""
@@ -377,6 +453,8 @@ def export_halo_effect_csv_dir(
         selected_path,
         drought_days=drought_days,
         active_days=active_days,
+        post_date_start=post_date_start,
+        post_date_end=post_date_end,
         config=config,
     )
     out_dir = Path(output_dir).expanduser().resolve()
