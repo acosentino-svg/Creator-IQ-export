@@ -493,6 +493,8 @@ def build_halo_effect_zip_bytes(
     *,
     drought_days: int = 90,
     active_days: int = 30,
+    post_date_start: str | None = None,
+    post_date_end: str | None = None,
     config: AppConfig | None = None,
 ) -> tuple[bytes, dict]:
     """Build Google Sheets CSV bundle in memory for browser download."""
@@ -522,6 +524,8 @@ def build_halo_effect_zip_bytes(
             str(out_dir),
             drought_days=drought_days,
             active_days=active_days,
+            post_date_start=post_date_start,
+            post_date_end=post_date_end,
             config=config,
         )
 

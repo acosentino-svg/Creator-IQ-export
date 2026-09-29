@@ -1,6 +1,7 @@
 """Upload posted + selected CSVs → download Google Sheets ZIP (no local Python)."""
 from __future__ import annotations
 
+import datetime as dt
 import sys
 from pathlib import Path
 
@@ -37,6 +38,11 @@ selected = st.file_uploader("Selected CSV (boosting tracker)", type=["csv"], key
 
 drought_days = st.slider("Selection drought (days)", 30, 365, 90, 15)
 active_days = st.slider("Still posting window (days)", 7, 120, 30, 7)
+use_dates = st.checkbox("Only include posts in a date range", value=True)
+start_date = st.date_input("Post date from", value=dt.date(2026, 7, 1), disabled=not use_dates)
+end_date = st.date_input("Post date through", value=dt.date(2026, 9, 30), disabled=not use_dates)
+post_start = start_date.isoformat() if use_dates else None
+post_end = end_date.isoformat() if use_dates else None
 
 if posted and selected:
     if st.button("Build export", type="primary"):
@@ -46,6 +52,8 @@ if posted and selected:
                 selected.getvalue(),
                 drought_days=drought_days,
                 active_days=active_days,
+                post_date_start=post_start,
+                post_date_end=post_end,
                 config=config,
             )
             st.session_state["halo_gs_zip"] = zip_bytes
@@ -62,7 +70,7 @@ if st.session_state.get("halo_gs_zip"):
     st.download_button(
         label="Download ZIP for Google Sheets",
         data=st.session_state["halo_gs_zip"],
-        file_name="halo_effect_google_sheets.zip",
+        file_name=f"halo_effect_google_sheets_{post_start or 'all'}_{post_end or 'all'}.zip",
         mime="application/zip",
         type="primary",
     )
