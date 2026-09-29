@@ -60,7 +60,51 @@ else:
         run_api_sync(config)
         st.rerun()
 
-st.subheader("2. Optional CSV supplement")
+st.subheader("2. Halo effect — Posted + Selected exports")
+st.markdown(
+    """
+Upload the two CreatorIQ / tracker files together:
+
+1. **`…_posted_….csv`** — posts with *Post Link*, *Post Date*, *Publisher Id*, *Post Description*
+2. **`…_selected_….csv`** — boosting tracker with *Content Used* and *Duration of Usage*
+
+We match posts to selections by TikTok video ID / Instagram reel code, mark **selected** rows,
+and compute eligibility from `#WayfairCreator` + `#wayfairelevate` in the caption.
+    """
+)
+posted_file = st.file_uploader("Posted (CreatorIQ)", type=["csv"], key="halo_posted")
+selected_file = st.file_uploader("Selected (boosting tracker)", type=["csv"], key="halo_selected")
+
+if posted_file and selected_file:
+    try:
+        from creatoriq_dashboard.boosting_halo_effect import (  # noqa: WPS433
+            merge_halo_effect_posts_and_selections,
+            parse_halo_posted_csv,
+            parse_halo_selected_csv,
+        )
+
+        posted_df = parse_halo_posted_csv(posted_file.getvalue())
+        selected_df = parse_halo_selected_csv(selected_file.getvalue())
+        merged, diag = merge_halo_effect_posts_and_selections(posted_df, selected_df, config=config)
+        st.success(
+            f"Matched **{diag['posts_matched_to_selection']:,}** posts to selections "
+            f"({diag['selected_posts']:,} selected rows in scorecard). "
+            f"**{diag['eligible_posts']:,}** eligible posts · "
+            f"**{diag['selected_not_in_posted']:,}** selected assets not found in posted export."
+        )
+        if diag.get("selected_not_in_posted", 0) > 0:
+            st.warning(
+                "Some selected content is missing from the posted file — widen the CreatorIQ date range "
+                "or pull a longer posts export so selection history lines up."
+            )
+        st.dataframe(merged.head(15), use_container_width=True, hide_index=True)
+        if st.button("Load halo effect data into scorecard", type="primary"):
+            set_content(merged, config)
+            st.success(f"Loaded **{len(merged):,}** rows. Open **Selection Impact** for the analysis.")
+    except ValueError as exc:
+        st.error(str(exc))
+
+st.subheader("3. Optional CSV supplement")
 st.caption(
     "Only use this if paid-media spend or revenue fields are missing from the CreatorIQ API. "
     "Uploaded rows merge with API data (API wins unless a field is zero/blank)."
@@ -90,7 +134,7 @@ if files:
             set_content(merge_content_raw(existing, combined), config)
             st.success(f"Scorecard now has **{len(get_content()):,}** total rows.")
 
-st.subheader("3. Current dataset")
+st.subheader("4. Current dataset")
 current = get_content()
 if current.empty:
     st.info("No data loaded yet. Refresh from CreatorIQ in the sidebar.")
