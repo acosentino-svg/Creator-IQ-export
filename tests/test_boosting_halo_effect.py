@@ -4,6 +4,7 @@ from __future__ import annotations
 import pandas as pd
 
 from creatoriq_dashboard.boosting_halo_effect import (
+    build_data_quality_checklist,
     merge_halo_effect_posts_and_selections,
     parse_halo_posted_csv,
     parse_halo_selected_csv,
@@ -37,3 +38,19 @@ def test_url_key_matches_tiktok_and_instagram():
     assert diag["posts_matched_to_selection"] == 1
     assert bool(content.iloc[0]["selected"])
     assert bool(content.iloc[0]["eligible"])
+
+
+def test_data_quality_checklist_rows():
+    diag = {
+        "posted_rows": 7959,
+        "selected_unique_assets": 1403,
+        "posts_matched_to_selection": 792,
+        "selection_match_rate_on_posts": 0.1,
+        "selected_posts": 792,
+        "eligible_posts": 7678,
+        "selected_not_in_posted": 611,
+    }
+    table = build_data_quality_checklist(diag)
+    assert list(table.columns) == ["Check", "Result"]
+    assert len(table) == 5
+    assert "7,959" in table.iloc[0]["Result"]

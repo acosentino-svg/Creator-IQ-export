@@ -232,3 +232,117 @@ def load_halo_effect_from_paths(posted_path: str, selected_path: str, *, config:
     posted = parse_halo_posted_csv(posted_path)
     selected = parse_halo_selected_csv(selected_path)
     return merge_halo_effect_posts_and_selections(posted, selected, config=config)
+
+
+def build_data_quality_checklist(diagnostics: dict) -> pd.DataFrame:
+    """Two-column Check / Result table for Excel."""
+    posted = diagnostics.get("posted_rows", 0)
+    matched = diagnostics.get("posts_matched_to_selection", 0)
+    rate = diagnostics.get("selection_match_rate_on_posts")
+    rate_note = f"{rate * 100:.1f}% of posts" if rate is not None else ""
+    not_in = diagnostics.get("selected_not_in_posted", 0)
+
+    rows = [
+        ("Posts in posted file", f"{posted:,}"),
+        ("Unique selected assets in tracker", f"{diagnostics.get('selected_unique_assets', 0):,}"),
+        (
+            "Posts flagged selected",
+            f"{diagnostics.get('selected_posts', 0):,} ({rate_note}; matches tracker on post URL)"
+            if matched
+            else f"{diagnostics.get('selected_posts', 0):,}",
+        ),
+        ("Eligible posts (both hashtags)", f"{diagnostics.get('eligible_posts', 0):,}"),
+        (
+            "Selected rows not in posted export",
+            f"{not_in:,} — widen CreatorIQ date range or pull a longer posts export"
+            if not_in
+            else "0",
+        ),
+    ]
+    return pd.DataFrame(rows, columns=["Check", "Result"])
+
+
+def build_selected_not_in_posted(posted: pd.DataFrame, selected: pd.DataFrame) -> pd.DataFrame:
+    """Selected tracker rows that did not match any row in the posted export."""
+    if selected.empty:
+        return pd.DataFrame(columns=["url_key", "content_url", "selection_date", "creator_name_selected", "platform"])
+    if "url_key" not in selected.columns:
+        selected = parse_halo_selected_csv(selected)
+    if posted.empty or "url_key" not in posted.columns:
+        posted_keys: set[str] = set()
+    else:
+        posted_keys = set(posted["url_key"].dropna().unique())
+    missing = selected[~selected["url_key"].isin(posted_keys)].copy()
+    cols = [c for c in ("url_key", "content_url", "selection_date", "creator_name_selected", "platform") if c in missing.columns]
+    return missing[cols].sort_values("selection_date", na_position="last").reset_index(drop=True)
+
+
+def _excel_safe_frame(df: pd.DataFrame) -> pd.DataFrame:
+    """openpyxl cannot write timezone-aware datetimes."""
+    if df.empty:
+        return df
+    out = df.copy()
+    for col in out.columns:
+        if pd.api.types.is_datetime64_any_dtype(out[col]):
+            series = out[col]
+            if hasattr(series.dt, "tz") and series.dt.tz is not None:
+                out[col] = series.dt.tz_localize(None)
+    return out
+
+
+def export_halo_effect_workbook(
+    posted_path: str,
+    selected_path: str,
+    output_path: str,
+    *,
+    drought_days: int = 90,
+    active_days: int = 30,
+    config: AppConfig | None = None,
+) -> dict:
+    """Write multi-sheet Excel report (data quality, timeline, analysis)."""
+    from creatoriq_dashboard.boosting_selection_impact import (
+        build_creator_selection_timeline,
+        build_posting_by_days_since_last_selection,
+        summarize_timeline_segments,
+    )
+
+    posted = parse_halo_posted_csv(posted_path)
+    selected = parse_halo_selected_csv(selected_path)
+    content, diagnostics = merge_halo_effect_posts_and_selections(posted, selected, config=config)
+
+    checklist = build_data_quality_checklist(diagnostics)
+    not_in_posted = build_selected_not_in_posted(posted, selected)
+    timeline = build_creator_selection_timeline(
+        content, drought_days=drought_days, active_days=active_days
+    )
+    segments = summarize_timeline_segments(timeline)
+    buckets = build_posting_by_days_since_last_selection(
+        content, active_days=active_days, bin_width_days=30, max_days=360
+    )
+
+    posts_out = content.copy()
+    if not posts_out.empty:
+        posts_out["eligible"] = posts_out["eligible"].map(lambda v: "Yes" if v else "No")
+        posts_out["selected"] = posts_out["selected"].map(lambda v: "Yes" if v else "No")
+
+    settings = pd.DataFrame(
+        [
+            ("Posted file", posted_path),
+            ("Selected file", selected_path),
+            ("Selection drought (days)", drought_days),
+            ("Still posting window (days)", active_days),
+        ],
+        columns=["Setting", "Value"],
+    )
+
+    with pd.ExcelWriter(output_path, engine="openpyxl") as writer:
+        checklist.to_excel(writer, sheet_name="Data Quality", index=False)
+        settings.to_excel(writer, sheet_name="Settings", index=False)
+        _excel_safe_frame(not_in_posted).to_excel(writer, sheet_name="Selected Not In Posted", index=False)
+        segments.to_excel(writer, sheet_name="Segment Summary", index=False)
+        buckets.to_excel(writer, sheet_name="Days Since Selection", index=False)
+        _excel_safe_frame(timeline).to_excel(writer, sheet_name="Creator Timeline", index=False)
+        _excel_safe_frame(posts_out).to_excel(writer, sheet_name="All Posts", index=False)
+
+    diagnostics["output_path"] = output_path
+    return diagnostics
