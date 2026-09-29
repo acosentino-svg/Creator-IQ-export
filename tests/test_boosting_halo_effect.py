@@ -1,6 +1,8 @@
 """Tests for halo effect posted + selected merge."""
 from __future__ import annotations
 
+from pathlib import Path
+
 import pandas as pd
 
 from creatoriq_dashboard.boosting_halo_effect import (
@@ -54,3 +56,25 @@ def test_data_quality_checklist_rows():
     assert list(table.columns) == ["Check", "Result"]
     assert len(table) == 5
     assert "7,959" in table.iloc[0]["Result"]
+
+
+def test_export_csv_dir_writes_data_quality(tmp_path: Path):
+    from creatoriq_dashboard.boosting_halo_effect import export_halo_effect_csv_dir
+
+    posted = tmp_path / "posted.csv"
+    selected = tmp_path / "selected.csv"
+    posted.write_text(
+        "Post Id,Creator Name,SocialHandle,Post Description,Post Link,Post Date,Publisher Id\n"
+        '1,a,x,"#WayfairCreator #wayfairelevate",https://tiktok.com/@x/video/99/,2026-01-10 12:00:00,1\n',
+        encoding="utf-8",
+    )
+    selected.write_text(
+        "Creator Name,Content Used,Duration of Usage\n"
+        "a,https://www.tiktok.com/@x/video/99,1/5/2026\n",
+        encoding="utf-8",
+    )
+    out = tmp_path / "sheets"
+    export_halo_effect_csv_dir(str(posted), str(selected), str(out))
+    dq = pd.read_csv(out / "01_data_quality.csv")
+    assert "Check" in dq.columns
+    assert len(dq) == 5

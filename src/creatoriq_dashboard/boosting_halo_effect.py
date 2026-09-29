@@ -290,16 +290,15 @@ def _excel_safe_frame(df: pd.DataFrame) -> pd.DataFrame:
     return out
 
 
-def export_halo_effect_workbook(
+def build_halo_effect_report_frames(
     posted_path: str,
     selected_path: str,
-    output_path: str,
     *,
     drought_days: int = 90,
     active_days: int = 30,
     config: AppConfig | None = None,
-) -> dict:
-    """Write multi-sheet Excel report (data quality, timeline, analysis)."""
+) -> tuple[dict[str, pd.DataFrame], dict]:
+    """Build named tables for Excel or Google Sheets (one CSV per table)."""
     from creatoriq_dashboard.boosting_selection_impact import (
         build_creator_selection_timeline,
         build_posting_by_days_since_last_selection,
@@ -335,14 +334,110 @@ def export_halo_effect_workbook(
         columns=["Setting", "Value"],
     )
 
+    frames = {
+        "data_quality": checklist,
+        "settings": settings,
+        "selected_not_in_posted": _excel_safe_frame(not_in_posted),
+        "segment_summary": segments,
+        "days_since_selection": buckets,
+        "creator_timeline": _excel_safe_frame(timeline),
+        "all_posts": _excel_safe_frame(posts_out),
+    }
+    return frames, diagnostics
+
+
+# Filenames are ordered so they sort nicely in Drive / local folders.
+GOOGLE_SHEETS_CSV_FILES: tuple[tuple[str, str], ...] = (
+    ("data_quality", "01_data_quality.csv"),
+    ("settings", "02_settings.csv"),
+    ("selected_not_in_posted", "03_selected_not_in_posted.csv"),
+    ("segment_summary", "04_segment_summary.csv"),
+    ("days_since_selection", "05_days_since_selection.csv"),
+    ("creator_timeline", "06_creator_timeline.csv"),
+    ("all_posts", "07_all_posts.csv"),
+)
+
+
+def export_halo_effect_csv_dir(
+    posted_path: str,
+    selected_path: str,
+    output_dir: str,
+    *,
+    drought_days: int = 90,
+    active_days: int = 30,
+    config: AppConfig | None = None,
+) -> dict:
+    """Write one CSV per report table — import each into a Google Sheets tab."""
+    from pathlib import Path
+
+    frames, diagnostics = build_halo_effect_report_frames(
+        posted_path,
+        selected_path,
+        drought_days=drought_days,
+        active_days=active_days,
+        config=config,
+    )
+    out_dir = Path(output_dir).expanduser().resolve()
+    out_dir.mkdir(parents=True, exist_ok=True)
+
+    written: list[str] = []
+    for key, filename in GOOGLE_SHEETS_CSV_FILES:
+        path = out_dir / filename
+        frames[key].to_csv(path, index=False)
+        written.append(str(path))
+
+    readme = out_dir / "README_google_sheets.txt"
+    readme.write_text(
+        """Import into Google Sheets
+==========================
+1. Go to sheets.google.com → Blank spreadsheet.
+2. For each CSV in this folder (in order 01 … 07):
+   File → Import → Upload → select the CSV
+   Import location: "Insert new sheet(s)" (or "Replace current sheet" for 01 only on a blank book).
+3. Start with 01_data_quality.csv — that is the Check / Result table.
+
+Tip: You can also upload the whole folder to Google Drive, then open each CSV with Google Sheets.
+""",
+        encoding="utf-8",
+    )
+    written.append(str(readme))
+
+    diagnostics["output_dir"] = str(out_dir)
+    diagnostics["csv_files"] = written
+    return diagnostics
+
+
+def export_halo_effect_workbook(
+    posted_path: str,
+    selected_path: str,
+    output_path: str,
+    *,
+    drought_days: int = 90,
+    active_days: int = 30,
+    config: AppConfig | None = None,
+) -> dict:
+    """Write multi-sheet Excel report (data quality, timeline, analysis)."""
+    frames, diagnostics = build_halo_effect_report_frames(
+        posted_path,
+        selected_path,
+        drought_days=drought_days,
+        active_days=active_days,
+        config=config,
+    )
+
+    sheet_names = {
+        "data_quality": "Data Quality",
+        "settings": "Settings",
+        "selected_not_in_posted": "Selected Not In Posted",
+        "segment_summary": "Segment Summary",
+        "days_since_selection": "Days Since Selection",
+        "creator_timeline": "Creator Timeline",
+        "all_posts": "All Posts",
+    }
+
     with pd.ExcelWriter(output_path, engine="openpyxl") as writer:
-        checklist.to_excel(writer, sheet_name="Data Quality", index=False)
-        settings.to_excel(writer, sheet_name="Settings", index=False)
-        _excel_safe_frame(not_in_posted).to_excel(writer, sheet_name="Selected Not In Posted", index=False)
-        segments.to_excel(writer, sheet_name="Segment Summary", index=False)
-        buckets.to_excel(writer, sheet_name="Days Since Selection", index=False)
-        _excel_safe_frame(timeline).to_excel(writer, sheet_name="Creator Timeline", index=False)
-        _excel_safe_frame(posts_out).to_excel(writer, sheet_name="All Posts", index=False)
+        for key, sheet in sheet_names.items():
+            frames[key].to_excel(writer, sheet_name=sheet, index=False)
 
     diagnostics["output_path"] = output_path
     return diagnostics

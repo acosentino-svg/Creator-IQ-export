@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 """Build Excel halo-effect report from CreatorIQ posted + boosting selected CSVs.
 
+For Google Sheets, use scripts/export_halo_effect_google_sheets.py instead.
+
 Example:
   PYTHONPATH=src python scripts/export_halo_effect_excel.py \\
     --posted ~/Downloads/boosting_halo_effect_-_2026_posted.csv \\
