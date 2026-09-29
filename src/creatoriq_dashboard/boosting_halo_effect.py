@@ -433,28 +433,12 @@ GOOGLE_SHEETS_CSV_FILES: tuple[tuple[str, str], ...] = (
     ("all_posts", "07_all_posts.csv"),
 )
 
-# For meetings / manager updates — import 3 tabs instead of 7.
+# For meetings — 3 analytic tabs (no settings / data-quality checklist).
 GOOGLE_SHEETS_MINIMAL_CSV_FILES: tuple[tuple[str, str], ...] = (
-    ("summary_pack", "01_summary.csv"),
-    ("creator_timeline", "02_creator_timeline.csv"),
-    ("selected_not_in_posted", "03_selected_not_in_posted.csv"),
+    ("segment_summary", "01_segment_summary.csv"),
+    ("days_since_selection", "02_days_since_selection.csv"),
+    ("creator_timeline", "03_creator_timeline.csv"),
 )
-
-
-def build_summary_pack_csv(frames: dict[str, pd.DataFrame]) -> pd.DataFrame:
-    """One importable sheet: settings, data quality, segments, days-since-selection."""
-    blocks: list[pd.DataFrame] = []
-    for title, key in (
-        ("SETTINGS", "settings"),
-        ("DATA QUALITY", "data_quality"),
-        ("SEGMENT SUMMARY", "segment_summary"),
-        ("DAYS SINCE LAST SELECTION", "days_since_selection"),
-    ):
-        block = frames[key].copy()
-        block.insert(0, "section", title)
-        blocks.append(block)
-        blocks.append(pd.DataFrame({"section": [""], "Check": [""]}))
-    return pd.concat(blocks, ignore_index=True)
 
 
 def export_halo_effect_csv_dir(
@@ -485,11 +469,7 @@ def export_halo_effect_csv_dir(
     out_dir.mkdir(parents=True, exist_ok=True)
 
     written: list[str] = []
-    if minimal:
-        frames["summary_pack"] = build_summary_pack_csv(frames)
-        file_map = GOOGLE_SHEETS_MINIMAL_CSV_FILES
-    else:
-        file_map = GOOGLE_SHEETS_CSV_FILES
+    file_map = GOOGLE_SHEETS_MINIMAL_CSV_FILES if minimal else GOOGLE_SHEETS_CSV_FILES
 
     for key, filename in file_map:
         path = out_dir / filename
@@ -501,11 +481,12 @@ def export_halo_effect_csv_dir(
         readme_body = """Import into Google Sheets (minimal — 3 tabs)
 ============================================
 1. sheets.google.com → Blank spreadsheet.
-2. Import 01_summary.csv → Replace spreadsheet (settings + quality + segments + days-since-selection).
-3. Import 02_creator_timeline.csv → Insert new sheet.
-4. Import 03_selected_not_in_posted.csv → Insert new sheet (skip if you don't need match gaps).
+2. Import 01_segment_summary.csv → Replace spreadsheet.
+3. Import 02_days_since_selection.csv → Insert new sheet.
+4. Import 03_creator_timeline.csv → Insert new sheet.
 
-Post-level detail (07_all_posts) is omitted in minimal mode.
+No settings, data-quality checklist, or all-posts dump in minimal mode.
+Use full export (no --minimal) if you need those.
 """
     else:
         readme_body = """Import into Google Sheets (full — 7 tabs)

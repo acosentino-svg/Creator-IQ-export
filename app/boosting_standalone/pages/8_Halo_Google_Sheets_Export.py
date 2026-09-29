@@ -42,7 +42,10 @@ selected = st.file_uploader("Selected CSV (boosting tracker)", type=["csv"], key
 
 drought_days = st.slider("Selection drought (days)", 30, 365, 90, 15)
 active_days = st.slider("Still posting window (days)", 7, 120, 30, 7)
-minimal_export = st.checkbox("Minimal export (3 files for Google Sheets — recommended)", value=True)
+minimal_export = st.checkbox(
+    "Minimal export (3 tabs: segments, days since selection, creators — recommended)",
+    value=True,
+)
 use_dates = st.checkbox("Only include posts in a date range", value=True)
 start_date = st.date_input("Post date from", value=dt.date(2026, 7, 1), disabled=not use_dates)
 end_date = st.date_input("Post date through", value=dt.date(2026, 9, 30), disabled=not use_dates)
@@ -94,8 +97,14 @@ if posted and selected:
 if st.session_state.get("halo_gs_zip"):
     diag = st.session_state.get("halo_gs_diag", {})
     checklist = build_data_quality_checklist(diag)
-    st.subheader("Data quality (also in `01_data_quality.csv` inside the ZIP)")
-    st.dataframe(checklist, use_container_width=True, hide_index=True)
+    if not minimal_export:
+        st.subheader("Data quality (in full export ZIP)")
+        st.dataframe(checklist, use_container_width=True, hide_index=True)
+    else:
+        st.caption(
+            "ZIP contains **01_segment_summary**, **02_days_since_selection**, "
+            "**03_creator_timeline** — no settings or data-quality tabs."
+        )
 
     st.download_button(
         label="Download ZIP for Google Sheets",
