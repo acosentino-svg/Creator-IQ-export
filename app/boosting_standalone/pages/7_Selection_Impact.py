@@ -18,8 +18,11 @@ import streamlit as st
 from boosting_standalone.common import render_sidebar, show_flash
 from creatoriq_dashboard.boosting_selection_impact import (
     build_creator_posting_velocity,
+    build_creator_selection_timeline,
     build_monthly_selection_retention,
+    build_posting_by_days_since_last_selection,
     summarize_selection_impact,
+    summarize_timeline_segments,
 )
 
 st.set_page_config(page_title="Selection Impact", page_icon="🎯", layout="wide")
@@ -36,6 +39,83 @@ if content.empty:
     st.info("Upload or sync data to see selection impact.")
     st.stop()
 
+st.subheader("Long-run view (days, not months)")
+st.markdown(
+    """
+This matches the hypothesis: **creators who stop getting selected eventually stop posting**, while
+**creators who were selected recently tend to keep posting**. Use full post history (not one row per month).
+    """
+)
+drought_days = st.slider("No selection for this many days = “selection dried up”", 30, 365, 90, 15)
+active_days = st.slider("Count as “still posting” if eligible post within this many days", 7, 120, 30, 7)
+
+timeline = build_creator_selection_timeline(
+    content, drought_days=drought_days, active_days=active_days
+)
+segment_summary = summarize_timeline_segments(timeline)
+if not segment_summary.empty:
+    display_seg = segment_summary.copy()
+    display_seg["pct_still_posting"] = display_seg["pct_still_posting"].map(
+        lambda v: f"{v * 100:.0f}%" if pd.notna(v) else "—"
+    )
+    st.dataframe(
+        display_seg.rename(
+            columns={
+                "segment": "Segment",
+                "creators": "Creators",
+                "still_posting": f"Posted in last {active_days}d",
+                "pct_still_posting": "% still posting",
+            }
+        ),
+        use_container_width=True,
+        hide_index=True,
+    )
+
+buckets = build_posting_by_days_since_last_selection(
+    content, active_days=active_days, bin_width_days=30, max_days=360
+)
+if not buckets.empty:
+    plot_buckets = buckets.copy()
+    plot_buckets["pct"] = plot_buckets["pct_still_posting"] * 100
+    fig = px.bar(
+        plot_buckets,
+        x="days_since_last_selection_bucket",
+        y="pct",
+        hover_data=["creators", "still_posting"],
+        title=f"% still posting (last {active_days} days) by time since last selection",
+        labels={"pct": "% still posting"},
+    )
+    st.plotly_chart(fig, use_container_width=True)
+
+st.download_button(
+    "Download creator timeline (CSV)",
+    timeline.to_csv(index=False).encode("utf-8"),
+    file_name="creator_selection_timeline.csv",
+    mime="text/csv",
+)
+
+with st.expander("How to pull this data from CreatorIQ + your spreadsheet"):
+    st.markdown(
+        """
+1. **All eligible posts (time series)** — CreatorIQ *Daily Campaign Posts* (or API sync in this app) for the
+   boosting campaign, with **Publisher ID**, **post/publish date**, and caption (for hashtag eligibility).
+   Date range: **program start → today** so you capture people who went dark months ago.
+
+2. **Selection history** — Your boosting selection spreadsheet (or CreatorIQ custom field *Selected* /
+   *Selection date* on each post). Merge on **Data Source** so every selected row has `selected = yes` and
+   ideally **selection date** (not just month).
+
+3. **One row per post** — The scorecard computes each creator’s `last_selection_date`, `last_eligible_post_date`,
+   and days since each. Filter **Past selector — went dark** to see creators who used to get picked but haven’t
+   posted recently.
+
+4. **Optional QA** — Sort by `days_since_last_selection` vs `days_since_last_post`; when selections stop first
+   and posting stops weeks later, that supports your story (correlation, not proof of causation).
+        """
+    )
+
+st.divider()
+st.subheader("Monthly scorecard (secondary)")
 summary = summarize_selection_impact(content)
 month_label = summary.get("latest_month") or "—"
 

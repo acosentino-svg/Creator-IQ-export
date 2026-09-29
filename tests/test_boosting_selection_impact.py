@@ -5,8 +5,10 @@ import pandas as pd
 
 from creatoriq_dashboard.boosting_selection_impact import (
     build_creator_posting_velocity,
+    build_creator_selection_timeline,
     build_monthly_selection_retention,
     summarize_selection_impact,
+    summarize_timeline_segments,
 )
 from creatoriq_dashboard.boosting_scorecard import normalize_content_raw
 
@@ -77,6 +79,41 @@ def test_posting_velocity_before_after_first_selection():
 
     b = velocity[velocity["creator_id"] == "B"].iloc[0]
     assert not b["ever_selected"]
+
+
+def test_timeline_past_selector_went_dark():
+    content = normalize_content_raw(
+        pd.DataFrame(
+            {
+                "creator_id": ["D", "D"],
+                "month": ["2026-01", "2026-06"],
+                "content_url": ["u1", "u2"],
+                "platform": ["TikTok"] * 2,
+                "post_date": pd.to_datetime(["2026-01-15", "2026-06-10"], utc=True),
+                "eligible": [True, True],
+                "selected": [True, False],
+                "selection_date": pd.to_datetime(["2026-01-20"], utc=True).tolist() + [pd.NaT],
+                "boosted": [False] * 2,
+                "gift_card_cost": [0] * 2,
+                "paid_spend": [0] * 2,
+                "boosted_revenue": [0] * 2,
+                "impressions": [0] * 2,
+                "engagements": [0] * 2,
+                "clicks": [0] * 2,
+                "featured_category": [""] * 2,
+                "campaign": ["Wayfair Creators Boosting Partnership"] * 2,
+            }
+        )
+    )
+    as_of = pd.Timestamp("2026-09-15", tz="UTC")
+    timeline = build_creator_selection_timeline(
+        content, as_of=as_of, drought_days=90, active_days=30
+    )
+    row = timeline.iloc[0]
+    assert row["segment"] == "Past selector — went dark"
+    summary = summarize_timeline_segments(timeline)
+    assert int(summary.iloc[0]["creators"]) == 1
+    assert int(summary.iloc[0]["still_posting"]) == 0
 
 
 def test_summarize_selection_impact_keys():
