@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>October 2026 Boosting Brief — One Page</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --p: #7f187f;
+      --pl: #f0e3f4;
+      --boost-bg: #d8f0dc;
+      --boost-head: #2d6a3e;
+      --pass-bg: #f4c4c4;
+      --pass-head: #a82828;
+      --ink: #1a1a1a;
+      --mu: #3d3d3d;
+    }
+    * { box-sizing: border-box; }
+    @page { size: letter; margin: 0; }
+    body { margin: 0; font-family: Inter, Arial, sans-serif; background: #bbb; color: var(--ink); }
+    .page {
+      width: 8.5in;
+      height: 11in;
+      margin: 12px auto;
+      background: #fff;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .hero {
+      flex-shrink: 0;
+      height: 1.65in;
+      background:
+        linear-gradient(to bottom, rgba(20, 20, 30, 0.15), rgba(20, 20, 30, 0.45)),
+        url("hero-bedroom.jpg") center/cover;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      color: #fff;
+    }
+    .hero .logo { font-size: 13pt; font-weight: 600; letter-spacing: 0.02em; text-shadow: 0 1px 6px rgba(0,0,0,0.35); }
+    .hero h1 {
+      margin: 8px 0 0;
+      font-size: 24pt;
+      font-weight: 700;
+      line-height: 1.05;
+      text-shadow: 0 2px 12px rgba(0,0,0,0.4);
+    }
+    .body {
+      flex: 1;
+      padding: 0.16in 0.38in 0.18in;
+      display: flex;
+      flex-direction: column;
+      gap: 0.09in;
+    }
+    h2 {
+      margin: 0 0 7px;
+      font-size: 9.5pt;
+      font-weight: 700;
+      color: var(--p);
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+    }
+    .lavender {
+      background: var(--pl);
+      border-radius: 12px;
+      padding: 11px 13px;
+      font-size: 8.85pt;
+      line-height: 1.4;
+      color: var(--mu);
+    }
+    .lavender p { margin: 0; }
+    .lavender strong { color: var(--ink); }
+    .mid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.24in;
+      align-items: start;
+    }
+    .msg-card {
+      background: var(--pl);
+      border-radius: 10px;
+      padding: 5px 7px 6px;
+      margin-bottom: 4px;
+      font-size: 7.35pt;
+      line-height: 1.3;
+      color: var(--mu);
+    }
+    .msg-card .title {
+      font-size: 8pt;
+      font-weight: 700;
+      color: var(--ink);
+      margin-bottom: 3px;
+    }
+    .msg-card .film {
+      margin: 0;
+      font-size: 7.5pt;
+      line-height: 1.36;
+      color: var(--mu);
+    }
+    .msg-card .film strong { color: var(--ink); font-weight: 600; }
+    .section-note {
+      margin: 0 0 8px;
+      font-size: 8.35pt;
+      line-height: 1.35;
+      color: var(--mu);
+    }
+    .section-note strong { color: var(--ink); }
+    .boost-pass {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-top: 4px;
+    }
+    .criteria {
+      border-radius: 10px;
+      overflow: hidden;
+      font-size: 7.55pt;
+      line-height: 1.32;
+      color: var(--mu);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+    }
+    .criteria .bar {
+      padding: 7px 8px;
+      text-align: center;
+      font-size: 9pt;
+      font-weight: 700;
+      color: #fff;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+    }
+    .criteria.boost .bar { background: var(--boost-head); }
+    .criteria.pass .bar { background: var(--pass-head); }
+    .criteria.boost .body-c { background: var(--boost-bg); }
+    .criteria.pass .body-c { background: var(--pass-bg); }
+    .criteria .body-c { padding: 7px 8px 8px; }
+    .criteria ul { margin: 0; padding-left: 1.05em; }
+    .criteria li { margin-bottom: 3px; }
+    .criteria strong { color: var(--ink); }
+    .deliver h2 { margin-bottom: 10px; }
+    ul.deliver {
+      margin: 0;
+      padding-left: 1.1em;
+      font-size: 8.85pt;
+      line-height: 1.4;
+      color: var(--mu);
+    }
+    ul.deliver li { margin-bottom: 6px; }
+    ul.deliver ul { margin-top: 4px; font-size: 9pt; }
+    .appendix a {
+      display: block;
+      font-size: 9.25pt;
+      color: var(--ink);
+      text-decoration: underline;
+      margin-bottom: 5px;
+    }
+    .appendix span { font-size: 9.25pt; color: var(--mu); display: block; }
+    .contact { font-weight: 700; color: var(--p); margin-top: 8px; font-size: 9.25pt; }
+    @media print { body { background: #fff; } .page { margin: 0; } }
+  </style>
+</head>
+<body>
+  <article class="page">
+    <header class="hero">
+      <div class="logo">wayfair</div>
+      <h1>October Boosting Brief</h1>
+    </header>
+
+    <div class="body">
+      <section>
+        <h2>October overview</h2>
+        <div class="lavender">
+          <p>Match Paid priorities <strong>this month</strong>: <strong>Meta</strong> — fall/Halloween early Oct, then holiday preview. <strong>TikTok</strong> — pet, sideboards, Halloween, Wayfair Verified. In-room, in-use video on both all month.</p>
+        </div>
+      </section>
+
+      <div class="mid">
+        <div class="left">
+          <h2>Messaging inspiration</h2>
+          <p class="section-note">Fall <strong>story angles</strong> — pick one, tell it in your voice.</p>
+          <div class="msg-card">
+            <div class="title">1 · Fall styling</div>
+            <p class="film">Cozy room refresh with layers &amp; textiles · porch or entryway fall moment · dining setup for cooler weather</p>
+          </div>
+          <div class="msg-card">
+            <div class="title">2 · Halloween decorating</div>
+            <p class="film">At-home Halloween that feels fun, not scary · porch, table, or mantle styling · spooky-neutral mood (livable, not promo)</p>
+          </div>
+          <div class="msg-card">
+            <div class="title">3 · Setting up for the holidays</div>
+            <p class="film">Guest-ready spaces · entertaining or hosting nook · highlight <strong>Wayfair Verified</strong> when your product qualifies</p>
+          </div>
+          <div class="msg-card">
+            <div class="title">4 · Fall hosting</div>
+            <p class="film">Fall dinners &amp; having people over · extra seating or storage · outdoor hangout while the weather still allows</p>
+          </div>
+
+          <div class="boost-pass" aria-label="We boost versus we pass on">
+            <div class="criteria boost">
+              <div class="bar">We boost</div>
+              <div class="body-c">
+                <ul>
+                  <li><strong>Vertical video</strong> (Reels/TikTok) — creator-native, not ad-like</li>
+                  <li>Product on screen in the <strong>first 3 seconds</strong></li>
+                  <li>Shown <strong>in use</strong> in a styled room — not unbox-only</li>
+                  <li>Creator on screen, hands-on, or POV</li>
+                  <li>Bright footage, steady pacing, readable sound-off text</li>
+                </ul>
+              </div>
+            </div>
+            <div class="criteria pass">
+              <div class="bar">We pass on</div>
+              <div class="body-c">
+                <ul>
+                  <li><strong>Carousels</strong> and commercial-style spots</li>
+                  <li>Unboxing-only or product not clear</li>
+                  <li>Late/weak hooks; no creator presence</li>
+                  <li>Dark, chaotic, or hard-to-read footage/text</li>
+                  <li>Creative led by <strong>sales, codes, or LTO</strong></li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="lavender deliver">
+          <h2>Deliverables checklist</h2>
+          <ul class="deliver">
+            <li>Vertical video, <strong>15–45 seconds</strong>, captioned (sound-off friendly) — not a carousel</li>
+            <li><strong>Your captions:</strong>
+              <ul>
+                <li>Reels/TikTok: <strong>#WayfairCreator</strong> and <strong>#wayfairelevate</strong></li>
+                <li><strong>#ad</strong> when required</li>
+              </ul>
+            </li>
+            <li>Link in caption or bio if stickers fail</li>
+          </ul>
+        </div>
+      </div>
+
+      <section>
+        <h2>Appendix</h2>
+        <div class="lavender appendix">
+          <a href="https://www.instagram.com/reels/DdR5817pNId/">Examples — boost-friendly</a> ·
+          <a href="https://www.instagram.com/reels/DdRcdZFNG2Z/">usually skipped</a> ·
+          <span>Guidelines &amp; FTC (dashboard)</span>
+          <div class="contact">Questions? wcp@wayfair.com</div>
+        </div>
+      </section>
+    </div>
+  </article>
+</body>
+</html>
