@@ -67,11 +67,14 @@ boosting:
   # Empty list = include all statuses so the boosting campaign is found even when not Active.
   campaign_status_filter: []
   # Pull scorecard data from CreatorIQ on app load when cache is empty or stale.
-  auto_sync_on_load: true
+  # Keep false on Streamlit Cloud — auto-sync blocks page render until complete.
+  auto_sync_on_load: false
   # Re-sync automatically when cached data is older than this many hours (0 = only when empty).
   sync_stale_hours: 24
-  # Cap WBP tag scan via /publishers (100 creators/page). null = scan until API returns a short page.
-  max_publisher_pages: null
+  # Scan all /publishers for WBP tag. VERY SLOW (43k+ creators) — leave false; use campaign roster instead.
+  scan_wbp_publishers: false
+  # Only used when scan_wbp_publishers is true. Pages of 100 creators each; 0 = skip scan.
+  max_publisher_pages: 0
 
 live_sync:
   # Safety limits for pulling from the real CreatorIQ API (see

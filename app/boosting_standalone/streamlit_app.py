@@ -35,10 +35,9 @@ st.caption(
 )
 
 if content.empty:
-    st.info(
-        "No data yet. In **live mode** the app auto-syncs from CreatorIQ on load — "
-        "use **Refresh from CreatorIQ** in the sidebar if needed. "
-        "In demo mode, load sample data or add API secrets."
+    st.warning(
+        "**No data loaded yet.** Open the sidebar and click **Refresh from CreatorIQ**. "
+        "The first sync usually takes 1–2 minutes (one campaign — not a full CRM export)."
     )
     st.stop()
 
