@@ -23,7 +23,7 @@ st.markdown(
 ### Quick links in the Boosting app
 - **Overview** — executive KPIs
 - **Data Upload** — monthly CSV/Excel (recommended)
-- **Creator Health** · **Content Funnel** · **Performance** · **Retention** · **Data Quality**
+- **Creator Health** · **Content Funnel** · **Performance** · **Retention** · **Selection Impact** · **Data Quality**
 
 Sidebar also has **Quick upload**, **Sync CreatorIQ API**, and **filters**.
     """
