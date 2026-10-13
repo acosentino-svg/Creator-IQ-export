@@ -1,26 +1,26 @@
 cast_order,cast_segment,publisher_id,publisher_name,social_handle,transaction_sales_rank,total_sales,order_count,total_commission,wac_posts_jun_sep,months_with_wac_posts,jun_wac_posts,jul_wac_posts,aug_wac_posts,sep_wac_posts,selection_notes
-1,veteran,12784222,René Ceretto,pleasantlybuilt,1,2340729.41,5151,296275.39,236,4,52,115,10,59,High sales + consistent WAC volume (Jun–Sep)
-2,veteran,32309691,Brianna Yarbrough,bri_yarbs,2,644825.99,716,87255.48,59,4,1,3,6,49,High sales + consistent WAC volume (Jun–Sep)
-3,veteran,24777708,Hannah Joyce,surryplace,22,36315.12,127,4276.32,115,4,12,14,73,16,High sales + consistent WAC volume (Jun–Sep)
-4,veteran,22178976,Meggie Ferreira,meggieferrerhome,24,34845.09,75,4725.65,155,4,34,60,48,13,High sales + consistent WAC volume (Jun–Sep)
-5,veteran,29929108,Asia Martin,295111193683322,25,34796.72,44,4916.29,99,4,16,48,27,8,High sales + consistent WAC volume (Jun–Sep)
-6,veteran,25205302,Carrie Passaro,carrieithome,36,23964.86,22,1818.99,348,4,157,73,79,39,High sales + consistent WAC volume (Jun–Sep)
-7,veteran,22293389,Catherine Ortega,itsneutralcatt,39,22975.75,48,2383.08,262,4,106,69,30,57,High sales + consistent WAC volume (Jun–Sep)
-8,veteran,29742827,Audrianna Skillin,skillinhome,58,13768.67,37,1760.36,321,4,111,104,55,51,High sales + consistent WAC volume (Jun–Sep)
-9,veteran,30340556,Mehdi Hosseinzadeh,lifeinwaheaven,95,8132.6,21,958.93,210,4,99,69,21,21,High sales + consistent WAC volume (Jun–Sep)
-10,veteran,25911907,Keona Crenshaw,keona.nicole_,116,6605.3,14,752.6,240,4,26,84,99,31,High sales + consistent WAC volume (Jun–Sep)
-11,veteran,32816334,Elizabeth Huston,madeonmillhavenlane,121,6368.09,14,615.88,552,4,228,247,69,8,High sales + consistent WAC volume (Jun–Sep)
-12,veteran,26925412,Tina Teal,tinatealhome,137,5465.49,22,687.04,407,4,117,150,114,26,High sales + consistent WAC volume (Jun–Sep)
-13,emerging,28482200,Gracie Smith,HaveToCookToEat,227,2652.89,2,318.35,1427,4,462,421,302,242,Strong WAC activity + sales; rank outside top 100 (less prior spotlight)
-14,emerging,29647738,Sarah LaMantia,sarah.lamantia,101,7750.23,21,723.89,21,4,10,3,6,2,Strong WAC activity + sales; rank outside top 100 (less prior spotlight)
-15,emerging,25359890,Terra Nelson,terranelsonhome,102,7717.91,24,667.72,24,2,0,3,0,21,Strong WAC activity + sales; rank outside top 100 (less prior spotlight)
-16,emerging,26325991,Tannesia Speed,tannesiavs,106,7238.84,19,1006.57,72,4,36,8,14,14,Strong WAC activity + sales; rank outside top 100 (less prior spotlight)
-17,emerging,26239735,Kelli Testa,kellitesta,112,6819.9,12,818.4,98,3,36,35,27,0,Strong WAC activity + sales; rank outside top 100 (less prior spotlight)
-18,emerging,25997460,Pronab Roy,techegadget,114,6767.46,19,936.87,100,3,65,27,0,8,Strong WAC activity + sales; rank outside top 100 (less prior spotlight)
-19,emerging,31918930,Jessica Manfredini,LivingWithJessDini,130,5920.88,19,525.14,196,4,2,17,99,78,Strong WAC activity + sales; rank outside top 100 (less prior spotlight)
-20,emerging,29851726,Emily Lewandowski,emmylew_designs,154,4800.72,17,523.81,343,4,99,50,101,93,Strong WAC activity + sales; rank outside top 100 (less prior spotlight)
-21,emerging,28829110,emily cortez,3m.i.ly_c,115,6761.88,12,724.08,71,4,24,30,8,9,Strong WAC activity + sales; rank outside top 100 (less prior spotlight)
-22,emerging,28349319,Sabrina Mullen,oakmerecollective,120,6369.07,11,727.22,93,4,5,64,19,5,Strong WAC activity + sales; rank outside top 100 (less prior spotlight)
-23,emerging,14816908,Marlene Cordero,ourcozycolonialct,126,6125.28,13,606.05,67,4,15,16,16,20,Strong WAC activity + sales; rank outside top 100 (less prior spotlight)
-24,emerging,16506745,Stuti Rastogi,onesqftatime,124,6189.2,8,866.49,31,2,22,9,0,0,Strong WAC activity + sales; rank outside top 100 (less prior spotlight)
-25,emerging,28427698,Liza Grier,lizaliz06,128,6052.94,8,711.24,24,2,12,0,12,0,Strong WAC activity + sales; rank outside top 100 (less prior spotlight)
+1,veteran,32309691,Brianna Yarbrough,bri_yarbs,2,644825.99,716,87255.48,59,4,1,3,6,49,High sales + consistent WAC volume (Jun–Sep); not on prior cast list
+2,veteran,31394440,Dallas Dudra,shopfindsdaily,4,307828.88,701,38652.17,36,4,1,1,2,32,High sales + consistent WAC volume (Jun–Sep); not on prior cast list
+3,veteran,24777708,Hannah Joyce,surryplace,22,36315.12,127,4276.32,115,4,12,14,73,16,High sales + consistent WAC volume (Jun–Sep); not on prior cast list
+4,veteran,29929108,Asia Martin,295111193683322,25,34796.72,44,4916.29,99,4,16,48,27,8,High sales + consistent WAC volume (Jun–Sep); not on prior cast list
+5,veteran,25205302,Carrie Passaro,carrieithome,36,23964.86,22,1818.99,348,4,157,73,79,39,High sales + consistent WAC volume (Jun–Sep); not on prior cast list
+6,veteran,22293389,Catherine Ortega,itsneutralcatt,39,22975.75,48,2383.08,262,4,106,69,30,57,High sales + consistent WAC volume (Jun–Sep); not on prior cast list
+7,veteran,29742827,Audrianna Skillin,skillinhome,58,13768.67,37,1760.36,321,4,111,104,55,51,High sales + consistent WAC volume (Jun–Sep); not on prior cast list
+8,veteran,30340556,Mehdi Hosseinzadeh,lifeinwaheaven,95,8132.6,21,958.93,210,4,99,69,21,21,High sales + consistent WAC volume (Jun–Sep); not on prior cast list
+9,veteran,25911907,Keona Crenshaw,keona.nicole_,116,6605.3,14,752.6,240,4,26,84,99,31,High sales + consistent WAC volume (Jun–Sep); not on prior cast list
+10,veteran,32816334,Elizabeth Huston,madeonmillhavenlane,121,6368.09,14,615.88,552,4,228,247,69,8,High sales + consistent WAC volume (Jun–Sep); not on prior cast list
+11,veteran,31918930,Jessica Manfredini,LivingWithJessDini,130,5920.88,19,525.14,196,4,2,17,99,78,High sales + consistent WAC volume (Jun–Sep); not on prior cast list
+12,veteran,26925412,Tina Teal,tinatealhome,137,5465.49,22,687.04,407,4,117,150,114,26,High sales + consistent WAC volume (Jun–Sep); not on prior cast list
+13,emerging,28482200,Gracie Smith,HaveToCookToEat,227,2652.89,2,318.35,1427,4,462,421,302,242,Strong WAC + sales; rank >100; not on prior cast list
+14,emerging,29647738,Sarah LaMantia,sarah.lamantia,101,7750.23,21,723.89,21,4,10,3,6,2,Strong WAC + sales; rank >100; not on prior cast list
+15,emerging,25359890,Terra Nelson,terranelsonhome,102,7717.91,24,667.72,24,2,0,3,0,21,Strong WAC + sales; rank >100; not on prior cast list
+16,emerging,26325991,Tannesia Speed,tannesiavs,106,7238.84,19,1006.57,72,4,36,8,14,14,Strong WAC + sales; rank >100; not on prior cast list
+17,emerging,26239735,Kelli Testa,kellitesta,112,6819.9,12,818.4,98,3,36,35,27,0,Strong WAC + sales; rank >100; not on prior cast list
+18,emerging,25997460,Pronab Roy,techegadget,114,6767.46,19,936.87,100,3,65,27,0,8,Strong WAC + sales; rank >100; not on prior cast list
+19,emerging,29851726,Emily Lewandowski,emmylew_designs,154,4800.72,17,523.81,343,4,99,50,101,93,Strong WAC + sales; rank >100; not on prior cast list
+20,emerging,28829110,emily cortez,3m.i.ly_c,115,6761.88,12,724.08,71,4,24,30,8,9,Strong WAC + sales; rank >100; not on prior cast list
+21,emerging,28349319,Sabrina Mullen,oakmerecollective,120,6369.07,11,727.22,93,4,5,64,19,5,Strong WAC + sales; rank >100; not on prior cast list
+22,emerging,14816908,Marlene Cordero,ourcozycolonialct,126,6125.28,13,606.05,67,4,15,16,16,20,Strong WAC + sales; rank >100; not on prior cast list
+23,emerging,16506745,Stuti Rastogi,onesqftatime,124,6189.2,8,866.49,31,2,22,9,0,0,Strong WAC + sales; rank >100; not on prior cast list
+24,emerging,28427698,Liza Grier,lizaliz06,128,6052.94,8,711.24,24,2,12,0,12,0,Strong WAC + sales; rank >100; not on prior cast list
+25,emerging,25014118,Jessica LaFevre,lafevreliving1,131,5911.54,13,809.21,42,4,18,3,18,3,Strong WAC + sales; rank >100; not on prior cast list
