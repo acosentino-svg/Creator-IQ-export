@@ -47,7 +47,7 @@ def make_config(**boosting_overrides) -> AppConfig:
                 "campaign_name": "CampaignName",
                 "posted_at": "DateSubmitted",
                 "post_url": "PostUrl",
-                "post_caption": "Caption",
+                "post_caption": "Post",
             },
         },
     )
@@ -89,7 +89,7 @@ def test_sync_boosting_from_creatoriq_fetches_campaign_posts():
             "CampaignName": "Wayfair Creators Boosting Partnership",
             "DateSubmitted": "2026-08-15T12:00:00Z",
             "PostUrl": "https://example.com/p/1",
-            "Caption": "Room #WayfairCreator #wayfairelevate",
+            "Post": "Room #WayfairCreator #wayfairelevate",
         }
     ]
     client.iter_resource.return_value = []
@@ -114,7 +114,7 @@ def test_sync_uses_configured_campaign_id_without_campaigns_list():
             "CampaignName": "Wayfair Creators Boosting Partnership",
             "DateSubmitted": "2026-08-15T12:00:00Z",
             "PostUrl": "https://example.com/p/1",
-            "Caption": "Room #WayfairCreator #wayfairelevate",
+            "Post": "Room #WayfairCreator #wayfairelevate",
         }
     ]
     client.iter_resource.return_value = []
