@@ -46,12 +46,27 @@ def _normalize_url_key(url: str) -> str | None:
     return f"url:{host}{path.lower()}"
 
 
-def _parse_usage_date(value) -> pd.Timestamp | None:
+def _parse_usage_date(value, *, default_year: int = 2026) -> pd.Timestamp | None:
+    """Parse tracker ``Duration of Usage`` (column D): M/D/Y or M/D (year assumed)."""
     if value is None or (isinstance(value, float) and pd.isna(value)):
         return None
-    ts = pd.to_datetime(value, errors="coerce", utc=True)
+    text = str(value).strip()
+    if not text or text.lower() in {"nan", "none", "#ref!"}:
+        return None
+    text = text.rstrip("-–—").strip()
+
+    ts = pd.to_datetime(text, errors="coerce", utc=True)
     if pd.notna(ts):
         return pd.Timestamp(ts).tz_convert("UTC")
+
+    m = re.match(r"^(\d{1,2})/(\d{1,2})$", text)
+    if m:
+        month, day = int(m.group(1)), int(m.group(2))
+        try:
+            naive = pd.Timestamp(year=default_year, month=month, day=day)
+        except ValueError:
+            return None
+        return naive.tz_localize("UTC")
     return None
 
 

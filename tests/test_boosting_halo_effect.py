@@ -6,11 +6,19 @@ from pathlib import Path
 import pandas as pd
 
 from creatoriq_dashboard.boosting_halo_effect import (
+    _parse_usage_date,
     build_data_quality_checklist,
     merge_halo_effect_posts_and_selections,
     parse_halo_posted_csv,
     parse_halo_selected_csv,
 )
+
+
+def test_parse_usage_date_month_day_without_year():
+    ts = _parse_usage_date("10/21")
+    assert ts is not None
+    assert ts.year == 2026 and ts.month == 10 and ts.day == 21
+    assert _parse_usage_date("1/5/2026").month == 1
 
 
 def test_url_key_matches_tiktok_and_instagram():
