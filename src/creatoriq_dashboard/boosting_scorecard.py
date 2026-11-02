@@ -31,6 +31,7 @@ CONTENT_RAW_COLUMNS = [
     "clicks",
     "featured_category",
     "campaign",
+    "post_caption",
 ]
 
 _CREATOR_NAME_ALIASES = (
@@ -203,6 +204,10 @@ def normalize_content_raw(df: pd.DataFrame) -> pd.DataFrame:
 
     out["featured_category"] = out["featured_category"].fillna("").astype(str).str.strip()
     out["campaign"] = out["campaign"].fillna("").astype(str).str.strip()
+    if "post_caption" in out.columns:
+        out["post_caption"] = out["post_caption"].fillna("").astype(str).replace({"nan": "", "None": ""})
+    else:
+        out["post_caption"] = ""
 
     # Derive month from post_date when missing (after eligible filter we'll use explicit month)
     missing_month = out["month"].isna() & out["post_date"].notna()

@@ -228,6 +228,7 @@ def merge_halo_effect_posts_and_selections(
                 "clicks": 0,
                 "featured_category": "",
                 "campaign": "Halo effect upload",
+                "post_caption": row.get("post_description", "") or "",
             }
         )
 

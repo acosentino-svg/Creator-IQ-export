@@ -168,6 +168,64 @@ def summarize_timeline_segments(timeline: pd.DataFrame) -> pd.DataFrame:
     return pd.DataFrame(rows)
 
 
+def summarize_timeline_segments_enriched(
+    timeline: pd.DataFrame,
+    content: pd.DataFrame,
+    *,
+    focus_month: str | None = None,
+    as_of: str = "",
+) -> pd.DataFrame:
+    """Segment table with posting/selection averages and optional brief-theme counts for one month."""
+    from creatoriq_dashboard.boosting_brief_themes import creator_brief_alignment_in_month
+
+    if timeline.empty:
+        return pd.DataFrame()
+
+    eligible = _eligible_content(normalize_content_raw(content))
+    brief_creators: pd.Series | None = None
+    month_posts = None
+    if focus_month and not eligible.empty:
+        month_posts = eligible[eligible["month"] == focus_month]
+        brief_creators = creator_brief_alignment_in_month(eligible, focus_month)
+
+    rows: list[dict] = []
+    for segment, grp in timeline.groupby("segment", sort=False):
+        still = int(grp["posted_in_last_n_days"].sum())
+        n = len(grp)
+        ids = set(grp["creator_id"].astype(str))
+        row = {
+            "as_of": as_of,
+            "segment": segment,
+            "creators": n,
+            "still_posting": still,
+            "went_dark": n - still,
+            "pct_still_posting": _safe_div(still, n),
+            "avg_eligible_posts": float(grp["eligible_posts"].mean()) if n else None,
+            "median_eligible_posts": float(grp["eligible_posts"].median()) if n else None,
+            "avg_selected_posts": float(grp["selected_posts"].mean()) if n else None,
+            "avg_days_since_last_post": float(grp["days_since_last_post"].dropna().mean())
+            if grp["days_since_last_post"].notna().any()
+            else None,
+        }
+        if focus_month and month_posts is not None and not month_posts.empty:
+            in_month = month_posts[month_posts["creator_id"].astype(str).isin(ids)]
+            active_in_month = in_month.groupby("creator_id").size()
+            row[f"creators_active_{focus_month}"] = int(active_in_month.shape[0])
+            row[f"eligible_posts_{focus_month}"] = int(len(in_month))
+            row[f"avg_eligible_posts_per_active_{focus_month}"] = (
+                float(active_in_month.mean()) if not active_in_month.empty else None
+            )
+            row[f"selected_eligible_posts_{focus_month}"] = (
+                int(in_month["selected"].sum()) if "selected" in in_month.columns else 0
+            )
+            if brief_creators is not None and not brief_creators.empty:
+                aligned = brief_creators.reindex(list(active_in_month.index)).fillna(False)
+                row[f"creators_brief_themed_{focus_month}"] = int(aligned.sum())
+                row[f"pct_active_brief_themed_{focus_month}"] = _safe_div(int(aligned.sum()), len(active_in_month))
+        rows.append(row)
+    return pd.DataFrame(rows)
+
+
 def build_posting_by_days_since_last_selection(
     content: pd.DataFrame,
     *,

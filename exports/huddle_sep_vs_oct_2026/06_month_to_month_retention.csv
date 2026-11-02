@@ -1,5 +1,5 @@
 period,segment,prior_month_creators,retained,lapsed,retention_rate,falloff_rate
-September (Aug → Sep),Had selection last month,47,34,13,0.723404255319149,0.2765957446808511
-September (Aug → Sep),No selection last month,77,42,35,0.5454545454545454,0.45454545454545453
-October (Sep → Oct),Had selection last month,24,17,7,0.7083333333333334,0.2916666666666667
-October (Sep → Oct),No selection last month,143,78,65,0.5454545454545454,0.45454545454545453
+September (Aug → Sep),Had selection last month,50,36,14,0.72,0.28
+September (Aug → Sep),No selection last month,74,40,34,0.5405405405405406,0.4594594594594595
+October (Sep → Oct),Had selection last month,41,29,12,0.7073170731707317,0.2926829268292683
+October (Sep → Oct),No selection last month,126,66,60,0.5238095238095238,0.47619047619047616
