@@ -26,6 +26,7 @@ def text_contains_hashtag(text: str, hashtag: str) -> bool:
 
 
 def post_has_required_hashtags(text: str, required_hashtags: list[str]) -> bool:
+    """True when caption contains every required tag (any `#` casing, e.g. #WAYFAIRCREATOR)."""
     if not required_hashtags:
         return True
     return all(text_contains_hashtag(text, tag) for tag in required_hashtags)

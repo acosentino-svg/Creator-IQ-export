@@ -333,7 +333,7 @@ def build_data_quality_checklist(diagnostics: dict) -> pd.DataFrame:
             if matched
             else f"{diagnostics.get('selected_posts', 0):,}",
         ),
-        ("Eligible posts (both hashtags)", f"{diagnostics.get('eligible_posts', 0):,}"),
+        ("Eligible posts (both hashtags, any capitalization)", f"{diagnostics.get('eligible_posts', 0):,}"),
         (
             "Selected rows not in posted export",
             f"{not_in:,} — widen CreatorIQ date range or pull a longer posts export"
