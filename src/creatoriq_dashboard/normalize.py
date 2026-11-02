@@ -13,8 +13,26 @@ from .api_client import get_path
 
 
 def normalize_record(raw: dict[str, Any], mapping: dict[str, str]) -> dict[str, Any]:
-    """Apply a {normalized_field: raw_dotted_path} mapping to one raw record."""
-    return {normalized_field: get_path(raw, raw_path) for normalized_field, raw_path in mapping.items()}
+    """Apply a {normalized_field: raw_dotted_path} mapping to one raw record.
+
+    Paths may list fallbacks separated by ``|`` (first non-empty wins), e.g.
+    ``PostUrl|PostLink`` when tenants use different CreatorIQ field names.
+    """
+    out: dict[str, Any] = {}
+    for normalized_field, raw_path in mapping.items():
+        if "|" in raw_path:
+            value: Any = None
+            for candidate in raw_path.split("|"):
+                candidate = candidate.strip()
+                if not candidate:
+                    continue
+                value = get_path(raw, candidate)
+                if value not in (None, ""):
+                    break
+            out[normalized_field] = value
+        else:
+            out[normalized_field] = get_path(raw, raw_path)
+    return out
 
 
 def normalize_records(raw_records: list[dict[str, Any]], mapping: dict[str, str]) -> list[dict[str, Any]]:

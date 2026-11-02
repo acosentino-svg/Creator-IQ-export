@@ -54,8 +54,8 @@ posts:
   platform: SocialNetwork
   post_type: PostType
   posted_at: DateSubmitted
-  post_url: PostUrl # permalink when CreatorIQ exposes it; used as Content URL in Boosting scorecard
-  post_caption: Caption # used for #WayfairCreator + #wayfairelevate eligibility checks
+  post_url: PostUrl|PostLink # permalink; some tenants expose PostLink instead of PostUrl
+  post_caption: Caption|Post # caption text; some tenants use Post instead of Caption
   views: Views_next
   likes: Likes
   comments: Comments
