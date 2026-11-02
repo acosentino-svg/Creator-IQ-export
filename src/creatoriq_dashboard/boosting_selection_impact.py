@@ -647,3 +647,195 @@ def build_huddle_oct_vs_jul_sep(
     ]
 
     return period_df, monthly_pivot, cohort_df, segment_df, bullets
+
+
+def _timeline_at(
+    content: pd.DataFrame,
+    as_of: str,
+    *,
+    active_days: int,
+    drought_days: int = 90,
+) -> pd.DataFrame:
+    from creatoriq_dashboard.boosting_halo_effect import filter_content_by_post_dates
+
+    through = filter_content_by_post_dates(content, end=as_of)
+    return build_creator_selection_timeline(
+        through, as_of=as_of, active_days=active_days, drought_days=drought_days
+    )
+
+
+def _count_newly_stopped_posting(
+    timeline_before: pd.DataFrame,
+    timeline_after: pd.DataFrame,
+) -> pd.DataFrame:
+    """Creators still posting at first as_of but not at second (30d eligible activity)."""
+    if timeline_before.empty or timeline_after.empty:
+        return pd.DataFrame(columns=["creator_id", "creator_name", "segment_before", "segment_after"])
+    merged = timeline_before.merge(
+        timeline_after,
+        on="creator_id",
+        how="inner",
+        suffixes=("_before", "_after"),
+    )
+    stopped = merged[
+        merged["posted_in_last_n_days_before"].astype(bool)
+        & ~merged["posted_in_last_n_days_after"].astype(bool)
+    ]
+    return stopped[
+        [
+            "creator_id",
+            "creator_name_before",
+            "segment_before",
+            "segment_after",
+        ]
+    ].rename(columns={"creator_name_before": "creator_name"})
+
+
+def build_huddle_sep_vs_oct(
+    content: pd.DataFrame,
+    selected: pd.DataFrame,
+    *,
+    active_days: int = 30,
+) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame, list[str]]:
+    """Follow-up to last month's read: September baseline vs October (post-switch).
+
+    Does not lump Jul-Aug with September.
+    """
+    september = summarize_eligible_period(
+        content,
+        period_label="Sep 2026",
+        start="2026-09-01",
+        end="2026-09-30",
+        as_of="2026-09-30",
+        active_days=active_days,
+    )
+    october = summarize_eligible_period(
+        content,
+        period_label="Oct 2026",
+        start="2026-10-01",
+        end="2026-10-31",
+        as_of="2026-10-31",
+        active_days=active_days,
+    )
+    tr_sep = summarize_tracker_selections_in_period(
+        selected, period_label="Sep 2026", start="2026-09-01", end="2026-09-30"
+    )
+    tr_oct = summarize_tracker_selections_in_period(
+        selected, period_label="Oct 2026", start="2026-10-01", end="2026-10-31"
+    )
+
+    def _merge_period_row(eligible_summary: dict, tracker_summary: dict) -> dict:
+        row = dict(eligible_summary)
+        for key, value in tracker_summary.items():
+            if key == "period":
+                continue
+            row[f"tracker_{key}"] = value
+        return row
+
+    period_df = pd.DataFrame(
+        [
+            _merge_period_row(september, tr_sep),
+            _merge_period_row(october, tr_oct),
+        ]
+    )
+
+    program = build_program_monthly(content)
+    months_keep = {"2026-08", "2026-09", "2026-10"}
+    monthly = program[program["month"].isin(months_keep)].copy()
+    monthly_pivot = monthly.pivot(index="month", columns="metric", values="value").reset_index()
+
+    retention = build_monthly_selection_retention(content)
+    ret_sep = retention[retention["month"] == "2026-09"]
+    ret_oct = retention[retention["month"] == "2026-10"]
+    retention_rows: list[dict] = []
+    for label, frame in (("September (Aug → Sep)", ret_sep), ("October (Sep → Oct)", ret_oct)):
+        for _, row in frame.iterrows():
+            retention_rows.append(
+                {
+                    "period": label,
+                    "segment": row["segment"],
+                    "prior_month_creators": row["prior_month_creators"],
+                    "retained": row["retained"],
+                    "lapsed": row["lapsed"],
+                    "retention_rate": row["retention_rate"],
+                    "falloff_rate": row["falloff_rate"],
+                }
+            )
+    retention_df = pd.DataFrame(retention_rows)
+
+    # September actives → October (follow-up cohort; not Jul–Aug)
+    sep_start, sep_end = _period_bounds("2026-09-01", "2026-09-30")
+    oct_start, oct_end = _period_bounds("2026-10-01", "2026-10-31")
+    eligible_all = _eligible_content(normalize_content_raw(content))
+    sep_posts = eligible_all[(eligible_all["post_date"] >= sep_start) & (eligible_all["post_date"] <= sep_end)]
+    sep_cohort = set(sep_posts["creator_id"].unique())
+    oct_posts = eligible_all[(eligible_all["post_date"] >= oct_start) & (eligible_all["post_date"] <= oct_end)]
+    oct_active = set(oct_posts["creator_id"].unique())
+    continued = len(sep_cohort & oct_active)
+    lapsed_sep_to_oct = len(sep_cohort - oct_active)
+
+    cohort_df = pd.DataFrame(
+        [
+            {"metric": "Creators with eligible posts in September", "value": len(sep_cohort)},
+            {"metric": "Of those, posted eligible again in October", "value": continued},
+            {"metric": "September actives with no eligible post in October", "value": lapsed_sep_to_oct},
+            {"metric": "Sep → Oct continuation rate", "value": _safe_div(continued, len(sep_cohort))},
+            {
+                "metric": "October actives who were not active in September",
+                "value": len(oct_active - sep_cohort),
+            },
+        ]
+    )
+
+    tl_aug = _timeline_at(content, "2026-08-31", active_days=active_days)
+    tl_sep = _timeline_at(content, "2026-09-30", active_days=active_days)
+    tl_oct = _timeline_at(content, "2026-10-31", active_days=active_days)
+
+    seg_sep = summarize_timeline_segments(tl_sep)
+    seg_oct = summarize_timeline_segments(tl_oct)
+    seg_sep["as_of"] = "2026-09-30"
+    seg_oct["as_of"] = "2026-10-31"
+    segment_df = pd.concat([seg_sep, seg_oct], ignore_index=True)
+
+    stopped_in_sep = _count_newly_stopped_posting(tl_aug, tl_sep)
+    stopped_in_oct = _count_newly_stopped_posting(tl_sep, tl_oct)
+
+    dark_df = pd.DataFrame(
+        [
+            {
+                "window": "August → September",
+                "creators_stopped_posting": len(stopped_in_sep),
+                "note": f"Still posting Aug 31, not in last {active_days}d at Sep 30",
+            },
+            {
+                "window": "September → October",
+                "creators_stopped_posting": len(stopped_in_oct),
+                "note": f"Still posting Sep 30, not in last {active_days}d at Oct 31",
+            },
+        ]
+    )
+
+    def _seg_dark(seg_frame: pd.DataFrame, label: str) -> int:
+        row = seg_frame[seg_frame["segment"].str.contains("went dark", case=False, na=False)]
+        return int(row["creators"].sum()) if not row.empty else 0
+
+    dark_segments_sep = _seg_dark(seg_sep, "sep")
+    dark_segments_oct = _seg_dark(seg_oct, "oct")
+
+    def _pct(x):
+        return f"{x * 100:.1f}%" if x is not None and pd.notna(x) else "—"
+
+    post_rate_sep = september["post_selection_rate"]
+    post_rate_oct = october["post_selection_rate"]
+
+    bullets = [
+        "Follow-up to last month: compare **September (pre-switch baseline)** to **October (brief + higher boosting)** — not Oct vs all of Jul–Sep.",
+        f"September: {september['eligible_posts']:,} eligible posts, {september['active_creators']} actives, selection rate {_pct(post_rate_sep)} · October: {october['eligible_posts']:,} posts, {october['active_creators']} actives, {_pct(post_rate_oct)}.",
+        f"Went dark (program segments at month-end, all ‘went dark’ buckets): {dark_segments_sep} creators Sep 30 → {dark_segments_oct} Oct 31.",
+        f"Stopped posting between months ({active_days}d eligible activity): {len(stopped_in_sep)} Aug→Sep vs {len(stopped_in_oct)} Sep→Oct — Oct is the post-switch drop-off to watch.",
+        f"September actives ({len(sep_cohort)}): {continued} continued eligible posting in Oct; {lapsed_sep_to_oct} had no eligible October post.",
+        f"Tracker picks (column D): {tr_sep['unique_assets']} in Sep vs {tr_oct['unique_assets']} in Oct; CreatorIQ matched selected eligible posts: {september['selected_eligible_posts']} vs {october['selected_eligible_posts']}.",
+        "If Oct tracker > CreatorIQ matches, sync URLs with paid before treating selection rate as down.",
+    ]
+
+    return period_df, monthly_pivot, cohort_df, segment_df, dark_df, retention_df, bullets

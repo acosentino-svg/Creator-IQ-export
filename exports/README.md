@@ -16,11 +16,13 @@ Regenerate posted export (requires live `.env` / API key):
 
 **Into Google Sheets:** [sheets.google.com](https://sheets.google.com) → **File → Import → Upload** → choose `campaign_2206666_posts_since_july.csv` (or unzip a halo `.zip` and import each CSV as new sheets).
 
-Regenerate huddle (Oct vs Jul–Sep):
+Regenerate huddle follow-up (**Sep vs Oct**, not Jul–Sep vs Oct):
 
-`PYTHONPATH=src python3 scripts/export_huddle_oct_vs_jul_sep.py --posted ... --selected ... --output-dir exports/huddle_oct_vs_jul_sep_2026`
+`PYTHONPATH=src python3 scripts/export_huddle_sep_vs_oct.py --posted ... --selected ... --output-dir exports/huddle_sep_vs_oct_2026`
 
-| `huddle_oct_vs_jul_sep_2026/` | **Oct vs Jul–Sep** comparison CSVs + talking points for program huddle |
+Legacy lumped comparison: `scripts/export_huddle_oct_vs_jul_sep.py`
+
+| `huddle_sep_vs_oct_2026/` | **September baseline vs October** (post-switch) for program huddle |
 
 Regenerate halo bundles: Boosting app **Google Sheets Export** (upload both CSVs + set dates) or:
 

@@ -1,0 +1,7 @@
+• Follow-up to last month: compare **September (pre-switch baseline)** to **October (brief + higher boosting)** — not Oct vs all of Jul–Sep.
+• September: 639 eligible posts, 167 actives, selection rate 4.9% · October: 824 posts, 165 actives, 2.2%.
+• Went dark (program segments at month-end, all ‘went dark’ buckets): 379 creators Sep 30 → 402 Oct 31.
+• Stopped posting between months (30d eligible activity): 44 Aug→Sep vs 76 Sep→Oct — Oct is the post-switch drop-off to watch.
+• September actives (167): 95 continued eligible posting in Oct; 72 had no eligible October post.
+• Tracker picks (column D): 81 in Sep vs 88 in Oct; CreatorIQ matched selected eligible posts: 31 vs 18.
+• If Oct tracker > CreatorIQ matches, sync URLs with paid before treating selection rate as down.
