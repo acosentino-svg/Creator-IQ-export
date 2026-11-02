@@ -60,13 +60,23 @@ def test_hashtag_eligibility_requires_both():
     )
 
 
-def test_hashtag_case_insensitive_variants():
-    caption = "Check this out #WAYFAIRCREATOR and #WayfairElevate for the room"
-    assert post_has_required_hashtags(caption, ["WayfairCreator", "wayfairelevate"])
-    assert post_has_required_hashtags(caption, ["wayfaircreator", "WAYFAIRELEVATE"])
+def test_hashtag_mixed_casing_each_tag():
+    assert post_has_required_hashtags(
+        "room tour #wAyFaIrCrEaToR and #WAYFAIRELEVATE",
+        ["WayfairCreator", "wayfairelevate"],
+    )
+    assert post_has_required_hashtags(
+        "#wayfaircreator #WayfairElevate",
+        ["WayfairCreator", "wayfairelevate"],
+    )
 
 
-def test_is_eligible_from_caption_series():
+def test_wayfair_partner_is_not_eligible():
+    """Program rule: WayfairPartner is a different tag; not a substitute for WayfairCreator."""
+    assert not post_has_required_hashtags(
+        "#WayfairPartner #wayfairelevate #ad",
+        ["WayfairCreator", "wayfairelevate"],
+    )
     config = make_config()
     post = pd.Series({"post_caption": "New room tour #wayfairelevate and #WayfairCreator"})
     assert is_eligible_boosting_content(post, config=config)
