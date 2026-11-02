@@ -17,11 +17,13 @@ import pandas as pd
 REPO_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO_ROOT / "src"))
 
+from creatoriq_dashboard.boosting_rules import is_eligible_boosting_content  # noqa: E402
 from creatoriq_dashboard.caption_themes import (  # noqa: E402
     add_theme_columns,
     assign_primary_theme,
     theme_summary,
 )
+from creatoriq_dashboard.config import load_config  # noqa: E402
 
 
 def main() -> int:
