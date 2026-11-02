@@ -1,0 +1,9 @@
+• Eligible volume: 1,890 posts (Jul–Sep) → 824 in Oct (165 active creators vs 259 over Jul–Sep).
+• Post-level selection rate (#WayfairCreator + #wayfairelevate): 8.0% → 2.2% (-5.9% pts).
+• Share of active creators with ≥1 selected eligible post in-window: 32.4% → 9.7%.
+• Tracker picks (column D): 238 assets Jul–Sep (~79/mo) vs 88 in Oct; 53 creators in Oct tracker.
+• CreatorIQ match: only 18 eligible posts in Oct flagged selected vs 88 tracker rows — check URL/date alignment for the gap.
+• Jul–Sep active cohort (259 creators): 46.3% posted eligible again in Oct; 139 no eligible Oct post.
+• Monthly post selection rate: Jul 7.9% → Aug 11.5% → Sep 4.9% → Oct 2.2% (eligible posts only).
+• Never-selected: 66 still posting vs 294 dark (Sep 30); 65 still posting vs 309 dark (Oct 31) — 30d window, full program history through each date.
+• Frame for huddle: brief + higher boosting should show up in tracker pace and Oct eligible volume; selection *match rate on CreatorIQ posts* is lagging tracker — worth Ellie/Bella sync on URLs and timing.

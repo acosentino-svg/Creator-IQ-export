@@ -399,3 +399,251 @@ def summarize_selection_impact(content: pd.DataFrame) -> dict:
         "falloff_rate_no_selection_prior_month": falloff_no_selection,
         "retention_rate_had_selection_prior_month": retention_with_selection,
     }
+
+
+def _period_bounds(start: str, end: str) -> tuple[pd.Timestamp, pd.Timestamp]:
+    start_ts = pd.Timestamp(start, tz="UTC")
+    end_ts = pd.Timestamp(end, tz="UTC")
+    if end_ts == end_ts.normalize():
+        end_ts = end_ts + pd.Timedelta(days=1) - pd.Timedelta(seconds=1)
+    return start_ts, end_ts
+
+
+def summarize_eligible_period(
+    content: pd.DataFrame,
+    *,
+    period_label: str,
+    start: str,
+    end: str,
+    as_of: str | None = None,
+    active_days: int = 30,
+    drought_days: int = 90,
+) -> dict:
+    """Eligible-post activity and selection rates for one calendar window."""
+    from creatoriq_dashboard.boosting_halo_effect import filter_content_by_post_dates
+
+    start_ts, end_ts = _period_bounds(start, end)
+    as_of_ts = pd.Timestamp(as_of or end, tz="UTC")
+    if as_of_ts == as_of_ts.normalize():
+        as_of_ts = as_of_ts + pd.Timedelta(days=1) - pd.Timedelta(seconds=1)
+
+    window = filter_content_by_post_dates(content, start=start_ts, end=end_ts)
+    eligible = _eligible_content(normalize_content_raw(window))
+    if eligible.empty:
+        return {
+            "period": period_label,
+            "start": start,
+            "end": end,
+            "eligible_posts": 0,
+            "selected_eligible_posts": 0,
+            "post_selection_rate": None,
+            "active_creators": 0,
+            "creators_with_selected_post": 0,
+            "creator_selection_rate": None,
+            "avg_eligible_posts_per_active_creator": None,
+            "pct_active_still_posting_at_as_of": None,
+            "creators_went_dark_at_as_of": 0,
+        }
+
+    eligible_posts = len(eligible)
+    selected_posts = int(eligible["selected"].sum())
+    active = eligible["creator_id"].nunique()
+    creators_selected = eligible.loc[eligible["selected"], "creator_id"].nunique()
+
+    # Retention among creators active in this window: posted within active_days before as_of
+    active_window = pd.Timedelta(days=active_days)
+    still = 0
+    dark = 0
+    for _, grp in eligible.groupby("creator_id"):
+        last_post = grp["post_date"].dropna()
+        if last_post.empty:
+            dark += 1
+            continue
+        last_ts = pd.Timestamp(last_post.max()).tz_convert("UTC")
+        if (as_of_ts - last_ts) <= active_window:
+            still += 1
+        else:
+            dark += 1
+
+    return {
+        "period": period_label,
+        "start": start,
+        "end": end,
+        "eligible_posts": eligible_posts,
+        "selected_eligible_posts": selected_posts,
+        "post_selection_rate": _safe_div(selected_posts, eligible_posts),
+        "active_creators": active,
+        "creators_with_selected_post": creators_selected,
+        "creator_selection_rate": _safe_div(creators_selected, active),
+        "avg_eligible_posts_per_active_creator": _safe_div(eligible_posts, active),
+        "pct_active_still_posting_at_as_of": _safe_div(still, active),
+        "creators_still_posting_at_as_of": still,
+        "creators_went_dark_at_as_of": dark,
+    }
+
+
+def summarize_tracker_selections_in_period(
+    selected: pd.DataFrame,
+    *,
+    period_label: str,
+    start: str,
+    end: str,
+) -> dict:
+    """Boosting picks recorded in column D (Duration of Usage) inside the window."""
+    if selected.empty or "selection_date" not in selected.columns:
+        return {
+            "period": period_label,
+            "selections_in_period": 0,
+            "unique_assets": 0,
+            "unique_creators": 0,
+        }
+    start_ts, end_ts = _period_bounds(start, end)
+    dates = pd.to_datetime(selected["selection_date"], utc=True, errors="coerce")
+    mask = (dates >= start_ts) & (dates <= end_ts)
+    in_period = selected.loc[mask]
+    creators = in_period["creator_name_selected"].dropna().astype(str).str.strip()
+    creators = creators[creators.ne("") & creators.ne("nan")]
+    return {
+        "period": period_label,
+        "selections_in_period": int(len(in_period)),
+        "unique_assets": int(in_period["url_key"].nunique()) if "url_key" in in_period.columns else len(in_period),
+        "unique_creators": int(creators.nunique()) if not creators.empty else 0,
+    }
+
+
+def build_huddle_oct_vs_jul_sep(
+    content: pd.DataFrame,
+    selected: pd.DataFrame,
+    *,
+    active_days: int = 30,
+) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame, list[str]]:
+    """Compare Jul–Sep vs Oct for huddle: KPI table, monthly trend, cohort handoff, talking points."""
+    from creatoriq_dashboard.boosting_halo_effect import filter_content_by_post_dates
+
+    jul_sep = summarize_eligible_period(
+        content,
+        period_label="Jul–Sep 2026",
+        start="2026-07-01",
+        end="2026-09-30",
+        as_of="2026-09-30",
+        active_days=active_days,
+    )
+    october = summarize_eligible_period(
+        content,
+        period_label="Oct 2026",
+        start="2026-10-01",
+        end="2026-10-31",
+        as_of="2026-10-31",
+        active_days=active_days,
+    )
+    tr_jul_sep = summarize_tracker_selections_in_period(
+        selected, period_label="Jul–Sep 2026", start="2026-07-01", end="2026-09-30"
+    )
+    tr_oct = summarize_tracker_selections_in_period(
+        selected, period_label="Oct 2026", start="2026-10-01", end="2026-10-31"
+    )
+
+    def _merge_period_row(eligible_summary: dict, tracker_summary: dict) -> dict:
+        row = dict(eligible_summary)
+        for key, value in tracker_summary.items():
+            if key == "period":
+                continue
+            row[f"tracker_{key}"] = value
+        return row
+
+    period_df = pd.DataFrame(
+        [
+            _merge_period_row(jul_sep, tr_jul_sep),
+            _merge_period_row(october, tr_oct),
+        ]
+    )
+
+    program = build_program_monthly(content)
+    months_keep = {"2026-07", "2026-08", "2026-09", "2026-10"}
+    monthly = program[program["month"].isin(months_keep)].copy()
+    monthly_pivot = monthly.pivot(index="month", columns="metric", values="value").reset_index()
+
+    def _month_rate(m: str) -> float | None:
+        row = monthly_pivot[monthly_pivot["month"] == m]
+        if row.empty or "selection_rate" not in row.columns:
+            return None
+        val = row.iloc[0]["selection_rate"]
+        return float(val) if pd.notna(val) else None
+
+    # Jul–Sep active cohort → October behavior
+    js_start, js_end = _period_bounds("2026-07-01", "2026-09-30")
+    oct_start, oct_end = _period_bounds("2026-10-01", "2026-10-31")
+    eligible_all = _eligible_content(normalize_content_raw(content))
+    js_posts = eligible_all[(eligible_all["post_date"] >= js_start) & (eligible_all["post_date"] <= js_end)]
+    cohort = set(js_posts["creator_id"].unique())
+    oct_posts = eligible_all[(eligible_all["post_date"] >= oct_start) & (eligible_all["post_date"] <= oct_end)]
+    oct_active = set(oct_posts["creator_id"].unique())
+    posted_oct = len(cohort & oct_active)
+    lapsed = len(cohort - oct_active)
+
+    js_sel = js_posts[js_posts["selected"]]["creator_id"].nunique()
+    cohort_oct_eligible = oct_posts[oct_posts["creator_id"].isin(cohort)]
+    cohort_oct_selected = (
+        int(cohort_oct_eligible[cohort_oct_eligible["selected"]]["creator_id"].nunique())
+        if not cohort_oct_eligible.empty
+        else 0
+    )
+
+    cohort_df = pd.DataFrame(
+        [
+            {"metric": "Creators with eligible posts Jul–Sep", "value": len(cohort)},
+            {"metric": "Of those, posted eligible again in Oct", "value": posted_oct},
+            {"metric": "Of those, no eligible post in Oct (lapsed)", "value": lapsed},
+            {"metric": "Oct continuation rate", "value": _safe_div(posted_oct, len(cohort))},
+            {"metric": "Jul–Sep cohort: had selected post Jul–Sep", "value": js_sel},
+            {"metric": "Jul–Sep cohort: selected eligible post in Oct", "value": cohort_oct_selected},
+        ]
+    )
+
+    through_sep = filter_content_by_post_dates(content, end="2026-09-30")
+    through_oct = filter_content_by_post_dates(content, end="2026-10-31")
+    seg_sep = summarize_timeline_segments(
+        build_creator_selection_timeline(
+            through_sep, as_of="2026-09-30", active_days=active_days, drought_days=90
+        )
+    )
+    seg_oct = summarize_timeline_segments(
+        build_creator_selection_timeline(
+            through_oct, as_of="2026-10-31", active_days=active_days, drought_days=90
+        )
+    )
+    seg_sep["as_of"] = "2026-09-30"
+    seg_oct["as_of"] = "2026-10-31"
+    segment_df = pd.concat([seg_sep, seg_oct], ignore_index=True)
+
+    def _pct(x):
+        return f"{x * 100:.1f}%" if x is not None and pd.notna(x) else "—"
+
+    def _delta(a, b):
+        if a is None or b is None or pd.isna(a) or pd.isna(b):
+            return None
+        return b - a
+
+    post_rate_js = jul_sep["post_selection_rate"]
+    post_rate_oct = october["post_selection_rate"]
+    creator_rate_js = jul_sep["creator_selection_rate"]
+    creator_rate_oct = october["creator_selection_rate"]
+
+    never_dark_sep = int(seg_sep.loc[seg_sep["segment"] == "Never selected — went dark", "creators"].iloc[0])
+    never_still_sep = int(seg_sep.loc[seg_sep["segment"] == "Never selected — still posting", "creators"].iloc[0])
+    never_dark_oct = int(seg_oct.loc[seg_oct["segment"] == "Never selected — went dark", "creators"].iloc[0])
+    never_still_oct = int(seg_oct.loc[seg_oct["segment"] == "Never selected — still posting", "creators"].iloc[0])
+
+    bullets = [
+        f"Eligible volume: {jul_sep['eligible_posts']:,} posts (Jul–Sep) → {october['eligible_posts']:,} in Oct ({october['active_creators']} active creators vs {jul_sep['active_creators']} over Jul–Sep).",
+        f"Post-level selection rate (#WayfairCreator + #wayfairelevate): {_pct(post_rate_js)} → {_pct(post_rate_oct)} ({_pct(_delta(post_rate_js, post_rate_oct))} pts).",
+        f"Share of active creators with ≥1 selected eligible post in-window: {_pct(creator_rate_js)} → {_pct(creator_rate_oct)}.",
+        f"Tracker picks (column D): {tr_jul_sep['unique_assets']} assets Jul–Sep (~{tr_jul_sep['unique_assets']/3:.0f}/mo) vs {tr_oct['unique_assets']} in Oct; {tr_oct['unique_creators']} creators in Oct tracker.",
+        f"CreatorIQ match: only {october['selected_eligible_posts']} eligible posts in Oct flagged selected vs {tr_oct['unique_assets']} tracker rows — check URL/date alignment for the gap.",
+        f"Jul–Sep active cohort ({len(cohort)} creators): {_pct(_safe_div(posted_oct, len(cohort)))} posted eligible again in Oct; {lapsed} no eligible Oct post.",
+        f"Monthly post selection rate: Jul {_pct(_month_rate('2026-07'))} → Aug {_pct(_month_rate('2026-08'))} → Sep {_pct(_month_rate('2026-09'))} → Oct {_pct(post_rate_oct)} (eligible posts only).",
+        f"Never-selected: {never_still_sep} still posting vs {never_dark_sep} dark (Sep 30); {never_still_oct} still posting vs {never_dark_oct} dark (Oct 31) — 30d window, full program history through each date.",
+        "Frame for huddle: brief + higher boosting should show up in tracker pace and Oct eligible volume; selection *match rate on CreatorIQ posts* is lagging tracker — worth Ellie/Bella sync on URLs and timing.",
+    ]
+
+    return period_df, monthly_pivot, cohort_df, segment_df, bullets
