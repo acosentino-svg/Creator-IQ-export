@@ -6,12 +6,19 @@ from pathlib import Path
 import pandas as pd
 
 from creatoriq_dashboard.boosting_halo_effect import (
+    _normalize_url_key,
     _parse_usage_date,
     build_data_quality_checklist,
     merge_halo_effect_posts_and_selections,
     parse_halo_posted_csv,
     parse_halo_selected_csv,
 )
+
+
+def test_instagram_reels_path_matches_reel():
+    tracker = "https://www.instagram.com/reels/dd88pvanqf5"
+    posted = "https://www.instagram.com/reel/dd88pvanqf5/"
+    assert _normalize_url_key(tracker) == _normalize_url_key(posted) == "instagram:dd88pvanqf5"
 
 
 def test_parse_usage_date_month_day_without_year():

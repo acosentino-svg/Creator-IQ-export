@@ -32,8 +32,8 @@ def _normalize_url_key(url: str) -> str | None:
     if m:
         return f"tiktok:{m.group(1)}"
 
-    # Instagram reel / post / tv
-    m = re.search(r"/(?:reel|p|tv)/([^/?#]+)", path, flags=re.IGNORECASE)
+    # Instagram reel / post / tv (/reels/ is common in tracker exports)
+    m = re.search(r"/(?:reel|reels|p|tv)/([^/?#]+)", path, flags=re.IGNORECASE)
     if m:
         return f"instagram:{m.group(1).lower()}"
 
