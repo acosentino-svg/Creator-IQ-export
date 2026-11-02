@@ -176,7 +176,11 @@ def summarize_timeline_segments_enriched(
     as_of: str = "",
 ) -> pd.DataFrame:
     """Segment table with posting/selection averages and optional brief-theme counts for one month."""
-    from creatoriq_dashboard.boosting_brief_themes import creator_brief_alignment_in_month
+    from creatoriq_dashboard.boosting_brief_themes import (
+        BRIEF_PROGRAM_START_MONTH,
+        creator_brief_alignment_in_month,
+        month_has_program_brief,
+    )
 
     if timeline.empty:
         return pd.DataFrame()
@@ -184,9 +188,11 @@ def summarize_timeline_segments_enriched(
     eligible = _eligible_content(normalize_content_raw(content))
     brief_creators: pd.Series | None = None
     month_posts = None
-    if focus_month and not eligible.empty:
+    if focus_month and not eligible.empty and month_has_program_brief(focus_month):
         month_posts = eligible[eligible["month"] == focus_month]
         brief_creators = creator_brief_alignment_in_month(eligible, focus_month)
+    elif focus_month and not eligible.empty:
+        month_posts = eligible[eligible["month"] == focus_month]
 
     rows: list[dict] = []
     for segment, grp in timeline.groupby("segment", sort=False):
@@ -222,6 +228,8 @@ def summarize_timeline_segments_enriched(
                 aligned = brief_creators.reindex(list(active_in_month.index)).fillna(False)
                 row[f"creators_brief_themed_{focus_month}"] = int(aligned.sum())
                 row[f"pct_active_brief_themed_{focus_month}"] = _safe_div(int(aligned.sum()), len(active_in_month))
+            elif focus_month and focus_month < BRIEF_PROGRAM_START_MONTH:
+                row["brief_theme_tracking"] = "No program brief (seasonal captions only — not brief baseline)"
         rows.append(row)
     return pd.DataFrame(rows)
 
@@ -886,8 +894,22 @@ def build_huddle_sep_vs_oct(
     post_rate_sep = september["post_selection_rate"]
     post_rate_oct = october["post_selection_rate"]
 
+    from creatoriq_dashboard.boosting_brief_themes import summarize_october_brief_impact
+
+    brief_impact = summarize_october_brief_impact(eligible_all)
+    oct_brief_line = ""
+    if not brief_impact.empty:
+        posts = brief_impact[brief_impact["metric"] == "pct_posts_any_brief_theme"]
+        creators = brief_impact[brief_impact["metric"] == "pct_creators_brief_themed"]
+        if not posts.empty and pd.notna(posts.iloc[0]["value"]):
+            oct_brief_line = (
+                f"October brief (caption themes): {_pct(float(posts.iloc[0]['value']))} of eligible posts "
+                f"match brief keywords; {_pct(float(creators.iloc[0]['value']))} of Oct actives posted ≥1 themed piece "
+                "(Sep had no brief — do not compare Sep theme %)."
+            )
+
     bullets = [
-        "Follow-up to last month: compare **September (pre-switch baseline)** to **October (brief + higher boosting)** — not Oct vs all of Jul–Sep.",
+        "Follow-up to last month: **September = no creative brief** (posting/selection baseline only). **October = brief + higher boosting**.",
         f"September: {september['eligible_posts']:,} eligible posts, {september['active_creators']} actives, selection rate {_pct(post_rate_sep)} · October: {october['eligible_posts']:,} posts, {october['active_creators']} actives, {_pct(post_rate_oct)}.",
         f"Went dark (program segments at month-end, all ‘went dark’ buckets): {dark_segments_sep} creators Sep 30 → {dark_segments_oct} Oct 31.",
         f"Stopped posting between months ({active_days}d eligible activity): {len(stopped_in_sep)} Aug→Sep vs {len(stopped_in_oct)} Sep→Oct — Oct is the post-switch drop-off to watch.",
@@ -895,5 +917,7 @@ def build_huddle_sep_vs_oct(
         f"Tracker picks (column D): {tr_sep['unique_assets']} in Sep vs {tr_oct['unique_assets']} in Oct; CreatorIQ matched selected eligible posts: {september['selected_eligible_posts']} vs {october['selected_eligible_posts']}.",
         "If Oct tracker > CreatorIQ matches, sync URLs with paid before treating selection rate as down.",
     ]
+    if oct_brief_line:
+        bullets.insert(2, oct_brief_line)
 
     return period_df, monthly_pivot, cohort_df, segment_df, dark_df, retention_df, bullets

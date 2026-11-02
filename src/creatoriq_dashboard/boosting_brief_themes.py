@@ -7,7 +7,9 @@ import pandas as pd
 
 from creatoriq_dashboard.boosting_scorecard import _safe_div
 
-# Aligns with October Boosting brief messaging buckets (caption keyword proxies).
+# Creative brief (fall styling, Halloween, etc.) launched for the boosting program in October 2026.
+# Caption theme hits in earlier months are seasonal/organic — not comparable as a “pre-brief” baseline.
+BRIEF_PROGRAM_START_MONTH = "2026-10"
 BRIEF_THEME_PATTERNS: dict[str, str] = {
     "fall_styling": r"(?:\bfall\b|\bautumn\b|\bcozy\b|\bseasonal\b|fall decor|fall styling|fall refresh)",
     "halloween": r"\bhalloween\b",
@@ -98,3 +100,97 @@ def creator_brief_alignment_in_month(
         return pd.Series(dtype=bool)
     tagged = add_brief_theme_columns(sub, text_col=text_col)
     return tagged.groupby("creator_id")["brief_any_theme"].any()
+
+
+def month_has_program_brief(month: str) -> bool:
+    return str(month) >= BRIEF_PROGRAM_START_MONTH
+
+
+def summarize_october_brief_impact(
+    eligible: pd.DataFrame,
+    *,
+    brief_month: str = BRIEF_PROGRAM_START_MONTH,
+    text_col: str = "post_caption",
+) -> pd.DataFrame:
+    """Interpret brief alignment for the first month the creative brief existed (October only)."""
+    rows: list[dict] = [
+        {
+            "section": "context",
+            "metric": "September had no boosting creative brief",
+            "value": "Do not compare Sep caption theme % to Oct as brief lift — Sep themes are seasonal only.",
+        },
+        {
+            "section": "context",
+            "metric": "Brief measurement month",
+            "value": brief_month,
+        },
+    ]
+    oct_el = eligible[eligible["month"] == brief_month]
+    if oct_el.empty:
+        return pd.DataFrame(rows)
+
+    tagged = add_brief_theme_columns(oct_el, text_col=text_col)
+    n = len(tagged)
+    rows.append({"section": "october_posts", "metric": "eligible_posts", "value": n})
+    rows.append(
+        {
+            "section": "october_posts",
+            "metric": "posts_matching_any_brief_theme",
+            "value": int(tagged["brief_any_theme"].sum()),
+        }
+    )
+    rows.append(
+        {
+            "section": "october_posts",
+            "metric": "pct_posts_any_brief_theme",
+            "value": _safe_div(int(tagged["brief_any_theme"].sum()), n),
+        }
+    )
+    for key in BRIEF_THEME_PATTERNS:
+        hits = int(tagged[f"brief_{key}"].sum())
+        rows.append({"section": "october_posts", "metric": f"{key}_posts", "value": hits})
+        rows.append({"section": "october_posts", "metric": f"{key}_pct", "value": _safe_div(hits, n)})
+
+    if "selected" in tagged.columns:
+        sel = tagged[tagged["selected"]]
+        not_sel = tagged[~tagged["selected"]]
+        rows.append({"section": "october_selected", "metric": "selected_eligible_posts", "value": len(sel)})
+        rows.append(
+            {
+                "section": "october_selected",
+                "metric": "selected_posts_with_brief_theme",
+                "value": int(sel["brief_any_theme"].sum()) if not sel.empty else 0,
+            }
+        )
+        rows.append(
+            {
+                "section": "october_selected",
+                "metric": "pct_selected_with_brief_theme",
+                "value": _safe_div(int(sel["brief_any_theme"].sum()), len(sel)) if len(sel) else None,
+            }
+        )
+        rows.append(
+            {
+                "section": "october_selected",
+                "metric": "pct_unselected_with_brief_theme",
+                "value": _safe_div(int(not_sel["brief_any_theme"].sum()), len(not_sel)) if len(not_sel) else None,
+            }
+        )
+
+    creators = tagged.groupby("creator_id")["brief_any_theme"].any()
+    rows.append({"section": "october_creators", "metric": "active_creators", "value": int(creators.shape[0])})
+    rows.append(
+        {
+            "section": "october_creators",
+            "metric": "creators_with_brief_themed_post",
+            "value": int(creators.sum()),
+        }
+    )
+    rows.append(
+        {
+            "section": "october_creators",
+            "metric": "pct_creators_brief_themed",
+            "value": _safe_div(int(creators.sum()), len(creators)),
+        }
+    )
+    return pd.DataFrame(rows)

@@ -25,7 +25,11 @@ from creatoriq_dashboard.boosting_halo_effect import (  # noqa: E402
     parse_halo_posted_csv,
     parse_halo_selected_csv,
 )
-from creatoriq_dashboard.boosting_brief_themes import summarize_brief_themes_by_month  # noqa: E402
+from creatoriq_dashboard.boosting_brief_themes import (  # noqa: E402
+    BRIEF_PROGRAM_START_MONTH,
+    summarize_brief_themes_by_month,
+    summarize_october_brief_impact,
+)
 from creatoriq_dashboard.boosting_scorecard import _eligible_content, normalize_content_raw  # noqa: E402
 from creatoriq_dashboard.boosting_selection_impact import (  # noqa: E402
     build_huddle_sep_vs_oct,
@@ -54,6 +58,10 @@ def main() -> None:
     content_norm = normalize_content_raw(content)
     eligible = _eligible_content(content_norm)
     brief_monthly = summarize_brief_themes_by_month(eligible)
+    brief_monthly["program_brief"] = brief_monthly["month"].map(
+        lambda m: "yes" if str(m) >= BRIEF_PROGRAM_START_MONTH else "no — seasonal only, not a brief baseline"
+    )
+    brief_impact = summarize_october_brief_impact(eligible)
 
     tl_sep = _timeline_at(content, "2026-09-30", active_days=args.active_days)
     tl_oct = _timeline_at(content, "2026-10-31", active_days=args.active_days)
@@ -77,6 +85,7 @@ def main() -> None:
     segment_df.to_csv(out / "04_segments_sep30_vs_oct31_simple.csv", index=False)
     segment_enriched.to_csv(out / "04_segment_summary_enriched.csv", index=False)
     brief_monthly.to_csv(out / "08_brief_themes_by_month.csv", index=False)
+    brief_impact.to_csv(out / "09_october_brief_impact.csv", index=False)
     dark_df.to_csv(out / "05_stopped_posting_between_months.csv", index=False)
     retention_df.to_csv(out / "06_month_to_month_retention.csv", index=False)
     (out / "07_huddle_talking_points.txt").write_text("\n".join(f"• {b}" for b in bullets) + "\n", encoding="utf-8")
@@ -90,8 +99,9 @@ Does NOT lump Jul–Aug with September.
 
 Import into Google Sheets:
   01_sep_vs_oct_kpis.csv
-  04_segment_summary_enriched.csv — segments + avg posts, Oct brief-themed creators
-  08_brief_themes_by_month.csv — fall / Halloween / holiday / pet / etc. in captions
+  04_segment_summary_enriched.csv — segments + avg posts; brief-themed creators on Oct 31 rows only
+  08_brief_themes_by_month.csv — theme keywords by month (program_brief column: Sep = no)
+  09_october_brief_impact.csv — October-only brief interpretation
   05_stopped_posting_between_months.csv — Sep→Oct drop-off vs Aug→Sep
   03_september_actives_in_october.csv — Sep cohort continuation
   07_huddle_talking_points.txt
