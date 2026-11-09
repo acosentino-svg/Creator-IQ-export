@@ -4,6 +4,7 @@ from __future__ import annotations
 import io
 import re
 import zipfile
+from pathlib import Path
 from urllib.parse import urlparse
 
 import pandas as pd
@@ -70,9 +71,35 @@ def _parse_usage_date(value, *, default_year: int = 2026) -> pd.Timestamp | None
     return None
 
 
+def _read_tracker_csv(source: str | bytes | Path) -> pd.DataFrame:
+    """Load tracker export; skip a one-line instruction row above the real header when present."""
+    path = Path(source) if isinstance(source, (str, Path)) else None
+    raw = pd.read_csv(source)
+    col_names = {str(c).strip(): c for c in raw.columns}
+    if next((k for k in col_names if "content used" in k.lower()), None):
+        return raw
+    if path is not None:
+        for skip in range(1, 6):
+            candidate = pd.read_csv(path, skiprows=skip)
+            names = {str(c).strip(): c for c in candidate.columns}
+            if next((k for k in names if "content used" in k.lower()), None):
+                return candidate
+    return raw
+
+
 def parse_halo_selected_csv(source: str | bytes | pd.DataFrame) -> pd.DataFrame:
     """Internal boosting selection tracker (Content Used + Duration of Usage)."""
-    raw = pd.read_csv(source) if not isinstance(source, pd.DataFrame) else source.copy()
+    if isinstance(source, pd.DataFrame):
+        raw = source.copy()
+    elif isinstance(source, (str, bytes)) or hasattr(source, "read"):
+        from pathlib import Path
+
+        if isinstance(source, (str, Path)):
+            raw = _read_tracker_csv(source)
+        else:
+            raw = pd.read_csv(source)
+    else:
+        raw = pd.read_csv(source)
     if raw.empty:
         return pd.DataFrame(columns=["url_key", "content_url", "selection_date", "platform", "creator_name"])
 
@@ -88,6 +115,10 @@ def parse_halo_selected_csv(source: str | bytes | pd.DataFrame) -> pd.DataFrame:
 
     rows: list[dict] = []
     for _, row in raw.iterrows():
+        if name_col is not None:
+            label = str(row.get(name_col, "")).strip().lower()
+            if label in {"example entry", "creator name"}:
+                continue
         url = row.get(content_col)
         key = _normalize_url_key(url)
         if not key and asset_col is not None:

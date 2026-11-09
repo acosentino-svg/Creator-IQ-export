@@ -1,3 +1,3 @@
 period,start,end,eligible_posts,selected_eligible_posts,post_selection_rate,active_creators,creators_with_selected_post,creator_selection_rate,avg_eligible_posts_per_active_creator,pct_active_still_posting_at_as_of,creators_still_posting_at_as_of,creators_went_dark_at_as_of,tracker_selections_in_period,tracker_unique_assets,tracker_unique_creators
-Sep 2026,2026-09-01,2026-09-30,580,44,0.07586206896551724,157,31,0.19745222929936307,3.694267515923567,1.0,157.0,0,74,74,0
-Oct 2026,2026-10-01,2026-10-31,0,0,,0,0,,,,,0,0,0,0
+Sep 2026,2026-09-01,2026-09-30,639,58,0.09076682316118936,167,41,0.24550898203592814,3.8263473053892216,1.0,167,0,204,204,122
+Oct 2026,2026-10-01,2026-10-31,824,66,0.08009708737864078,165,41,0.24848484848484848,4.993939393939394,0.9878787878787879,163,2,228,228,140

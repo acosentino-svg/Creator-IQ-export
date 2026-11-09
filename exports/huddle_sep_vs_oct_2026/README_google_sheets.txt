@@ -13,4 +13,5 @@ Import into Google Sheets:
   10_sep_oct_halo_by_creator.csv — per creator: Sep/Oct posting, Jul–Sep ever-selected, activation lists
   11_halo_retention_by_outreach_and_selection.csv — continuation rates by selection + outreach
   12_selection_background_jul_sep.csv — Jul–Sep selection history (not the primary Sep vs Oct compare)
+  13_activation_outreach_outcomes.csv — who was on gift-card lists & whether they posted eligible in Sep/Oct
   07_huddle_talking_points.txt

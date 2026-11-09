@@ -1,17 +1,19 @@
 creator_id,creator_name,ever_selected_before_oct,ever_selected_jul_sep,first_selection_month,selected_posts_jul_sep,selected_posts_before_oct
 12538386,Sarah DuBois,True,True,2026-05,1,2
 12757347,Prerna Satija,True,False,2026-05,0,1
-12796072,Jelena H,False,False,,0,0
+12796072,Jelena H,True,True,2026-09,1,1
 12906283,marysa owings,True,False,2026-03,0,2
 13010409,Medina Colaku,True,False,2026-03,0,9
 13806358,Dina Halayqa,False,False,,0,0
 14534569,Jacqueline Nava,True,False,2026-04,0,1
-14816908,Marlene Cordero,True,False,2026-01,0,13
-15050919,Khi 🪭,False,False,,0,0
+14816908,Marlene Cordero,True,True,2026-01,1,14
+15050919,Khi Soto,False,False,2026-10,0,0
 16039620,Brittany Scanlan 📍Philadelphia Suburbs,False,False,,0,0
 16461174,Daysha O'Pry,False,False,,0,0
 16506745,Stuti Rastogi,True,True,2026-03,1,2
+17339592,Rickina Godette,False,False,,0,0
 17564598,Jill Crowe,True,False,2026-05,0,2
+18502466,John Anthony Smith,False,False,,0,0
 19802775,Sam Gracie,True,False,2026-01,0,1
 20309276,Tatyana Avramenko,True,True,2026-01,1,16
 20968251,Holli Rodrigues,True,False,2026-03,0,4
@@ -27,6 +29,7 @@ creator_id,creator_name,ever_selected_before_oct,ever_selected_jul_sep,first_sel
 23177955,illsie |UGC Creator,False,False,,0,0
 23198472,Dzanina Tahirovic,True,True,2026-02,2,9
 23199493,Karen Rosenick,False,False,,0,0
+23204558,Rebecca Holoiday,False,False,,0,0
 23208944,Deone Watkins,True,False,2026-02,0,1
 23209769,Sarah Haley,True,False,2026-05,0,1
 23210481,Krissy Anne Waters,False,False,,0,0
@@ -46,9 +49,9 @@ creator_id,creator_name,ever_selected_before_oct,ever_selected_jul_sep,first_sel
 24221721,Alisha Floryn,True,False,2026-03,0,1
 24232716,Zeinab Ali,True,True,2026-09,1,1
 24241209,Dana Vento,True,False,2026-01,0,7
-24242146,Shaquana Dawes,True,False,2026-03,0,7
+24242146,Shaquana Dawes,True,True,2026-03,1,8
 24288865,Judith Keriopoulos,False,False,,0,0
-24294288,christen Mencaccini,True,True,2026-03,2,11
+24294288,Christen Mencaccini,True,True,2026-03,2,11
 24298014,Hai Trinh,True,False,2026-04,0,2
 24302351,Brittany Spoerhase,True,True,2026-01,1,7
 24382413,Irene Serrano Bustamante,True,False,2026-03,0,9
@@ -57,20 +60,21 @@ creator_id,creator_name,ever_selected_before_oct,ever_selected_jul_sep,first_sel
 24418011,krescent Frye,True,False,2026-03,0,2
 24418653,Melina Tesi,True,True,2026-01,1,5
 24418757,Nissa-Lynn Parson • Home & Holiday Decor,True,False,2026-03,0,2
-24418835,Cindy Pichardo,True,True,2026-02,2,6
+24418835,Cindy Pichardo,True,True,2026-02,3,7
 24440867,Savannah Pratt Sharma,True,True,2026-03,5,19
 24445734,Isaiah David,True,False,2026-01,0,8
 24445789,Sheena  Deans,True,False,2026-04,0,1
 24445806,Crystal Hanson,True,True,2026-05,2,5
 24459501,Leticia Williams,True,True,2026-03,1,2
 24518531,Alexia Reina Mubayiwa,True,True,2026-02,1,5
+24570199,Taylor Hinojosa,False,False,,0,0
 24595088,brandy,False,False,,0,0
 24654000,Hope Taylor,True,False,2026-03,0,1
 24669814,Cris Zaragoza,True,False,2026-02,0,1
 24691140,Angie Ivie,True,False,2026-03,0,4
 24691148,Charlee | Build & Create Home,False,False,,0,0
-24773235,Joyce Cheng,True,True,2026-03,6,41
-24777708,Hannah Joyce,True,True,2026-01,1,13
+24773235,Joyce Cheng,True,True,2026-03,7,42
+24777708,Hannah Joyce,True,True,2026-01,2,14
 24789152,Barb Craft,True,True,2026-04,1,6
 24790516,Forlisa Nauling,True,True,2026-01,2,12
 24790557,abraujewelry Enright,True,False,2026-03,0,1
@@ -84,6 +88,7 @@ creator_id,creator_name,ever_selected_before_oct,ever_selected_jul_sep,first_sel
 24827084,Courtney Azurmendi,True,True,2026-01,3,11
 24866084,bloomandflourishinteriors,False,False,,0,0
 24874152,Shannon Cairns,False,False,,0,0
+24875487,Amanda Muster,False,False,,0,0
 25006130,Tαɾα |Blogger  Home Decor formerly Live.Love.Shiplap,True,False,2026-01,0,1
 25008103,Michelle,False,False,,0,0
 25014118,Jessica LaFevre,True,True,2026-02,1,8
@@ -92,19 +97,21 @@ creator_id,creator_name,ever_selected_before_oct,ever_selected_jul_sep,first_sel
 25074285,Michelle inkley,False,False,,0,0
 25082611,Rebecca Paradiso,True,False,2026-02,0,2
 25087516,Jeanette: DIY Home Interiors,False,False,,0,0
-25091588,Elaine Citro,False,False,,0,0
+25091588,Elaine Citro,True,False,2026-02,0,1
 25113080,Rachel Perlman,True,False,2026-02,0,1
 25114277,designerhome998,True,False,2026-04,0,2
 25126547,Marian Betancourt,False,False,,0,0
 25134472,Kara Ann Aderholt,True,False,2026-01,0,2
 25175720,Diana Merezhanyi,True,False,2026-04,0,5
-25205302,Carrie Passaro,True,True,2026-01,8,63
+25205302,Carrie Passaro,True,True,2026-01,9,64
 25216399,Jacqueline Emmons,False,False,,0,0
 25283130,molly,True,False,2026-02,0,1
 25284766,BonBon Bell,True,True,2026-02,2,27
 25311678,iceeresults,False,False,,0,0
 25311953,Ruth Largaespada | DIY ✨,False,False,,0,0
 25312578,Sue | DIY Home + Decor,False,False,,0,0
+25312937,Hannah Wang,False,False,,0,0
+25315564,Ulyana Pshyk,False,False,,0,0
 25319007,Ella | Home decor | Healthy food | Toxic free living.,True,False,2026-03,0,3
 25410357,Britain Bennett,True,False,2026-03,0,1
 25410452,Brianeisha Thompson,True,False,2026-03,0,5
@@ -129,12 +136,13 @@ creator_id,creator_name,ever_selected_before_oct,ever_selected_jul_sep,first_sel
 25536514,Andrea Sanchez,True,True,2026-04,2,6
 25536696,topaz.the.gem,False,False,,0,0
 25539878,josieturl,True,False,2026-02,0,1
+25540967,hello.good.buys,False,False,,0,0
 25588507,Graceful Glam by Danielle Schucker,True,False,2026-01,0,1
 25635657,Ashley Mulholland,True,True,2026-08,1,1
 25635707,Erin Szoch,True,False,2026-03,0,2
 25704700,Navneet Ahluwalia,True,False,2026-05,0,1
 25707726,Audra Stino,False,False,,0,0
-25708011,Lauren Worth,True,False,2026-01,0,3
+25708011,Lauren Worth,True,True,2026-01,1,4
 25755448,THE CHOC DOLL,True,False,2026-01,0,1
 25763338,Sahanaz Matin-Rashid,True,False,2026-03,0,10
 25768574,Angela  Beechan,True,False,2026-01,0,5
@@ -163,9 +171,9 @@ creator_id,creator_name,ever_selected_before_oct,ever_selected_jul_sep,first_sel
 26239735,Kelli Testa,True,False,2026-01,0,3
 26241983,Jalisa Baskin,True,False,2026-02,0,1
 26249014,Betsy Kirshner,False,False,,0,0
-26253029,Yoshimi,True,False,2026-01,0,2
+26253029,Yoshimi,True,True,2026-01,2,4
 26253080,Maura Foy,False,False,,0,0
-26253481,Chelsea Greer,True,True,2026-02,3,16
+26253481,Chelsea Greer,True,True,2026-02,5,18
 26262963,Deondra Morris,False,False,,0,0
 26265000,HEATHER | healthy + easy nut free recipes,False,False,,0,0
 26265692,Tiffany Rey,True,False,2026-05,0,1
@@ -185,7 +193,8 @@ creator_id,creator_name,ever_selected_before_oct,ever_selected_jul_sep,first_sel
 26482026,Yesenia M.,True,True,2026-02,1,6
 26497386,esteves.treasure,False,False,,0,0
 26505930,jalema Wallace,False,False,,0,0
-26536440,tereestyles,True,True,2026-09,1,1
+26508088,Dajanae Vaughn,False,False,,0,0
+26536440,Teressa Johns,True,True,2026-09,1,1
 26536472,Jenn Rogers-Kelley,True,True,2026-04,3,10
 26546942,Antoinette Faltz-McQueen,False,False,,0,0
 26554489,Wes Frei,True,False,2026-01,0,3
@@ -240,7 +249,8 @@ creator_id,creator_name,ever_selected_before_oct,ever_selected_jul_sep,first_sel
 27177438,Delaney Zollman,True,True,2026-03,2,5
 27178635,Emily Harrah,True,False,2026-01,0,5
 27183669,Lauren Bareli,True,False,2026-02,0,1
-27188460,Eden Wright,True,False,2026-06,0,1
+27185001,Kylie Talamantez,False,False,,0,0
+27188460,Eden Wright,True,True,2026-06,1,2
 27189821,Sophia Ali,False,False,,0,0
 27193097,Carolina Skipper,True,False,2026-03,0,7
 27231689,Dominique M. Rose | Columbus  Ohio,False,False,,0,0
@@ -289,7 +299,7 @@ creator_id,creator_name,ever_selected_before_oct,ever_selected_jul_sep,first_sel
 27856896,CoolMomStyle,True,False,2026-02,0,2
 27894793,Marette Flora,False,False,,0,0
 27908368,Jenn Dunning,True,True,2026-07,1,1
-27911901,Jessica Weintraub,True,True,2026-02,2,14
+27911901,Jessica Weintraub,True,True,2026-02,2,15
 27914890,Milaneya Karcha,True,False,2026-01,0,2
 27916284,Shelby Pettiford,True,False,2026-06,0,1
 27926999,Hilliary Wynn,True,True,2026-08,1,1
@@ -331,6 +341,7 @@ creator_id,creator_name,ever_selected_before_oct,ever_selected_jul_sep,first_sel
 28426058,artbycecilivilli,False,False,,0,0
 28426574,karinatsac,False,False,,0,0
 28426980,thorntonshanna1011,False,False,,0,0
+28427464,Jasmin,False,False,,0,0
 28427698,Liza Grier,False,False,,0,0
 28431932,Danielle Marie,False,False,,0,0
 28440645,Tamara Lyons,True,False,2026-01,0,3
@@ -339,6 +350,7 @@ creator_id,creator_name,ever_selected_before_oct,ever_selected_jul_sep,first_sel
 28445247,Paul Butler,True,False,2026-01,0,1
 28462539,Maureen Fitzgerald,False,False,,0,0
 28472700,Alex Bucklin,True,False,2026-02,0,3
+28484966,Nisha - Beauty  Fashion and Lifestyle Over 40,False,False,,0,0
 28485685,United States MARTA,True,False,2026-02,0,1
 28485788,Patricia Holly,False,False,,0,0
 28537814,Xhulja Ifrim,True,False,2026-01,0,3
@@ -349,6 +361,7 @@ creator_id,creator_name,ever_selected_before_oct,ever_selected_jul_sep,first_sel
 28591965,Jai-Leta Colvard,False,False,,0,0
 28606415,Shannon Grant,False,False,,0,0
 28607562,Emily Rosario,False,False,,0,0
+28607830,nestbykristenweiss,False,False,,0,0
 28608311,Jessica Romero 👨‍👩‍👧,False,False,,0,0
 28642235,Flavia Andrews,True,False,2026-03,0,2
 28651689,Sanya Zaman,False,False,,0,0
@@ -401,9 +414,10 @@ creator_id,creator_name,ever_selected_before_oct,ever_selected_jul_sep,first_sel
 29195334,lifewithpowells,False,False,,0,0
 29199073,khandeece,False,False,,0,0
 29199148,Sophia Zheng,False,False,,0,0
-29212803,Sara Duval,False,False,,0,0
+29212803,Sara Duval,False,False,2026-10,0,0
 29214590,Susan • nyc fashion & lifestyle,False,False,,0,0
 29214601,Olivia  LeDonne,True,False,2026-04,0,2
+29217441,airelleview,False,False,,0,0
 29234670,Sharmila Kc,False,False,,0,0
 29238056,Allie Barron,False,False,,0,0
 29241597,Christiana Marie,True,False,2026-04,0,4
@@ -420,12 +434,14 @@ creator_id,creator_name,ever_selected_before_oct,ever_selected_jul_sep,first_sel
 29406183,itlookedgoodonline,True,False,2026-06,0,1
 29406257,Bgcherie,False,False,,0,0
 29406555,Jacqueline Gonzalez,True,True,2026-07,1,1
+29406643,Moria Hulbert,False,False,,0,0
 29406892,smickx14,False,False,,0,0
 29431589,Sirena Castillo,True,True,2026-08,1,1
 29446506,semrauavehome,True,False,2026-04,0,1
 29465538,bre_legal,False,False,,0,0
 29465557,vanessaeaguirre,False,False,,0,0
 29485856,melissafitfoodie,True,False,2026-02,0,3
+29497703,Maz | Affordable Home Decor  Home Styling Tips & Organization,False,False,2026-10,0,0
 29508626,Maria  castillo,False,False,,0,0
 29518694,Brindy Hamstra,False,False,,0,0
 29529536,Dayana Ruiz | Repostera & Mentora Digital | Miami,False,False,,0,0
@@ -474,11 +490,11 @@ creator_id,creator_name,ever_selected_before_oct,ever_selected_jul_sep,first_sel
 30208803,TAMIEKA SMITH,False,False,,0,0
 30221113,Hi Voltage & Performance Racing Team,True,False,2026-03,0,2
 30285151,Andaleeb Daniyal,False,False,,0,0
-30340556,Mehdi Hosseinzadeh,True,True,2026-01,3,13
+30340556,Mehdi Hosseinzadeh,True,True,2026-01,4,14
 30344930,thatfamousfamily,False,False,,0,0
 30492404,our.cozyluxe.haven,True,False,2026-02,0,1
 30492802,Teneice Permission (Teneice),False,False,,0,0
-30497835,Yvette Michelle,False,False,,0,0
+30497835,Yvette Michelle,True,True,2026-08,1,1
 30497984,Natalie Jennings,False,False,,0,0
 30498814,Devin Wyatt Johnson,True,True,2026-02,1,4
 30509048,LaShandra Woods,False,False,,0,0
@@ -512,6 +528,7 @@ creator_id,creator_name,ever_selected_before_oct,ever_selected_jul_sep,first_sel
 30872509,Martha P. Gulley,False,False,,0,0
 30891188,NICOLE LANIGAN,True,True,2026-04,3,9
 30905350,Nuri Joseph,False,False,,0,0
+30906938,styledbyxibo,False,False,,0,0
 30940824,Libby Loving,False,False,,0,0
 30968001,collabsbygiharyar,False,False,,0,0
 30968291,pinkwithsonshine,True,False,2026-06,0,1
@@ -528,7 +545,7 @@ creator_id,creator_name,ever_selected_before_oct,ever_selected_jul_sep,first_sel
 31540890,gakosyam,False,False,,0,0
 31544652,miacollaborates,False,False,,0,0
 31544909,Mary McGregor,False,False,,0,0
-31668673,India Chism,False,False,,0,0
+31668673,India Chism,True,True,2026-09,1,1
 31733022,reneawilliams876,True,False,2026-05,0,1
 31768618,shantiajefferson,False,False,,0,0
 31882950,Emily Cohen,True,True,2026-05,4,8
@@ -576,5 +593,7 @@ creator_id,creator_name,ever_selected_before_oct,ever_selected_jul_sep,first_sel
 34816982,vanesaims13,False,False,,0,0
 34870547,Ken's Beauty Bar,False,False,,0,0
 35128960,Kaitlyn Dedo,True,True,2026-08,1,1
+35290132,brandigardner,False,False,,0,0
 35373674,thekerryfrederickblog,False,False,,0,0
 35392373,miamoore198,False,False,,0,0
+35398160,hkpolidoro,False,False,,0,0

@@ -1,3 +1,27 @@
 section,metric,value
 context,September had no boosting creative brief,Do not compare Sep caption theme % to Oct as brief lift — Sep themes are seasonal only.
 context,Brief measurement month,2026-10
+october_posts,eligible_posts,824
+october_posts,posts_matching_any_brief_theme,418
+october_posts,pct_posts_any_brief_theme,0.5072815533980582
+october_posts,fall_styling_posts,247
+october_posts,fall_styling_pct,0.29975728155339804
+october_posts,halloween_posts,45
+october_posts,halloween_pct,0.05461165048543689
+october_posts,holiday_preview_posts,78
+october_posts,holiday_preview_pct,0.09466019417475728
+october_posts,sideboard_posts,33
+october_posts,sideboard_pct,0.04004854368932039
+october_posts,wayfair_verified_posts,9
+october_posts,wayfair_verified_pct,0.010922330097087379
+october_posts,pet_posts,19
+october_posts,pet_pct,0.023058252427184466
+october_posts,single_product_highlight_posts,158
+october_posts,single_product_highlight_pct,0.19174757281553398
+october_selected,selected_eligible_posts,66
+october_selected,selected_posts_with_brief_theme,47
+october_selected,pct_selected_with_brief_theme,0.7121212121212122
+october_selected,pct_unselected_with_brief_theme,0.4894459102902375
+october_creators,active_creators,165
+october_creators,creators_with_brief_themed_post,110
+october_creators,pct_creators_brief_themed,0.6666666666666666

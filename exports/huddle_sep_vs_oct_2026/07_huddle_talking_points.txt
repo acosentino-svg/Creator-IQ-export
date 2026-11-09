@@ -1,7 +1,8 @@
 • Follow-up to last month: **September = no creative brief** (posting/selection baseline only). **October = brief + higher boosting**.
-• September: 580 eligible posts, 157 actives, selection rate 7.6% · October: 0 posts, 0 actives, —.
-• Went dark (program segments at month-end, all ‘went dark’ buckets): 380 creators Sep 30 → 497 Oct 31.
-• Stopped posting between months (30d eligible activity): 45 Aug→Sep vs 162 Sep→Oct — Oct is the post-switch drop-off to watch.
-• September actives (157): 0 continued eligible posting in Oct; 157 had no eligible October post.
-• Tracker picks (column D): 74 in Sep vs 0 in Oct; CreatorIQ matched selected eligible posts: 44 vs 0.
+• September: 639 eligible posts, 167 actives, selection rate 9.1% · October: 824 posts, 165 actives, 8.0%.
+• October brief (caption themes): 50.7% of eligible posts match brief keywords; 66.7% of Oct actives posted ≥1 themed piece (Sep had no brief — do not compare Sep theme %).
+• Went dark (program segments at month-end, all ‘went dark’ buckets): 374 creators Sep 30 → 397 Oct 31.
+• Stopped posting between months (30d eligible activity): 44 Aug→Sep vs 76 Sep→Oct — Oct is the post-switch drop-off to watch.
+• September actives (167): 95 continued eligible posting in Oct; 72 had no eligible October post.
+• Tracker picks (column D): 204 in Sep vs 228 in Oct; CreatorIQ matched selected eligible posts: 58 vs 66.
 • If Oct tracker > CreatorIQ matches, sync URLs with paid before treating selection rate as down.
