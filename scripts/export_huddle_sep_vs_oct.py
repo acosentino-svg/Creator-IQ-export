@@ -31,6 +31,12 @@ from creatoriq_dashboard.boosting_brief_themes import (  # noqa: E402
     summarize_october_brief_impact,
 )
 from creatoriq_dashboard.boosting_scorecard import _eligible_content, normalize_content_raw  # noqa: E402
+from creatoriq_dashboard.boosting_activation_outreach import (  # noqa: E402
+    build_activation_outreach_lookup,
+    build_sep_to_oct_halo_detail,
+    summarize_sep_to_oct_retention_by_factors,
+    summarize_background_selection_flags,
+)
 from creatoriq_dashboard.boosting_selection_impact import (  # noqa: E402
     build_huddle_sep_vs_oct,
     build_creator_selection_timeline,
@@ -45,15 +51,40 @@ def main() -> None:
     parser.add_argument("--selected", required=True)
     parser.add_argument("--output-dir", default="exports/huddle_sep_vs_oct_2026")
     parser.add_argument("--active-days", type=int, default=30)
+    parser.add_argument(
+        "--activation-sep",
+        help="September lapsed / gift-card activation outreach CSV (CreatorId or Publisher Id + Creator)",
+    )
+    parser.add_argument(
+        "--activation-oct",
+        help="October activation outreach CSV (same columns as September list)",
+    )
+    parser.add_argument(
+        "--activation-aug",
+        help="Optional earlier lapsed outreach list (e.g. August wave); kept separate from Sep/Oct flags",
+    )
     args = parser.parse_args()
 
     posted = parse_halo_posted_csv(args.posted)
     selected = parse_halo_selected_csv(args.selected)
     content, diag = merge_halo_effect_posts_and_selections(posted, selected)
 
+    outreach_sources: list[tuple[str, str]] = []
+    if args.activation_sep:
+        outreach_sources.append(("sept_activation_outreach", args.activation_sep))
+    if args.activation_oct:
+        outreach_sources.append(("oct_activation_outreach", args.activation_oct))
+    if args.activation_aug:
+        outreach_sources.append(("aug_lapsed_outreach", args.activation_aug))
+    outreach_lookup = build_activation_outreach_lookup(*outreach_sources) if outreach_sources else None
+
     period_df, monthly_df, cohort_df, segment_df, dark_df, retention_df, bullets = build_huddle_sep_vs_oct(
         content, selected, active_days=args.active_days
     )
+
+    halo_detail = build_sep_to_oct_halo_detail(content, outreach_lookup=outreach_lookup)
+    halo_factors = summarize_sep_to_oct_retention_by_factors(halo_detail)
+    selection_background = summarize_background_selection_flags(content)
 
     content_norm = normalize_content_raw(content)
     eligible = _eligible_content(content_norm)
@@ -88,7 +119,26 @@ def main() -> None:
     brief_impact.to_csv(out / "09_october_brief_impact.csv", index=False)
     dark_df.to_csv(out / "05_stopped_posting_between_months.csv", index=False)
     retention_df.to_csv(out / "06_month_to_month_retention.csv", index=False)
+    halo_detail.to_csv(out / "10_sep_oct_halo_by_creator.csv", index=False)
+    halo_factors.to_csv(out / "11_halo_retention_by_outreach_and_selection.csv", index=False)
+    selection_background.to_csv(out / "12_selection_background_jul_sep.csv", index=False)
     (out / "07_huddle_talking_points.txt").write_text("\n".join(f"• {b}" for b in bullets) + "\n", encoding="utf-8")
+
+    if outreach_lookup and not halo_factors.empty:
+        for flag in outreach_lookup.flag_names:
+            pretty = flag.replace("_", " ").title()
+            yes_rows = halo_factors[
+                (halo_factors["factor"] == pretty) & (halo_factors["segment"] == "Yes — on outreach list")
+            ]
+            if yes_rows.empty:
+                continue
+            row = yes_rows.iloc[0]
+            rate = row.get("continuation_rate")
+            rate_s = f"{rate * 100:.1f}%" if rate is not None and pd.notna(rate) else "—"
+            bullets.append(
+                f"Halo ({pretty}): among Sep actives on the list ({int(row['sep_actives'])}), "
+                f"{int(row['continued_in_oct'])} posted eligible again in Oct ({rate_s})."
+            )
 
     readme = out / "README_google_sheets.txt"
     readme.write_text(
@@ -104,6 +154,9 @@ Import into Google Sheets:
   09_october_brief_impact.csv — October-only brief interpretation
   05_stopped_posting_between_months.csv — Sep→Oct drop-off vs Aug→Sep
   03_september_actives_in_october.csv — Sep cohort continuation
+  10_sep_oct_halo_by_creator.csv — per creator: Sep/Oct posting, Jul–Sep ever-selected, activation lists
+  11_halo_retention_by_outreach_and_selection.csv — continuation rates by selection + outreach
+  12_selection_background_jul_sep.csv — Jul–Sep selection history (not the primary Sep vs Oct compare)
   07_huddle_talking_points.txt
 """,
         encoding="utf-8",
