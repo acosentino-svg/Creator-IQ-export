@@ -359,3 +359,50 @@ def summarize_sep_to_oct_retention_by_factors(detail: pd.DataFrame) -> pd.DataFr
             )
 
     return pd.DataFrame(rows)
+
+
+def build_activation_outreach_outcomes(
+    content: pd.DataFrame,
+    lookup: ActivationOutreachLookup | None,
+) -> pd.DataFrame:
+    """Creators on activation lists: eligible posting in Sep/Oct (not limited to Sep actives)."""
+    from creatoriq_dashboard.boosting_scorecard import _eligible_content, normalize_content_raw
+
+    if lookup is None or not lookup.flag_names:
+        return pd.DataFrame()
+
+    eligible = _eligible_content(normalize_content_raw(content))
+    if eligible.empty:
+        return pd.DataFrame()
+
+    background = summarize_background_selection_flags(content).set_index("creator_id")
+
+    rows: list[dict] = []
+    for creator_id, grp in eligible.groupby("creator_id"):
+        name = next((str(v) for v in grp["creator_name"] if str(v).strip() not in {"", "nan"}), "")
+        flags = lookup.flags_for(creator_id=_norm_id(creator_id), creator_name=name)
+        if not any(flags.values()):
+            continue
+
+        row: dict = {
+            "creator_id": creator_id,
+            "creator_name": name,
+            "eligible_posts_total": int(len(grp)),
+            "eligible_posts_september": int((grp["month"] == "2026-09").sum()),
+            "eligible_posts_october": int((grp["month"] == "2026-10").sum()),
+            "active_september": bool((grp["month"] == "2026-09").any()),
+            "active_october": bool((grp["month"] == "2026-10").any()),
+            "had_selection_jul_sep": False,
+            "ever_selected_before_oct": False,
+        }
+        row.update(flags)
+        if creator_id in background.index:
+            bg = background.loc[creator_id]
+            row["had_selection_jul_sep"] = bool(bg["ever_selected_jul_sep"])
+            row["ever_selected_before_oct"] = bool(bg["ever_selected_before_oct"])
+            row["first_selection_month"] = bg.get("first_selection_month")
+        rows.append(row)
+
+    if not rows:
+        return pd.DataFrame()
+    return pd.DataFrame(rows).sort_values(["active_october", "active_september"], ascending=False)

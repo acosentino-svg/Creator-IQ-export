@@ -33,6 +33,7 @@ from creatoriq_dashboard.boosting_brief_themes import (  # noqa: E402
 from creatoriq_dashboard.boosting_scorecard import _eligible_content, normalize_content_raw  # noqa: E402
 from creatoriq_dashboard.boosting_activation_outreach import (  # noqa: E402
     build_activation_outreach_lookup,
+    build_activation_outreach_outcomes,
     build_sep_to_oct_halo_detail,
     summarize_sep_to_oct_retention_by_factors,
     summarize_background_selection_flags,
@@ -85,6 +86,9 @@ def main() -> None:
     halo_detail = build_sep_to_oct_halo_detail(content, outreach_lookup=outreach_lookup)
     halo_factors = summarize_sep_to_oct_retention_by_factors(halo_detail)
     selection_background = summarize_background_selection_flags(content)
+    outreach_outcomes = (
+        build_activation_outreach_outcomes(content, outreach_lookup) if outreach_lookup else pd.DataFrame()
+    )
 
     content_norm = normalize_content_raw(content)
     eligible = _eligible_content(content_norm)
@@ -122,6 +126,8 @@ def main() -> None:
     halo_detail.to_csv(out / "10_sep_oct_halo_by_creator.csv", index=False)
     halo_factors.to_csv(out / "11_halo_retention_by_outreach_and_selection.csv", index=False)
     selection_background.to_csv(out / "12_selection_background_jul_sep.csv", index=False)
+    if not outreach_outcomes.empty:
+        outreach_outcomes.to_csv(out / "13_activation_outreach_outcomes.csv", index=False)
     (out / "07_huddle_talking_points.txt").write_text("\n".join(f"• {b}" for b in bullets) + "\n", encoding="utf-8")
 
     if outreach_lookup and not halo_factors.empty:
@@ -157,6 +163,7 @@ Import into Google Sheets:
   10_sep_oct_halo_by_creator.csv — per creator: Sep/Oct posting, Jul–Sep ever-selected, activation lists
   11_halo_retention_by_outreach_and_selection.csv — continuation rates by selection + outreach
   12_selection_background_jul_sep.csv — Jul–Sep selection history (not the primary Sep vs Oct compare)
+  13_activation_outreach_outcomes.csv — who was on gift-card lists & whether they posted eligible in Sep/Oct
   07_huddle_talking_points.txt
 """,
         encoding="utf-8",
