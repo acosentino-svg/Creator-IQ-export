@@ -1,0 +1,17 @@
+factor,segment,sep_actives,continued_in_oct,fell_off_oct,continuation_rate
+All September actives,All,167,95,72,0.5688622754491018
+Selection in September,Yes,41,29,12,0.7073170731707317
+Selection in September,No,126,66,60,0.5238095238095238
+Ever selected Jul–Sep (background),Yes,71,51,20,0.7183098591549296
+Ever selected Jul–Sep (background),No,96,44,52,0.4583333333333333
+Ever selected before October,Yes,114,78,36,0.6842105263157895
+Ever selected before October,No,53,17,36,0.32075471698113206
+Sept Activation Outreach,Yes — on outreach list,1,0,1,0.0
+Sept Activation Outreach,No — not on list,166,95,71,0.572289156626506
+Sept Activation Outreach × Sep selection,Outreach + not selected in Sep,1,0,1,0.0
+Aug Lapsed Outreach,Yes — on outreach list,22,13,9,0.5909090909090909
+Aug Lapsed Outreach,No — not on list,145,82,63,0.5655172413793104
+Aug Lapsed Outreach × Sep selection,Outreach + selected in Sep,2,2,0,1.0
+Aug Lapsed Outreach × Sep selection,Outreach + not selected in Sep,20,11,9,0.55
+"Sept Activation Outreach (reactivated Oct, not Sep active)",On outreach list,0,26,0,
+"Aug Lapsed Outreach (reactivated Oct, not Sep active)",On outreach list,0,7,0,
