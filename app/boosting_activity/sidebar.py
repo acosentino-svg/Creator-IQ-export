@@ -1,6 +1,7 @@
 """Sidebar: API refresh window, activity dates, sync — boosting activity dash."""
 from __future__ import annotations
 
+import os
 from datetime import date, timedelta
 
 import pandas as pd
@@ -28,6 +29,7 @@ def render_boosting_activity_sidebar() -> dict:
         key="boosting_api_refresh_days",
         help="On **Refresh from CreatorIQ**, re-pull boosting campaign activity for this many days.",
     )
+    os.environ["BOOSTING_API_REFRESH_DAYS"] = str(int(api_days))
 
     if st.sidebar.button("Refresh from CreatorIQ", type="primary", use_container_width=True, disabled=config.is_demo):
         try:

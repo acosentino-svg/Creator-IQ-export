@@ -89,21 +89,26 @@ def _get_raw_inputs(_config_mode: str) -> tuple[dict[str, pd.DataFrame], dict[st
 
 
 def get_raw_data() -> tuple[RawData, dict[str, str | None]]:
-    from creatoriq_dashboard.boosting_scope import boosting_program_scope_enabled, filter_raw_for_boosting_program
+    from creatoriq_dashboard.boosting_scope import boosting_program_scope_enabled
 
     config = get_config()
-    raw, sync_status = _get_raw_inputs(config.mode)
-    bundle = RawData(
-        creators=raw["creators"],
-        posts=raw["posts"],
-        links=raw["links"],
-        email_events=raw["email_events"],
-        link_clicks=raw.get("link_clicks"),
-        active_member_links=raw.get("active_member_links"),
-    )
     if boosting_program_scope_enabled():
-        bundle = filter_raw_for_boosting_program(bundle, config)
-    return bundle, sync_status
+        from creatoriq_dashboard.boosting_activity_data import load_boosting_activity_inputs
+
+        return load_boosting_activity_inputs(config)
+
+    raw, sync_status = _get_raw_inputs(config.mode)
+    return (
+        RawData(
+            creators=raw["creators"],
+            posts=raw["posts"],
+            links=raw["links"],
+            email_events=raw["email_events"],
+            link_clicks=raw.get("link_clicks"),
+            active_member_links=raw.get("active_member_links"),
+        ),
+        sync_status,
+    )
 
 
 def render_mode_badge() -> None:

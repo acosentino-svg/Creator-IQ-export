@@ -49,7 +49,18 @@ st.caption(
 )
 
 if summary.empty and classified.empty:
-    st.warning("No boosting creators loaded. Use **Refresh from CreatorIQ** (live) or demo mode.")
+    st.warning(
+        "No boosting creators loaded yet. Live mode needs a **boosting-only** sync (campaign **2206666** roster + "
+        "activity via API — not the whole-program refresh). Click **Refresh from CreatorIQ** in the sidebar. "
+        "Transactions come from `data/creator_sales_ranking.csv`; link dates from **Active Members** CSV on "
+        "**Data & Settings** (optional)."
+    )
+else:
+    dq = bundle.get("data_quality", {})
+    st.caption(
+        f"Loaded **{len(summary):,}** creators · **{int(bundle['raw'].posts.shape[0]):,}** boosting posts · "
+        f"**{int(dq.get('active_member_link_rows', 0)):,}** link-date rows · sales file **{int(summary['has_transactions'].sum()) if 'has_transactions' in summary.columns else 0:,}** with transactions"
+    )
 
 tab_activation, tab_retention = st.tabs(["Activation", "Retention"])
 
