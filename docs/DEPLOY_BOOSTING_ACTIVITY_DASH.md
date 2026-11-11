@@ -1,6 +1,13 @@
 # Boosting “creator activity” dashboard (your own Streamlit app)
 
-You want something **like [creator-activity-dash.streamlit.app](https://creator-activity-dash.streamlit.app/)** — Creator Activity, Went Dark, Momentum, Email, Chat, Outreach — but **only for the Boosting program**. You **do not** need edit access to that existing app.
+You want something **like [creator-activity-dash.streamlit.app/#active-creator-report](https://creator-activity-dash.streamlit.app/#active-creator-report)**:
+
+- **Activation** tab with **Active creator report** table
+- Filters: **Must have posts**, **Must have links**, **Must have transactions**, **Search creator**
+- Sidebar: **Refresh window (days)**, **Activity window** (from/to dates), **Refresh from CreatorIQ**
+- **Retention** tab (boosting monthly retention)
+
+**Only for the Boosting program** (WBP or campaign 2206666). You **do not** need edit access to that existing app.
 
 This repo has a **second deployment** that reuses the same pages and metrics code, with data scoped to:
 

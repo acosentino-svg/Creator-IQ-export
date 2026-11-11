@@ -66,6 +66,3 @@ with tab_activation:
 
 with tab_retention:
     render_retention_tab()
-
-# Deep link: ?view=active-creator-report (Streamlit query params; legacy hash links open Activation tab)
-_view = st.query_params.get("view", "active-creator-report")

@@ -46,7 +46,7 @@ def render_filter_bar() -> dict:
 
 def render_active_creator_table(summary: pd.DataFrame, classified: pd.DataFrame) -> None:
     filters = render_filter_bar()
-    extra_cols = [
+    enrich_cols = [
         c
         for c in (
             "first_post",
@@ -62,15 +62,12 @@ def render_active_creator_table(summary: pd.DataFrame, classified: pd.DataFrame)
             "order_count",
             "has_transactions",
         )
-        if c in summary.columns and c not in classified.columns
+        if c in summary.columns
     ]
-    if extra_cols:
-        base = classified.merge(summary[["creator_id", *extra_cols]], on="creator_id", how="left")
-    else:
-        base = classified.copy()
-        for col in extra_cols:
-            if col in summary.columns:
-                base[col] = base["creator_id"].map(summary.set_index("creator_id")[col])
+    base = classified.merge(summary[["creator_id", *[c for c in enrich_cols if c not in classified.columns]]], on="creator_id", how="left")
+    for col in enrich_cols:
+        if col in summary.columns and col not in base.columns:
+            base[col] = base["creator_id"].map(summary.set_index("creator_id")[col])
 
     view = apply_creator_table_filters(
         base,
