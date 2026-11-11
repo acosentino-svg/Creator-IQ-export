@@ -1,5 +1,19 @@
 # Boosting Program dashboard (separate Streamlit app)
 
+## You cannot change the existing activation app into this
+
+**creator-activity-dash.streamlit.app** is wired to `streamlit_app.py` (whole-program activation). Streamlit Community Cloud does **not** let you run two different “main files” on one deployment in a clean way, and if you **don’t own** that app in [share.streamlit.io](https://share.streamlit.io) you **cannot edit** it at all.
+
+**Do not try to repurpose the current URL.** Instead:
+
+1. In Streamlit Cloud, click **Create app** (a **second** app on the same GitHub repo).
+2. Set **Main file path** to **`boosting_app.py`** (works on `main` today) or **`creator_boosting_dash.py`** after the boosting-only PR is merged.
+3. Pick a new name (e.g. `creator-boosting-dash`) — you get a **new** `.streamlit.app` link.
+
+The activation dashboard stays untouched; boosting gets its own URL and secrets.
+
+---
+
 Use this when you want the same idea as **creator-activity-dash.streamlit.app**, but **only the Wayfair Boosting program** — not the whole creator activation Command Center.
 
 The activation dashboard (`streamlit_app.py`) tracks enrollments, links, email, went-dark, etc. across the full program. This app tracks **boosting scorecard** metrics: eligible content, selection, paid spend, ROAS, retention, and funnel stages for campaign **2206666** and **WBP** creators.
