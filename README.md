@@ -190,6 +190,19 @@ ruff check src/ app/ scripts/ tests/
 `streamlit.testing.v1.AppTest`) and fails the build if any page raises — a
 cheap regression guard for a fast-moving Streamlit app.
 
+## Boosting program only (separate dashboard)
+
+The **Wayfair Boosting Program** scorecard is a **second Streamlit app** in this
+repo — like `creator-activity-dash` for activation, but scoped to campaign
+**2206666**, **WBP** creators, and boosting hashtags.
+
+- **Local:** `bash start_boosting_dashboard.sh` or `streamlit run app/boosting_standalone/streamlit_app.py`
+- **Streamlit Cloud:** main file `creator_boosting_dash.py` (or `boosting_app.py`)
+- **Deploy guide:** [`docs/DEPLOY_BOOSTING_APP.md`](docs/DEPLOY_BOOSTING_APP.md)
+
+Pages cover overview KPIs, creator health, content funnel, performance, retention,
+and data quality — not the full-program activation funnel / went-dark / email pages.
+
 ## Deploying it for the team
 
 - **Fastest**: [Streamlit Community Cloud](https://streamlit.io/cloud) —

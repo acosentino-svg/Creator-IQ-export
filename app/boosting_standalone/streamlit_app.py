@@ -1,4 +1,4 @@
-"""Wayfair Boosting Scorecard — Overview (executive KPIs)."""
+"""Wayfair Boosting Program — home (executive KPIs). Separate Streamlit app from the activation dashboard."""
 from __future__ import annotations
 
 import sys
@@ -11,6 +11,7 @@ for path in (str(APP_DIR), str(REPO_ROOT / "app"), str(SRC_DIR)):
     if path not in sys.path:
         sys.path.insert(0, path)
 
+import plotly.express as px  # noqa: E402
 import streamlit as st  # noqa: E402
 
 from boosting_standalone.common import get_config, render_sidebar, show_flash  # noqa: E402
@@ -28,10 +29,11 @@ config = get_config()
 content = render_sidebar(config)
 show_flash()
 
-st.title("Overview")
+st.title("🚀 Wayfair Boosting Program")
 st.caption(
-    "Wayfair Creators Boosting Partnership · Eligible content requires **#WayfairCreator** and **#wayfairelevate** "
-    "(any capitalization, e.g. #wayfaircreator, #WayfairElevate)."
+    "Boosting-only dashboard (separate from the whole-program **Activation Command Center**). "
+    "Data: **Wayfair Creators Boosting Partnership** (campaign 2206666) and WBP-tagged creators. "
+    "Eligible content requires **#WayfairCreator** and **#wayfairelevate** (case-insensitive)."
 )
 
 if content.empty:
@@ -92,7 +94,23 @@ if not trends.empty:
     st.subheader("Trends")
     t1, t2 = st.columns(2)
     with t1:
-        st.line_chart(trends.set_index("month_label")[["active_boosting_creators"]])
+        fig_active = px.line(
+            trends,
+            x="month_label",
+            y="active_boosting_creators",
+            markers=True,
+            title="Active Boosting Creators",
+        )
+        fig_active.update_layout(margin=dict(l=20, r=20, t=40, b=20), height=320, xaxis_title=None)
+        st.plotly_chart(fig_active, use_container_width=True)
     with t2:
         if "retention_rate" in trends.columns:
-            st.line_chart(trends.set_index("month_label")[["retention_rate"]])
+            fig_ret = px.line(
+                trends,
+                x="month_label",
+                y="retention_rate",
+                markers=True,
+                title="Creator Retention",
+            )
+            fig_ret.update_layout(margin=dict(l=20, r=20, t=40, b=20), height=320, xaxis_title=None)
+            st.plotly_chart(fig_ret, use_container_width=True)

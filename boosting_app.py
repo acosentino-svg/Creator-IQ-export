@@ -1,8 +1,9 @@
-"""Streamlit Cloud entry point for the standalone Boosting Program Scorecard.
+"""Streamlit Cloud entry point for the Boosting Program dashboard (alias).
 
-Deploy as a SEPARATE app from the activation dashboard:
-  Main file path: boosting_app.py
-  Branch: main
+Prefer `creator_boosting_dash.py` for new Streamlit Cloud apps (naming parity
+with creator-activity-dash). This file runs the same app.
+
+  Main file path: boosting_app.py  or  creator_boosting_dash.py
   Python: 3.12
 
 See docs/DEPLOY_BOOSTING_APP.md

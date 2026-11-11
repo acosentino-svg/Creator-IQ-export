@@ -128,6 +128,7 @@ def render_sidebar(config: AppConfig | None = None) -> pd.DataFrame:
     sync_status = st.session_state.get(SYNC_STATUS_KEY, {})
 
     st.sidebar.title("🚀 Wayfair Boosting")
+    st.sidebar.caption("🔒 **Internal use only** — boosting program scorecard, not the full activation dashboard.")
     st.sidebar.caption("Pulls from CreatorIQ campaigns · metrics update automatically")
 
     if config.is_demo:

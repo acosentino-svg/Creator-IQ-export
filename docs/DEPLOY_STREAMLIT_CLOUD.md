@@ -76,6 +76,12 @@ Then set up a scheduled job to refresh data (ask someone technical, or we can ad
 
 ---
 
+## Boosting program (second app)
+
+To mirror this activation dashboard but **only for the Boosting partnership**, deploy a **second** app with main file `creator_boosting_dash.py`. See [`DEPLOY_BOOSTING_APP.md`](DEPLOY_BOOSTING_APP.md).
+
+---
+
 ## Who can see it?
 
 | Audience | Can see it? |
