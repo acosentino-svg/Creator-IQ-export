@@ -44,6 +44,43 @@ def creator_has_boosting_tag(tags: str | None, required_tags: list[str]) -> bool
     return False
 
 
+def configured_boosting_campaign_ids(config: AppConfig) -> set[str]:
+    """Campaign IDs that identify the boosting program (default includes 2206666)."""
+    cfg = _boosting_settings(config)
+    return {str(x).strip() for x in (cfg.get("campaign_ids") or []) if str(x).strip()}
+
+
+def creator_ids_in_boosting_campaign_posts(posts: pd.DataFrame | None, config: AppConfig) -> set[str]:
+    """Creators with at least one post attributed to the boosting campaign in CreatorIQ."""
+    if posts is None or posts.empty or "creator_id" not in posts.columns:
+        return set()
+    ids: set[str] = set()
+    for _, row in posts.iterrows():
+        if is_boosting_campaign(str(row.get("campaign_name", "")), str(row.get("campaign_id", "")), config):
+            cid = str(row.get("creator_id", "")).strip()
+            if cid and cid != "nan":
+                ids.add(cid)
+    return ids
+
+
+def boosting_program_creator_ids(
+    creators: pd.DataFrame | None,
+    posts: pd.DataFrame | None,
+    config: AppConfig,
+    *,
+    campaign_roster_ids: set[str] | None = None,
+) -> set[str]:
+    """Who is in the boosting program: **WBP** CRM tag **or** on campaign **2206666** roster/posts.
+
+    ``campaign_roster_ids`` comes from the cached CreatorIQ campaign publisher list (see ``boosting_roster`` table).
+    """
+    ids = wbp_creator_ids(creators, config)
+    ids |= creator_ids_in_boosting_campaign_posts(posts, config)
+    if campaign_roster_ids:
+        ids |= campaign_roster_ids
+    return ids
+
+
 def wbp_creator_ids(creators: pd.DataFrame | None, config: AppConfig) -> set[str]:
     cfg = _boosting_settings(config)
     required_tags = cfg.get("creator_tags") or ["WBP"]

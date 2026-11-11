@@ -89,23 +89,31 @@ def _get_raw_inputs(_config_mode: str) -> tuple[dict[str, pd.DataFrame], dict[st
 
 
 def get_raw_data() -> tuple[RawData, dict[str, str | None]]:
+    from creatoriq_dashboard.boosting_scope import boosting_program_scope_enabled, filter_raw_for_boosting_program
+
     config = get_config()
     raw, sync_status = _get_raw_inputs(config.mode)
-    return (
-        RawData(
-            creators=raw["creators"],
-            posts=raw["posts"],
-            links=raw["links"],
-            email_events=raw["email_events"],
-            link_clicks=raw.get("link_clicks"),
-            active_member_links=raw.get("active_member_links"),
-        ),
-        sync_status,
+    bundle = RawData(
+        creators=raw["creators"],
+        posts=raw["posts"],
+        links=raw["links"],
+        email_events=raw["email_events"],
+        link_clicks=raw.get("link_clicks"),
+        active_member_links=raw.get("active_member_links"),
     )
+    if boosting_program_scope_enabled():
+        bundle = filter_raw_for_boosting_program(bundle, config)
+    return bundle, sync_status
 
 
 def render_mode_badge() -> None:
+    from creatoriq_dashboard.boosting_scope import boosting_program_scope_enabled
+
     st.sidebar.caption("🔒 **Internal use only** — not shared with creators.")
+    if boosting_program_scope_enabled():
+        st.sidebar.caption(
+            "🚀 **Boosting program scope** — creators with **WBP** tag or on campaign **2206666**."
+        )
     config = get_config()
     if config.is_demo:
         st.sidebar.info(

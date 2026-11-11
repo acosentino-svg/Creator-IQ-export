@@ -190,7 +190,11 @@ ruff check src/ app/ scripts/ tests/
 `streamlit.testing.v1.AppTest`) and fails the build if any page raises — a
 cheap regression guard for a fast-moving Streamlit app.
 
-## Boosting program only (separate dashboard)
+## Boosting “creator activity” dashboard (your own app)
+
+If you **don’t own** the team’s activation Streamlit app but want the **same pages** (Creator Activity, Went Dark, …) for creators in the boosting program only (**WBP** tag or **campaign 2206666**), deploy main file **`creator_boosting_activity_dash.py`**. See [`docs/DEPLOY_BOOSTING_ACTIVITY_DASH.md`](docs/DEPLOY_BOOSTING_ACTIVITY_DASH.md).
+
+## Boosting scorecard only (separate dashboard)
 
 The **Wayfair Boosting Program** scorecard is a **second Streamlit app** in this
 repo — like `creator-activity-dash` for activation, but scoped to campaign

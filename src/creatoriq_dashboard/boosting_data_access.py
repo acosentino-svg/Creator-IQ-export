@@ -6,7 +6,16 @@ from datetime import datetime, timedelta, timezone
 
 import pandas as pd
 
-from .boosting_creatoriq import merge_api_with_supplements, posts_to_boosting_content, sync_boosting_from_creatoriq
+from .api_client import CreatorIQClient
+from .boosting_creatoriq import (
+    _fetch_boosting_campaigns,
+    _fetch_boosting_creators,
+    _resolve_boosting_campaign_ids,
+    merge_api_with_supplements,
+    posts_to_boosting_content,
+    sync_boosting_from_creatoriq,
+)
+from .boosting_roster import persist_boosting_roster
 from .boosting_demo_data import generate_demo_boosting_content
 from .boosting_scorecard import CONTENT_RAW_COLUMNS, normalize_content_raw
 from .config import AppConfig
@@ -70,8 +79,13 @@ def load_boosting_content(config: AppConfig) -> tuple[pd.DataFrame, dict[str, st
     if should_auto_sync_boosting(config, stored, boosting_status):
         try:
             logger.info("Auto-syncing boosting scorecard from CreatorIQ API...")
-            stored = sync_boosting_from_creatoriq(config, existing_content=stored)
+            client = CreatorIQClient(config)
+            boosting_campaigns = _fetch_boosting_campaigns(config, client)
+            campaign_ids = _resolve_boosting_campaign_ids(config, boosting_campaigns)
+            roster_creators = _fetch_boosting_creators(config, client, campaign_ids)
+            stored = sync_boosting_from_creatoriq(config, existing_content=stored, creators=roster_creators, client=client)
             write_table(engine, "boosting_content", stored)
+            persist_boosting_roster(config, roster_creators)
             now = datetime.now(timezone.utc)
             record_sync(engine, "boosting_content", now)
             boosting_status = now.isoformat()
@@ -110,8 +124,18 @@ def sync_and_store_boosting_content(config: AppConfig) -> pd.DataFrame:
     """Pull boosting campaigns from CreatorIQ API and persist content raw."""
     engine = get_engine(config.db_path)
     existing = normalize_content_raw(read_table(engine, "boosting_content"))
-    merged = sync_boosting_from_creatoriq(config, existing_content=existing)
+    client = CreatorIQClient(config)
+    boosting_campaigns = _fetch_boosting_campaigns(config, client)
+    campaign_ids = _resolve_boosting_campaign_ids(config, boosting_campaigns)
+    roster_creators = _fetch_boosting_creators(config, client, campaign_ids)
+    merged = sync_boosting_from_creatoriq(
+        config,
+        existing_content=existing,
+        creators=roster_creators,
+        client=client,
+    )
     write_table(engine, "boosting_content", merged)
+    persist_boosting_roster(config, roster_creators)
     record_sync(engine, "boosting_content", datetime.now(timezone.utc))
     return merged
 

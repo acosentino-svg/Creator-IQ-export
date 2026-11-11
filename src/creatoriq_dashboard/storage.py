@@ -22,6 +22,7 @@ TABLES = (
     "email_events",
     "active_member_links",
     "boosting_content",
+    "boosting_roster",
 )
 LINK_SNAPSHOT_TABLE = "link_click_snapshots"
 

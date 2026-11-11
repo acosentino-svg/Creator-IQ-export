@@ -48,7 +48,7 @@ geography:
 
 boosting:
   # Wayfair Creators Boosting Partnership program rules.
-  # Creators: CRM tag WBP and/or roster in the campaign below.
+  # In the program = CRM tag WBP and/or on CreatorIQ campaign roster (2206666 below).
   # Eligible content: caption must include BOTH hashtags (case-insensitive).
   creator_tags:
     - WBP
