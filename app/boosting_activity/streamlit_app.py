@@ -20,6 +20,7 @@ import streamlit as st  # noqa: E402
 
 from boosting_activity.active_creator_report import render_active_creator_table  # noqa: E402
 from boosting_activity.retention_tab import render_retention_tab  # noqa: E402
+from boosting_activity.diagnostics_panel import render_data_diagnostics  # noqa: E402
 from boosting_activity.sidebar import render_boosting_activity_sidebar  # noqa: E402
 from common import get_bundle, get_config  # noqa: E402
 from creatoriq_dashboard.creator_sales import load_creator_sales, merge_sales_into_summary  # noqa: E402
@@ -61,6 +62,8 @@ else:
         f"Loaded **{len(summary):,}** creators · **{int(bundle['raw'].posts.shape[0]):,}** boosting posts · "
         f"**{int(dq.get('active_member_link_rows', 0)):,}** link-date rows · sales file **{int(summary['has_transactions'].sum()) if 'has_transactions' in summary.columns else 0:,}** with transactions"
     )
+
+render_data_diagnostics()
 
 tab_activation, tab_retention = st.tabs(["Activation", "Retention"])
 

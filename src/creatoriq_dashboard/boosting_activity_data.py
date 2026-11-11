@@ -23,11 +23,79 @@ from .data_access import normalize_creators_df, normalize_links_df
 from .demo_data import generate_demo_data
 from .metrics import RawData
 from .boosting_roster import load_boosting_roster_creator_ids
+from .csv_backlog import backlog_file_totals, filter_by_date_range, load_csv_backlog
+from .hybrid_diagnostics import HybridDiagnostics, build_hybrid_diagnostics
 from .storage import get_engine, get_last_synced_at, read_table
 
 logger = logging.getLogger(__name__)
 
 _CAMPAIGN_NAME = "Wayfair Creators Boosting Partnership"
+
+_LAST_HYBRID_DIAGNOSTICS: HybridDiagnostics | None = None
+
+
+def get_boosting_hybrid_diagnostics() -> HybridDiagnostics | None:
+    return _LAST_HYBRID_DIAGNOSTICS
+
+
+def _activity_window() -> tuple[pd.Timestamp, pd.Timestamp]:
+    start_raw = os.environ.get("BOOSTING_ACTIVITY_START", "").strip()
+    end_raw = os.environ.get("BOOSTING_ACTIVITY_END", "").strip()
+    if start_raw and end_raw:
+        start = pd.Timestamp(start_raw).tz_localize("UTC") if pd.Timestamp(start_raw).tzinfo is None else pd.Timestamp(start_raw)
+        end = pd.Timestamp(end_raw).tz_localize("UTC") if pd.Timestamp(end_raw).tzinfo is None else pd.Timestamp(end_raw)
+        return start, end
+    end = pd.Timestamp.now(tz="UTC")
+    return end - pd.Timedelta(days=30), end
+
+
+def _filter_posts_to_boosting_campaign(posts: pd.DataFrame, config: AppConfig) -> pd.DataFrame:
+    if posts.empty:
+        return posts
+    ids = configured_boosting_campaign_ids(config)
+    if "campaign_id" in posts.columns:
+        mask = posts["campaign_id"].astype(str).isin(ids)
+        if "campaign_name" in posts.columns:
+            mask = mask | posts["campaign_name"].astype(str).str.contains("Boosting", case=False, na=False)
+        return posts[mask].copy()
+    return posts
+
+
+def _csv_posts_to_schema(df: pd.DataFrame, config: AppConfig) -> pd.DataFrame:
+    if df.empty:
+        return pd.DataFrame(columns=["post_id", "creator_id", "campaign_id", "campaign_name", "posted_at"])
+    out = df.copy()
+    date_col = next((c for c in out.columns if "post" in c.lower() and "date" in c.lower()), None) or _find_any_date_col(out)
+    if date_col:
+        out["posted_at"] = pd.to_datetime(out[date_col], utc=True, errors="coerce")
+    url_col = next((c for c in out.columns if "url" in c.lower() or "link" in c.lower()), None)
+    out["post_id"] = out[url_col].astype(str) if url_col else out.index.astype(str)
+    if "campaign_id" not in out.columns:
+        out["campaign_id"] = "2206666"
+    out["campaign_name"] = _CAMPAIGN_NAME
+    out = _filter_posts_to_boosting_campaign(out, config)
+    if "posted_at" in out.columns:
+        out = out.dropna(subset=["posted_at"])
+    return out
+
+
+def _find_any_date_col(df: pd.DataFrame) -> str | None:
+    for cand in df.columns:
+        if "date" in str(cand).lower() or "created" in str(cand).lower():
+            return cand
+    return None
+
+
+def _csv_links_to_schema(df: pd.DataFrame) -> pd.DataFrame:
+    if df.empty:
+        return pd.DataFrame(columns=["link_id", "creator_id", "created_at", "campaign_id"])
+    out = df.copy()
+    date_col = _find_any_date_col(df)
+    if date_col:
+        out["created_at"] = pd.to_datetime(out[date_col], utc=True, errors="coerce")
+    out["link_id"] = out.index.astype(str)
+    out["campaign_id"] = out["campaign_id"].astype(str) if "campaign_id" in out.columns else "2206666"
+    return out
 
 
 def _api_refresh_lookback_days() -> int | None:
@@ -55,8 +123,8 @@ def boosting_content_to_posts(content: pd.DataFrame, config: AppConfig) -> pd.Da
             "creator_id": content["creator_id"].astype(str),
             "campaign_id": campaign_id,
             "campaign_name": content["campaign"] if "campaign" in content.columns else _CAMPAIGN_NAME,
-            "platform": content.get("platform", ""),
-            "post_type": content.get("featured_category", ""),
+            "platform": content["platform"] if "platform" in content.columns else "",
+            "post_type": content["featured_category"] if "featured_category" in content.columns else "",
             "posted_at": pd.to_datetime(content["post_date"], utc=True, errors="coerce"),
         }
     )
@@ -186,8 +254,24 @@ def _filter_tables_to_program(
 
 
 def load_boosting_activity_inputs(config: AppConfig) -> tuple[RawData, dict[str, str | None]]:
+    global _LAST_HYBRID_DIAGNOSTICS  # noqa: PLW0603
+
+    activity_start, activity_end = _activity_window()
+    backlog = load_csv_backlog(config)
+    backlog_totals = backlog_file_totals(backlog)
+
     if config.is_demo:
-        return prepare_demo_boosting_raw(), {k: "demo" for k in ("creators", "posts", "links", "boosting_content")}
+        raw = prepare_demo_boosting_raw()
+        _LAST_HYBRID_DIAGNOSTICS = build_hybrid_diagnostics(
+            activity_start=activity_start,
+            activity_end=activity_end,
+            posts=raw.posts,
+            links=raw.links,
+            transactions=pd.DataFrame(),
+            publisher_names=raw.creators[["creator_id", "name"]].drop_duplicates() if not raw.creators.empty else pd.DataFrame(),
+            api_meta={**backlog_totals, "notes": ["Demo mode — upload CSV backlog to data/backlog/ for hybrid totals."]},
+        )
+        return raw, {k: "demo" for k in ("creators", "posts", "links", "boosting_content")}
 
     engine = get_engine(config.db_path)
     content, content_sync = load_boosting_content(config)
@@ -202,15 +286,24 @@ def load_boosting_activity_inputs(config: AppConfig) -> tuple[RawData, dict[str,
             logger.exception("Boosting auto-sync failed")
 
     roster = read_table(engine, "boosting_roster")
-    posts = boosting_content_to_posts(content, config)
+    api_posts = boosting_content_to_posts(content, config)
+    api_posts = filter_by_date_range(api_posts, activity_start, activity_end)
 
     warehouse_posts = read_table(engine, "posts")
     if not warehouse_posts.empty:
         boost_from_wh = filter_boosting_posts(warehouse_posts, config, creators=roster)
         if not boost_from_wh.empty:
-            posts = pd.concat([posts, boost_from_wh], ignore_index=True).drop_duplicates(subset=["post_id"], keep="last")
+            api_posts = pd.concat([api_posts, boost_from_wh], ignore_index=True).drop_duplicates(subset=["post_id"], keep="last")
+
+    csv_posts_all = _filter_posts_to_boosting_campaign(_csv_posts_to_schema(backlog.get("posts", pd.DataFrame()), config), config)
+    csv_posts_range = filter_by_date_range(csv_posts_all, activity_start, activity_end)
+    posts = pd.concat([api_posts, csv_posts_range], ignore_index=True).drop_duplicates(subset=["post_id"], keep="last")
+
+    csv_links_all = _csv_links_to_schema(backlog.get("links", pd.DataFrame()))
+    csv_links_range = filter_by_date_range(csv_links_all, activity_start, activity_end)
 
     sales_creators = _creators_from_sales_csv()
+    name_backlog = backlog.get("publisher_names", pd.DataFrame())
     creators = _union_creators(roster, sales_creators)
     creators = _enrich_creator_names(creators, content)
     if creators.empty and not content.empty:
@@ -222,7 +315,10 @@ def load_boosting_activity_inputs(config: AppConfig) -> tuple[RawData, dict[str,
         if not creators.empty
         else load_boosting_roster_creator_ids(config)
     )
-    links = normalize_links_df(read_table(engine, "links"))
+    api_links = normalize_links_df(read_table(engine, "links"))
+    links = pd.concat([api_links, normalize_links_df(csv_links_range)], ignore_index=True)
+    if not links.empty and "link_id" in links.columns:
+        links = links.drop_duplicates(subset=["link_id"], keep="last")
     active_member_links = read_table(engine, "active_member_links")
     email_events = read_table(engine, "email_events")
     link_clicks = read_table(engine, "link_clicks")
@@ -236,6 +332,46 @@ def load_boosting_activity_inputs(config: AppConfig) -> tuple[RawData, dict[str,
         link_clicks,
         config,
         roster_ids,
+    )
+
+    csv_txn_all = backlog.get("transactions", pd.DataFrame())
+    csv_txn_range = filter_by_date_range(csv_txn_all, activity_start, activity_end)
+    sales = load_creator_sales()
+    transactions_view = csv_txn_range if not csv_txn_range.empty else sales.rename(columns={"creator_id": "creator_id"})
+
+    import json
+
+    api_meta = {
+        **backlog_totals,
+        "api_posts": len(api_posts),
+        "api_links": len(api_links),
+        "api_transactions": len(transactions_view),
+        "links_fetch_pages": int((len(api_links) + 99) / 100) if len(api_links) else 0,
+        "transactions_fetch_pages": int((len(transactions_view) + 99) / 100) if len(transactions_view) else 0,
+        "links_fetch_rows": len(links),
+        "transactions_fetch_rows": len(transactions_view),
+    }
+    fetch_meta = os.environ.get("BOOSTING_API_FETCH_META", "").strip()
+    if fetch_meta:
+        try:
+            api_meta.update(json.loads(fetch_meta))
+        except json.JSONDecodeError:
+            pass
+
+    publisher_names = _union_creators(creators, name_backlog.rename(columns={"name": "name"}) if "name" in name_backlog.columns else name_backlog)
+
+    _LAST_HYBRID_DIAGNOSTICS = build_hybrid_diagnostics(
+        activity_start=activity_start,
+        activity_end=activity_end,
+        posts=raw.posts,
+        links=raw.links,
+        transactions=transactions_view,
+        publisher_names=publisher_names[["creator_id", "name"]] if "name" in publisher_names.columns else publisher_names,
+        csv_posts=csv_posts_range,
+        csv_links=csv_links_range,
+        csv_transactions=csv_txn_range,
+        api_meta=api_meta,
+        campaign_id=next(iter(configured_boosting_campaign_ids(config)), "2206666"),
     )
 
     sync_status = {

@@ -72,6 +72,13 @@ boosting:
   sync_stale_hours: 24
   # Shown as default "Refresh window (days)" on boosting active-creator report
   api_refresh_lookback_days: 30
+  # CSV backlog + API hybrid (active creator report diagnostics)
+  hybrid:
+    csv_paths:
+      links: links.csv
+      posts: posts.csv
+      transactions: transactions.csv
+      publisher_names: publisher_names.csv
   # Cap WBP tag scan via /publishers (100 creators/page). null = scan until API returns a short page.
   max_publisher_pages: null
 

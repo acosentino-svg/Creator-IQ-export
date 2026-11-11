@@ -67,6 +67,10 @@ def render_boosting_activity_sidebar() -> dict:
     st.session_state["date_range_preset"] = "Custom"
     st.session_state["custom_range_start"] = activity_start
     st.session_state["custom_range_end"] = activity_end
+    os.environ["BOOSTING_ACTIVITY_START"] = pd.Timestamp(activity_start, tz="UTC").isoformat()
+    os.environ["BOOSTING_ACTIVITY_END"] = (
+        pd.Timestamp(activity_end, tz="UTC") + pd.Timedelta(days=1) - pd.Timedelta(seconds=1)
+    ).isoformat()
 
     return {
         "api_refresh_days": int(api_days),
