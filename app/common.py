@@ -124,12 +124,33 @@ def render_mode_badge() -> None:
         st.sidebar.success(f"**Live mode** — reading cached data synced from {config.base_url}")
 
 
+def _boosting_activity_controls_from_session(config: AppConfig) -> dict:
+    """Date range comes from boosting_activity/sidebar.py (activity window)."""
+    if "active_days" not in st.session_state:
+        st.session_state["active_days"] = config.settings.get("activation", "active_days", default=30)
+    if "went_dark_days" not in st.session_state:
+        st.session_state["went_dark_days"] = config.settings.get("activation", "went_dark_days", default=60)
+    custom_start = st.session_state.get("custom_range_start")
+    custom_end = st.session_state.get("custom_range_end")
+    range_start, range_end = resolve_date_range("Custom", custom_start, custom_end)
+    return {
+        "range_start": range_start,
+        "range_end": range_end,
+        "preset": "Custom",
+        "active_days": int(st.session_state["active_days"]),
+        "went_dark_days": int(st.session_state["went_dark_days"]),
+    }
+
+
 def render_sidebar_controls() -> dict:
     """Draws the global date-range + activation-threshold controls in the
     sidebar and returns the resolved values every page needs:
     {range_start, range_end, preset, active_days, went_dark_days}.
     """
     config = get_config()
+    if st.session_state.get("boosting_activity_dash_v2"):
+        return _boosting_activity_controls_from_session(config)
+
     render_mode_badge()
 
     st.sidebar.divider()

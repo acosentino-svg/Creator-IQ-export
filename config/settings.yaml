@@ -70,6 +70,8 @@ boosting:
   auto_sync_on_load: true
   # Re-sync automatically when cached data is older than this many hours (0 = only when empty).
   sync_stale_hours: 24
+  # Shown as default "Refresh window (days)" on boosting active-creator report
+  api_refresh_lookback_days: 30
   # Cap WBP tag scan via /publishers (100 creators/page). null = scan until API returns a short page.
   max_publisher_pages: null
 
