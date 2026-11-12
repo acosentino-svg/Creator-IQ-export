@@ -6,8 +6,10 @@ from unittest.mock import MagicMock
 import pandas as pd
 import pytest
 
+from creatoriq_dashboard.api_client import CreatorIQAPIError
 from creatoriq_dashboard.boosting_creatoriq import (
     _fetch_boosting_campaigns,
+    _fetch_wbp_tagged_publishers,
     sync_boosting_from_creatoriq,
 )
 from creatoriq_dashboard.boosting_data_access import should_auto_sync_boosting
@@ -62,6 +64,26 @@ def test_fetch_boosting_campaigns_ignores_inactive_status():
     ]
     df = _fetch_boosting_campaigns(config, client)
     assert list(df["campaign_id"]) == ["1"]
+
+
+def test_wbp_publisher_scan_uses_status_filter():
+    config = make_config(publisher_status_filter="Active", max_publisher_pages=2)
+    client = MagicMock()
+    client.iter_resource.return_value = []
+
+    _fetch_wbp_tagged_publishers(config, client)
+    client.iter_resource.assert_called_once_with(
+        "publishers", extra_params={"filter": "Status=Active"}, max_pages=2
+    )
+
+
+def test_wbp_publisher_scan_survives_api_error():
+    config = make_config()
+    client = MagicMock()
+    client.iter_resource.side_effect = CreatorIQAPIError("400 on /publishers")
+
+    out = _fetch_wbp_tagged_publishers(config, client)
+    assert out.empty
 
 
 def test_fetch_boosting_campaigns_respects_status_filter():

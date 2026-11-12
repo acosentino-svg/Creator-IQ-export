@@ -5,7 +5,7 @@ import logging
 
 import pandas as pd
 
-from .api_client import CreatorIQClient
+from .api_client import CreatorIQAPIError, CreatorIQClient
 from .boosting_rules import (
     creator_has_boosting_tag,
     is_boosting_campaign,
@@ -130,22 +130,41 @@ def _fetch_campaign_roster(
 def _fetch_wbp_tagged_publishers(config: AppConfig, client: CreatorIQClient) -> pd.DataFrame:
     """Scan /publishers for CRM tag WBP (bounded by boosting.max_publisher_pages)."""
     cfg = _boosting_settings(config)
+    if cfg.get("wbp_publisher_scan_enabled") is False:
+        logger.info("WBP publisher scan disabled (boosting.wbp_publisher_scan_enabled=false)")
+        return pd.DataFrame()
+
     required_tags = cfg.get("creator_tags") or ["WBP"]
     max_pages = cfg.get("max_publisher_pages")
     mapping = config.field_mappings.get("publishers", {})
 
+    status = cfg.get("publisher_status_filter")
+    if status is None:
+        status = config.settings.get("live_sync", "enrolled_status_filter", default="Active")
+    extra_params: dict[str, str] | None = None
+    if status:
+        extra_params = {"filter": f"Status={status}"}
+
     rows: list[dict] = []
-    for record in client.iter_resource("publishers", max_pages=max_pages):
-        pub = record.get("Publisher", record) if isinstance(record, dict) else record
-        if not isinstance(pub, dict):
-            continue
-        tags = normalize_tag_string(pub.get("Tags") or pub.get("TagNames"))
-        if not creator_has_boosting_tag(tags, required_tags):
-            continue
-        row = normalize_records([pub], mapping)[0]
-        row["tags"] = tags
-        row["tier"] = extract_tier_from_tags(tags)
-        rows.append(row)
+    try:
+        for record in client.iter_resource("publishers", extra_params=extra_params, max_pages=max_pages):
+            pub = record.get("Publisher", record) if isinstance(record, dict) else record
+            if not isinstance(pub, dict):
+                continue
+            tags = normalize_tag_string(pub.get("Tags") or pub.get("TagNames"))
+            if not creator_has_boosting_tag(tags, required_tags):
+                continue
+            row = normalize_records([pub], mapping)[0]
+            row["tags"] = tags
+            row["tier"] = extract_tier_from_tags(tags)
+            rows.append(row)
+    except CreatorIQAPIError as exc:
+        logger.warning(
+            "WBP publisher scan failed (%s). Continuing with campaign roster only. "
+            "Set boosting.wbp_publisher_scan_enabled=false to skip, or check publisher_status_filter.",
+            exc,
+        )
+        return pd.DataFrame()
 
     df = clean_id_columns(pd.DataFrame(rows), ["creator_id", "network_publisher_id"])
     if df.empty:

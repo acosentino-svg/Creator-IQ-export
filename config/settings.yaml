@@ -79,8 +79,12 @@ boosting:
       posts: posts.csv
       transactions: transactions.csv
       publisher_names: publisher_names.csv
-  # Cap WBP tag scan via /publishers (100 creators/page). null = scan until API returns a short page.
-  max_publisher_pages: null
+  # Scan /publishers for WBP-tagged creators (in addition to campaign 2206666 roster).
+  wbp_publisher_scan_enabled: true
+  # Many accounts require ?filter=Status=Active on /publishers (unfiltered calls can 400).
+  publisher_status_filter: Active
+  # Cap WBP tag scan (100 creators/page). null = no cap — can be very slow on Streamlit Cloud.
+  max_publisher_pages: 100
 
 live_sync:
   # Safety limits for pulling from the real CreatorIQ API (see
