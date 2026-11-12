@@ -34,7 +34,7 @@ def render_boosting_activity_sidebar() -> dict:
 
     if st.sidebar.button("Refresh from CreatorIQ", type="primary", use_container_width=True, disabled=config.is_demo):
         try:
-            with st.spinner(f"Syncing boosting data (last {api_days} days)…"):
+            with st.spinner("Syncing campaign roster + posts, then link dates (CRM)…"):
                 sync_and_store_boosting_content(config)
             st.session_state["boosting_sync_flash"] = ("success", "CreatorIQ sync completed.")
         except Exception as exc:  # noqa: BLE001

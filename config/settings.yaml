@@ -86,6 +86,9 @@ boosting:
   publisher_status_filter: Active
   # Cap WBP tag scan (100 creators/page). null = no cap — can be very slow on Streamlit Cloud.
   max_publisher_pages: 100
+  # On Refresh from CreatorIQ, pull link first/last dates via CRM Active Members report
+  # (same source as the main activation dash — not in campaign /activity API).
+  sync_link_dates_on_refresh: true
 
 live_sync:
   # Safety limits for pulling from the real CreatorIQ API (see

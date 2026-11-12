@@ -16,6 +16,7 @@ from .boosting_creatoriq import (
     sync_boosting_from_creatoriq,
 )
 from .boosting_roster import persist_boosting_roster
+from .crm_reports import CRMReportError, sync_active_member_links_from_crm
 from .boosting_demo_data import generate_demo_boosting_content
 from .boosting_scorecard import CONTENT_RAW_COLUMNS, normalize_content_raw
 from .config import AppConfig
@@ -137,6 +138,17 @@ def sync_and_store_boosting_content(config: AppConfig) -> pd.DataFrame:
     write_table(engine, "boosting_content", merged)
     persist_boosting_roster(config, roster_creators)
     record_sync(engine, "boosting_content", datetime.now(timezone.utc))
+
+    cfg = config.settings.get("boosting", default={}) or {}
+    if cfg.get("sync_link_dates_on_refresh", True) and not config.is_demo:
+        try:
+            count = sync_active_member_links_from_crm(config)
+            logger.info("Boosting refresh: stored link dates for %d creators (Active Members CRM)", count)
+        except CRMReportError as exc:
+            logger.warning("Boosting refresh: Active Members link sync skipped (%s)", exc)
+        except Exception:  # noqa: BLE001
+            logger.exception("Boosting refresh: Active Members link sync failed")
+
     return merged
 
 

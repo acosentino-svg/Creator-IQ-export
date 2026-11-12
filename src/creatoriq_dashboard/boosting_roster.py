@@ -28,6 +28,10 @@ def load_boosting_roster_creator_ids(config: AppConfig) -> set[str]:
 def persist_boosting_roster(config: AppConfig, creators: pd.DataFrame) -> None:
     if config.is_demo or creators is None or creators.empty or "creator_id" not in creators.columns:
         return
-    keep = [c for c in ("creator_id", "name", "tags", "handle", "email") if c in creators.columns]
+    keep = [
+        c
+        for c in ("creator_id", "name", "tags", "handle", "email", "network_publisher_id")
+        if c in creators.columns
+    ]
     roster = creators[keep].drop_duplicates(subset=["creator_id"], keep="last")
     write_table(get_engine(config.db_path), "boosting_roster", roster)
