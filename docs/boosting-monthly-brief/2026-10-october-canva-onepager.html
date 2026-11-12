@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>October Boosting Brief — Canva one-pager</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root { --purple: #7f187f; --purple-light: #f0e3f4; --muted: #3d3d3d; }
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: Inter, Arial, sans-serif; background: #bbb; }
+    .sheet {
+      width: 8.5in;
+      height: 11in;
+      margin: 16px auto;
+      background: #fff;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .hero {
+      height: 2.35in;
+      background:
+        linear-gradient(to bottom, rgba(30, 20, 40, 0.25), rgba(30, 20, 40, 0.55)),
+        url("hero-bedroom.jpg") center/cover;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      text-align: center;
+    }
+    .hero .logo { font-size: 14pt; font-weight: 600; letter-spacing: 0.02em; }
+    .hero h1 { font-size: 27pt; font-weight: 700; margin: 6px 0 0; }
+    .main {
+      flex: 1;
+      padding: 0.26in 0.38in 0.2in;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.28in;
+    }
+    h2 {
+      font-size: 9.5pt;
+      font-weight: 700;
+      color: var(--purple);
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      margin: 0 0 8px;
+    }
+    .overview p { margin: 0; font-size: 9.25pt; line-height: 1.45; color: var(--muted); }
+    .overview ul {
+      margin: 8px 0 0;
+      padding-left: 1.1em;
+      font-size: 9pt;
+      color: var(--muted);
+      line-height: 1.4;
+    }
+    .pill {
+      display: flex;
+      gap: 9px;
+      align-items: flex-start;
+      background: var(--purple-light);
+      border-radius: 10px;
+      padding: 8px 10px;
+      margin-bottom: 7px;
+      font-size: 8.75pt;
+      line-height: 1.35;
+      color: #1a1a1a;
+    }
+    .pill .n {
+      width: 22px; height: 22px; flex-shrink: 0;
+      background: var(--purple); color: #fff; border-radius: 50%;
+      font-size: 8.5pt; font-weight: 700;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .lavender {
+      background: var(--purple-light);
+      border-radius: 10px;
+      padding: 9px 11px;
+      margin-bottom: 8px;
+      font-size: 8.75pt;
+      color: var(--muted);
+      line-height: 1.38;
+    }
+    .lavender strong { color: #1a1a1a; display: block; margin-bottom: 2px; font-size: 9pt; }
+    ul.deliver {
+      margin: 0;
+      padding-left: 1.1em;
+      font-size: 9.25pt;
+      color: var(--muted);
+      line-height: 1.42;
+    }
+    ul.deliver li { margin-bottom: 5px; }
+    ul.deliver ul { font-size: 8.75pt; margin-top: 3px; }
+    .footer {
+      border-top: 3px solid var(--purple-light);
+      padding: 0.12in 0.38in 0.2in;
+      display: flex;
+      flex-direction: column;
+      gap: 0.1in;
+    }
+    .criteria {
+      background: var(--purple-light);
+      border-radius: 10px;
+      border-left: 4px solid var(--purple);
+      padding: 10px 12px;
+      font-size: 8.25pt;
+      line-height: 1.38;
+      color: var(--muted);
+    }
+    .criteria p { margin: 0 0 6px; }
+    .criteria p:last-child { margin-bottom: 0; }
+    .criteria strong { color: #1a1a1a; }
+    .appendix {
+      padding-top: 0.06in;
+      border-top: 1px solid #e5e5e5;
+    }
+    .appendix a { font-size: 8.75pt; color: #1a1a1a; text-decoration: underline; display: block; margin-bottom: 4px; }
+    .appendix span { font-size: 8.75pt; color: var(--muted); display: block; }
+    @media print { body { background: #fff; } .sheet { margin: 0; } }
+  </style>
+</head>
+<body>
+  <article class="sheet">
+    <header class="hero">
+      <div class="logo">wayfair</div>
+      <h1>October Boosting Brief</h1>
+    </header>
+
+    <div class="main">
+      <div class="left">
+        <section class="overview">
+          <h2>October overview</h2>
+          <p>Align your posts with what Paid is pulling <strong>this month</strong>:</p>
+          <ul>
+            <li><strong>Meta (early Oct):</strong> fall &amp; Halloween — product in the first 3 seconds</li>
+            <li><strong>Meta (mid–late Oct):</strong> holiday preview — trees, guest-ready, entertaining</li>
+            <li><strong>TikTok:</strong> pet, sideboards, Halloween, Wayfair Verified</li>
+            <li><strong>Both:</strong> evergreen in-room, in-use stories all month</li>
+          </ul>
+        </section>
+
+        <section style="margin-top:0.16in;">
+          <h2>Story structure</h2>
+          <div class="pill"><span class="n">1</span><span><strong>Problem → product → benefit → soft CTA</strong> — one clear arc; no filler.</span></div>
+          <div class="pill"><span class="n">2</span><span><strong>Match October themes</strong> — use the overview list; film native, in-room stories (not sale-led spots).</span></div>
+        </section>
+      </div>
+
+      <div class="right">
+        <section>
+          <h2>Deliverables checklist</h2>
+          <ul class="deliver">
+            <li><strong>15–45 sec</strong> vertical video (Reels / TikTok) — <em>not</em> a carousel</li>
+            <li><strong>Hook in 1–3 sec</strong> — show the Wayfair product; you on camera, hands-on, or POV</li>
+            <li><strong>Sound-off ready</strong> — simple on-screen text; readable fonts; on screen long enough</li>
+            <li>Caption hashtags: <strong>#WayfairCreator</strong> + <strong>#wayfairelevate</strong>; <strong>#ad</strong> when required</li>
+            <li>Creator link in caption or bio if product stickers fail</li>
+          </ul>
+        </section>
+
+        <section style="margin-top:0.14in;">
+          <h2>Film ideas this month</h2>
+          <div class="lavender"><strong>Fall &amp; hosting</strong> Porch refresh, dining setup, cozy layers, livable Halloween</div>
+          <div class="lavender"><strong>Holiday preview</strong> Tree &amp; trim, spare room, entertaining, giftable accents</div>
+          <div class="lavender"><strong>TikTok angles</strong> Pet + product in frame; sideboard styling; Verified badge on eligible items</div>
+        </section>
+      </div>
+    </div>
+
+    <footer class="footer">
+      <div class="criteria">
+        <h2 style="margin-bottom:6px;">Core video criteria</h2>
+        <p><strong>We boost</strong> creator-native vertical video: informal tone, bright clear footage, styled lived-in space; product visible early and <strong>in use</strong> (not unbox-only) with one clear benefit; brisk pacing and purposeful cuts — hold shots long enough to see the product. Seasonal or GTM moments are fine; we mainly boost <strong>evergreen</strong> stories, not promo-specific creative.</p>
+        <p><strong>We usually pass on</strong> carousels, commercial-style ads, unboxing-only or unclear product, weak/late hooks, missing creator presence, dark or chaotic footage, decorative/hard-to-read on-screen text, and videos led by sales, codes, or limited-time offers.</p>
+      </div>
+      <div class="appendix">
+        <h2>Appendix</h2>
+        <a href="https://www.instagram.com/reels/DdR5817pNId/">Content examples — boost-friendly</a>
+        <a href="https://www.instagram.com/reels/DdRcdZFNG2Z/">Content examples — usually skipped</a>
+        <span>Content guidelines · FTC disclosures (creator dashboard)</span>
+        <span style="margin-top:6px;">Questions? wcp@wayfair.com</span>
+      </div>
+    </footer>
+  </article>
+</body>
+</html>
