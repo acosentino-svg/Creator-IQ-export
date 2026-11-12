@@ -80,7 +80,8 @@ boosting:
       transactions: transactions.csv
       publisher_names: publisher_names.csv
   # Scan /publishers for WBP-tagged creators (in addition to campaign 2206666 roster).
-  wbp_publisher_scan_enabled: true
+  # false = roster + activity for campaign_ids only (faster; no /publishers call).
+  wbp_publisher_scan_enabled: false
   # Many accounts require ?filter=Status=Active on /publishers (unfiltered calls can 400).
   publisher_status_filter: Active
   # Cap WBP tag scan (100 creators/page). null = no cap — can be very slow on Streamlit Cloud.
