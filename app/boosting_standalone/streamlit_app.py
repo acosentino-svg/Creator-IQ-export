@@ -15,11 +15,10 @@ import plotly.express as px  # noqa: E402
 import streamlit as st  # noqa: E402
 
 from boosting_standalone.common import get_config, render_sidebar, show_flash  # noqa: E402
-from creatoriq_dashboard.boosting_comparisons import compare_months  # noqa: E402
+from creatoriq_dashboard.boosting_comparisons import compare_months, streamlit_metric_args  # noqa: E402
 from creatoriq_dashboard.boosting_diagnostics import generate_program_insights  # noqa: E402
 from creatoriq_dashboard.boosting_scorecard import (  # noqa: E402
     build_program_monthly,
-    format_program_value,
     program_trend_series,
 )
 
@@ -47,6 +46,12 @@ if content.empty:
 program_long = build_program_monthly(content)
 trends = program_trend_series(program_long)
 
+sample_comp = compare_months(program_long, "eligible_content_pieces")
+if sample_comp.get("current_month"):
+    help_text = streamlit_metric_args(sample_comp, "eligible_content_pieces")[2]
+    if help_text:
+        st.caption(f"Headline KPIs: **{help_text}**.")
+
 PRIORITY_KPIS = [
     ("active_boosting_creators", "Active Boosting Creators", True),
     ("eligible_content_pieces", "Eligible Content Pieces", True),
@@ -63,17 +68,8 @@ for i, (metric, label, higher_better) in enumerate(PRIORITY_KPIS):
     comp = compare_months(program_long, metric)
     col = cols[i % 4]
     with col:
-        current = comp.get("current")
-        display = format_program_value(metric, current) if current is not None else "—"
-        delta = None
-        if comp.get("abs_change") is not None:
-            if metric in {"selection_rate", "retention_rate", "activation_rate", "pct_active_creators_selected"}:
-                delta = f"{comp['abs_change'] * 100:+.1f} pts"
-            elif metric == "roas" and comp.get("previous"):
-                delta = f"{(comp['abs_change']):+.2f}x"
-            elif comp.get("previous"):
-                delta = f"{comp['abs_change']:+,.0f}"
-        col.metric(label, display, delta)
+        value, delta, _help = streamlit_metric_args(comp, metric)
+        col.metric(label, value, delta)
 
 st.subheader("Program Health Insights")
 for line in generate_program_insights(program_long):
