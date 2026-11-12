@@ -6,7 +6,7 @@ import plotly.graph_objects as go
 import streamlit as st
 
 from creatoriq_dashboard.active_creator_report_kpis import compute_active_creator_overview
-from creatoriq_dashboard.boosting_selection_upload import load_boosting_selections
+from creatoriq_dashboard.boosting_selection_upload import load_boosting_selections, summarize_selections
 
 
 def _fmt_money(value: float) -> str:
@@ -31,10 +31,15 @@ def render_report_overview(
 
     selections = load_boosting_selections(config)
     if not selections.empty:
-        sel = selections[selections.get("selected", False) == True]  # noqa: E712
+        stats = summarize_selections(selections)
         months = sorted(selections.get("selection_month", pd.Series(dtype=str)).astype(str).unique())
-        month_hint = f" (months: {', '.join(m for m in months if m and m != 'nan')[:80]})" if months else ""
-        st.caption(f"**Monthly selections on file:** {len(sel):,} creators marked selected{month_hint}")
+        month_hint = f" · months: {', '.join(m for m in months if m and m != 'nan')[:60]}" if months else ""
+        st.caption(
+            f"**Selections on file:** **{stats['total_picks']:,}** total picks · "
+            f"**{stats['creators_with_picks']:,}** creators · "
+            f"**{stats['creators_picked_more_than_once']:,}** picked more than once in a month"
+            f"{month_hint}"
+        )
 
     c1, c2, c3 = st.columns(3)
     with c1:

@@ -9,7 +9,12 @@ import streamlit as st
 from common import get_config, render_mode_badge
 from creatoriq_dashboard.boosting_cache import clear_boosting_warehouse
 from creatoriq_dashboard.boosting_data_access import sync_and_store_boosting_content
-from creatoriq_dashboard.boosting_selection_upload import load_boosting_selections, parse_selection_csv, persist_selection_upload
+from creatoriq_dashboard.boosting_selection_upload import (
+    load_boosting_selections,
+    parse_selection_csv,
+    persist_selection_upload,
+    summarize_selections,
+)
 
 from boosting_activity.backlog_upload import save_backlog_upload
 
@@ -149,9 +154,13 @@ def render_boosting_activity_sidebar() -> dict:
                 st.error(str(exc))
 
     selections = load_boosting_selections(config)
-    if not selections.empty and "selected" in selections.columns:
-        picked = int(selections[selections["selected"] == True].shape[0])  # noqa: E712
-        st.sidebar.caption(f"Selection records on file: **{len(selections):,}** ({picked:,} marked selected)")
+    if not selections.empty:
+        stats = summarize_selections(selections)
+        st.sidebar.caption(
+            f"Selections: **{stats['total_picks']:,}** picks · "
+            f"{stats['creators_with_picks']:,} creators · "
+            f"{stats['creators_picked_more_than_once']:,} with 2+ picks/month"
+        )
 
     return {
         "api_refresh_days": int(api_days),
