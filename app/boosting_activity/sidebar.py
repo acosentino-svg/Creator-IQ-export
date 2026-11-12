@@ -27,7 +27,8 @@ def render_boosting_activity_sidebar() -> dict:
         max_value=365,
         step=1,
         key="boosting_api_refresh_days",
-        help="On **Refresh from CreatorIQ**, re-pull boosting campaign activity for this many days.",
+        help="Reserved for incremental API refresh (like the main dash’s ~7-day pulls). "
+        "History in the table is driven by **Activity window** and cached campaign activity after **Refresh**.",
     )
     os.environ["BOOSTING_API_REFRESH_DAYS"] = str(int(api_days))
 

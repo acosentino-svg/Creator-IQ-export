@@ -98,16 +98,6 @@ def _csv_links_to_schema(df: pd.DataFrame) -> pd.DataFrame:
     return out
 
 
-def _api_refresh_lookback_days() -> int | None:
-    raw = os.environ.get("BOOSTING_API_REFRESH_DAYS", "").strip()
-    if not raw:
-        return None
-    try:
-        return max(1, int(raw))
-    except ValueError:
-        return None
-
-
 def boosting_content_to_posts(content: pd.DataFrame, config: AppConfig) -> pd.DataFrame:
     """Map boosting scorecard rows to activation `posts` schema."""
     if content.empty:
@@ -238,10 +228,8 @@ def _filter_tables_to_program(
         if not link_clicks.empty:
             link_clicks = link_clicks[link_clicks["creator_id"].astype(str).isin(program_ids)]
 
-    lookback = _api_refresh_lookback_days()
-    if lookback and not posts.empty and "posted_at" in posts.columns:
-        cutoff = pd.Timestamp.now(tz="UTC") - pd.Timedelta(days=lookback)
-        posts = posts[pd.to_datetime(posts["posted_at"], utc=True, errors="coerce") >= cutoff]
+    # Post date range is controlled by the sidebar activity window (and API/cache merge),
+    # not by the refresh-window days control (that is for future incremental sync only).
 
     return RawData(
         creators=creators,
