@@ -1,0 +1,640 @@
+wac_active_seller_rank,publisher_id,publisher_name,social_handle,transaction_sales_rank,total_sales,order_count,total_commission,affiliate_campaign,wac_posts_jun_sep,months_with_wac_posts,jun_wac_posts,jul_wac_posts,aug_wac_posts,sep_wac_posts,avg_wac_posts_per_active_month,recommended_for_campaign_outreach
+1,12784222,René Ceretto,pleasantlybuilt,1,2340729.41,5151,296275.39,Wayfair Affiliate Creators,236,4,52,115,10,59,59.0,False
+2,32309691,Brianna Yarbrough,bri_yarbs,2,644825.99,716,87255.48,Wayfair Affiliate Creators,59,4,1,3,6,49,14.75,False
+3,24570199,Taylor Hinojosa,taylorkhinojosa,3,393567.0,408,53079.02,Wayfair Affiliate Creators,12,3,0,2,8,2,4.0,False
+4,31394440,Dallas Dudra,shopfindsdaily,4,307828.88,701,38652.17,Wayfair Affiliate Creators,36,4,1,1,2,32,9.0,False
+5,25008048,The Freebie Guy,freebieguy,5,147743.65,1122,19525.32,Wayfair Affiliate Creators,7,2,0,2,5,0,3.5,False
+6,26567560,Arianna Lama,arinormari,6,118134.49,119,15910.93,Wayfair Affiliate Creators,1,1,1,0,0,0,1.0,False
+7,28440645,Tamara Lyons,tamaramariexoxo,7,111526.04,144,14828.14,Wayfair Affiliate Creators,98,4,31,40,19,8,24.5,False
+8,24669971,Naomi Vega,glamorouslyliving,8,109956.64,205,12195.97,Wayfair Affiliate Creators,20,2,0,15,5,0,10.0,False
+9,27003703,Julie Berset,citycactuscountry,9,86599.15,99,10410.21,Wayfair Affiliate Creators,91,4,18,35,24,14,22.75,False
+10,24459550,Arian Hokes,keepingupwitharii__,10,81900.7,133,9522.79,Wayfair Affiliate Creators,3,2,0,2,1,0,1.5,False
+11,27992420,Lydia Blue Olson,whatlydia,11,55962.95,48,7668.65,Wayfair Affiliate Creators,36,4,10,13,8,5,9.0,False
+12,24247157,tracy Nantongo,tracyrestyy,12,54793.14,118,7477.41,Wayfair Affiliate Creators,27,3,3,19,5,0,9.0,False
+13,25008112,Heather Wheeler,TheKrazyCouponLady,13,50136.79,289,6601.74,Wayfair Affiliate Creators,20,4,2,3,10,5,5.0,False
+14,22595756,naylani pepen,naylanipepen,14,50043.86,66,6819.8,Wayfair Affiliate Creators,33,4,7,8,16,2,8.25,False
+15,24294288,christen Mencaccini,christen.at.home,15,48542.92,126,5015.64,Wayfair Affiliate Creators,214,4,18,179,6,11,53.5,False
+16,25312937,Hannah Wang,heyitshannah09,16,45590.64,115,5307.78,Wayfair Affiliate Creators,65,3,0,9,10,46,21.67,False
+17,24221721,Alisha Floryn,alishafloryn,17,44690.39,139,5966.64,Wayfair Affiliate Creators,27,3,9,16,0,2,9.0,False
+18,25487403,Alesha Ball,aleshaspov,19,42307.16,129,5800.66,Wayfair Affiliate Creators,50,4,23,2,8,17,12.5,False
+19,29871363,Jennifer Argueta,jennmontoya_,20,36985.28,65,4940.16,Wayfair Affiliate Creators,41,4,7,15,4,15,10.25,False
+20,30728287,Andrea Lopez,msdreababyy,21,36676.71,55,4842.17,Wayfair Affiliate Creators,2,1,0,2,0,0,2.0,False
+21,24777708,Hannah Joyce,surryplace,22,36315.12,127,4276.32,Wayfair Affiliate Creators,115,4,12,14,73,16,28.75,False
+22,24298014,Hai Trinh,haikettua_atl,23,35083.88,117,4830.43,Wayfair Affiliate Creators,6,1,0,6,0,0,6.0,False
+23,22178976,Meggie Ferreira,meggieferrerhome,24,34845.09,75,4725.65,Wayfair Affiliate Creators,155,4,34,60,48,13,38.75,False
+24,29929108,Asia Martin,295111193683322,25,34796.72,44,4916.29,Wayfair Affiliate Creators,99,4,16,48,27,8,24.75,False
+25,27992421,ya fav darkie🖤,jemsyy_,26,28776.47,29,2311.41,Wayfair Affiliate Creators,2,1,0,2,0,0,2.0,False
+26,26108697,miranda Bubel,mirandabubelrealtor,27,28381.3,77,3939.05,Wayfair Affiliate Creators,10,2,2,0,0,8,5.0,False
+27,30128047,Evan Cabell,cabellhouse,28,28178.4,133,3761.64,Wayfair Affiliate Creators,2,1,2,0,0,0,2.0,False
+28,31702636,Andrea Watts,thedrayanicole,29,27808.53,50,2976.11,Wayfair Affiliate Creators,3,1,0,0,3,0,3.0,False
+29,29935229,danae Mangold,danaemangold,30,26778.63,43,3756.48,Wayfair Affiliate Creators,43,3,0,4,12,27,14.33,False
+30,29858990,Chris Barros,consumerbetterment,31,24470.06,45,3043.99,Wayfair Affiliate Creators,43,4,11,11,3,18,10.75,False
+31,30149847,Melissa  Hale,MODERNMOMDEALS,32,24430.25,179,2973.26,Wayfair Affiliate Creators,31,1,0,0,0,31,31.0,False
+32,31544759,pennyscroll,pennyscroll,34,24340.03,57,2824.51,Wayfair Affiliate Creators,17,2,0,0,4,13,8.5,False
+33,27578886,Kinsilo Doyle,knzyrae,35,24335.9,49,3421.62,Wayfair Affiliate Creators,61,4,4,34,21,2,15.25,False
+34,25205302,Carrie Passaro,carrieithome,36,23964.86,22,1818.99,Wayfair Affiliate Creators,348,4,157,73,79,39,87.0,False
+35,24886357,Marissa  Herr,herrhome,37,23675.8,73,2815.63,Wayfair Affiliate Creators,40,4,8,21,9,2,10.0,False
+36,22293389,Catherine Ortega,itsneutralcatt,39,22975.75,48,2383.08,Wayfair Affiliate Creators,262,4,106,69,30,57,65.5,False
+37,28397402,Sade Goodman,sadethestrategist,41,22529.01,35,3115.59,Wayfair Affiliate Creators,2,1,0,0,0,2,2.0,False
+38,28375067,Sharon,bbyg._sharon,44,21081.64,29,2529.82,Wayfair Affiliate Creators,12,2,2,0,10,0,6.0,False
+39,28428424,miyashelae Gross,theeinteriorgirl,45,20324.9,42,2539.97,Wayfair Affiliate Creators,8,2,0,2,6,0,4.0,False
+40,29755608,Laila United States,lailaamaniii,46,18825.29,34,2635.55,Wayfair Affiliate Creators,12,2,0,0,8,4,6.0,False
+41,32929586,Manuela Ylli,thewhitebrickhome,47,18396.15,38,2469.92,Wayfair Affiliate Creators,5,2,2,3,0,0,2.5,False
+42,27689787,Megan Aspen Repass,mama_megzz,48,17695.24,39,2358.11,Wayfair Affiliate Creators,6,3,2,2,0,2,2.0,False
+43,33562430,Atiana Russell,amraspointofview,50,15596.86,25,1494.4,Wayfair Affiliate Creators,22,3,9,5,0,8,7.33,False
+44,27992043,Jenna Ditch,heyjennanicole,51,15571.32,56,2114.2,Wayfair Affiliate Creators,16,1,0,16,0,0,16.0,False
+45,29261251,Maureen  Bryfczynski,platinumhome.interiors,52,15457.9,40,1699.51,Wayfair Affiliate Creators,16,4,6,4,5,1,4.0,False
+46,26947848,Anna Gandrabur,anya_gc_elegancy,53,15301.8,19,1740.92,Wayfair Affiliate Creators,63,4,21,31,9,2,15.75,False
+47,24812938,Josee' Mitchell,itsjoseevenson,54,15145.25,29,1654.01,Wayfair Affiliate Creators,11,2,4,0,7,0,5.5,False
+48,26389444,Jalyssa Tonyea Woodall,jalyssa_doubleu,55,15123.91,43,2015.02,Wayfair Affiliate Creators,61,3,21,19,0,21,20.33,False
+49,24694389,Rahema,islandgal_5homedecor,56,14832.31,43,1528.83,Wayfair Affiliate Creators,22,1,0,0,22,0,22.0,False
+50,29742827,Audrianna Skillin,skillinhome,58,13768.67,37,1760.36,Wayfair Affiliate Creators,321,4,111,104,55,51,80.25,False
+51,24684674,Greer Gagnier,homeonbroad,59,13765.5,24,1082.38,Wayfair Affiliate Creators,20,3,0,4,9,7,6.67,False
+52,27047085,ndavis.usha,_naodavis,60,12822.93,8,472.89,Wayfair Affiliate Creators,17,3,2,7,0,8,5.67,False
+53,31257038,Miranda Dynowski,miranda.dynowski,61,12666.86,11,1548.83,Wayfair Affiliate Creators,3,2,0,1,0,2,1.5,False
+54,25008103,Michelle,minionrun_deals,62,12621.12,60,1725.58,Wayfair Affiliate Creators,1,1,0,0,0,1,1.0,False
+55,28795246,Christina DiBella,saved_by_dibella,63,12497.96,43,1336.12,Wayfair Affiliate Creators,26,3,2,0,20,4,8.67,False
+56,19851281,Lisa Hu,lisahuhome,64,12350.28,8,531.94,Wayfair Affiliate Creators,2,2,1,0,1,0,1.0,False
+57,25369705,Diana Gomez,diy_home_hacks,65,11469.98,25,1446.11,Wayfair Affiliate Creators,12,2,5,0,7,0,6.0,False
+58,25461553,Rachel R.,rachellmariee_,66,11229.61,16,1144.13,Wayfair Affiliate Creators,3,1,3,0,0,0,3.0,False
+59,28958746,leenda akar,leendaakar,67,11132.94,3,1335.95,Wayfair Affiliate Creators,17,3,11,3,0,3,5.67,False
+60,27063811,Jayla Ferrell,506083762596071,68,10999.74,26,1569.69,Wayfair Affiliate Creators,72,4,37,8,3,24,18.0,False
+61,24789089,Riley Welner,rileyelisewelner,69,10867.15,24,1436.17,Wayfair Affiliate Creators,24,4,15,1,5,3,6.0,False
+62,26197023,Samiyah Hall,sa.miyahh,70,10562.62,26,1218.34,Wayfair Affiliate Creators,6,1,6,0,0,0,6.0,False
+63,28139693,Nicole Webz,nicolewebz,71,10543.8,25,1188.5,Wayfair Affiliate Creators,4,1,0,4,0,0,4.0,False
+64,25954031,Ana Szumilas,anainteriors.nyc,72,10443.13,34,1172.93,Wayfair Affiliate Creators,3,2,0,1,0,2,1.5,False
+65,28316151,Annie Telalyan,atelalyan,73,10098.16,33,1135.03,Wayfair Affiliate Creators,7,2,4,0,3,0,3.5,False
+66,28486020,Nadin Adam,mishmish.honey,74,10096.91,22,1400.97,Wayfair Affiliate Creators,2,1,0,2,0,0,2.0,False
+67,25812972,Vicki Dietz,southerncrossroadscreations,75,9502.43,5,291.99,Wayfair Affiliate Creators,7,3,1,5,1,0,2.33,False
+68,29928147,Dominique  Bourne,thatbaldmom,77,9376.59,9,1112.43,Wayfair Affiliate Creators,2,1,2,0,0,0,2.0,False
+69,26950100,Stephanie Baek,happy_baes,78,9217.26,32,952.42,Wayfair Affiliate Creators,39,3,13,24,2,0,13.0,False
+70,27233651,Athena Gil,themodernnook,79,9191.4,13,1320.28,Wayfair Affiliate Creators,10,3,3,3,4,0,3.33,False
+71,30059072,Monique Saulsberry,themoniquelavonn,80,9185.22,9,1295.33,Wayfair Affiliate Creators,5,2,2,3,0,0,2.5,False
+72,25048942,prettygirlswithcurlsmgmt,marcialachae,81,9110.91,12,1093.31,Wayfair Affiliate Creators,10,2,0,0,4,6,5.0,False
+73,24790574,Eboni  Brunson,eboniebo,82,8988.78,15,1239.21,Wayfair Affiliate Creators,45,4,7,14,16,8,11.25,False
+74,25094046,Kaprice Harrell,kolormekaprice,83,8974.35,19,1014.02,Wayfair Affiliate Creators,4,1,0,4,0,0,4.0,False
+75,29214533,Brianna Edwards,stylebybrimarie,84,8873.9,31,1214.82,Wayfair Affiliate Creators,28,4,9,3,7,9,7.0,False
+76,31156259,Tracy martinez,caffeineandgrace,85,8798.83,12,1034.53,Wayfair Affiliate Creators,86,4,24,49,12,1,21.5,False
+77,14906357,Lauren & Amanda Conaway,conawaytwinss,86,8699.6,18,1043.97,Wayfair Affiliate Creators,7,1,0,0,7,0,7.0,False
+78,29406643,Moria Hulbert,moriaelona,88,8659.67,9,615.05,Wayfair Affiliate Creators,22,1,22,0,0,0,22.0,False
+79,27903798,Mary Farmer,ppennypincher,90,8518.57,54,1072.84,Wayfair Affiliate Creators,14,3,1,9,4,0,4.67,False
+80,19461521,Kristina Evans,kristinanevans,91,8512.73,2,1021.53,Wayfair Affiliate Creators,56,4,24,15,12,5,14.0,False
+81,27410350,Claudy Pelingon,claudypel,92,8337.91,8,901.51,Wayfair Affiliate Creators,43,2,37,0,0,6,21.5,False
+82,30340556,Mehdi Hosseinzadeh,lifeinwaheaven,95,8132.6,21,958.93,Wayfair Affiliate Creators,210,4,99,69,21,21,52.5,False
+83,24790577,Shanice Williams,shanicelashaystyle,96,8114.05,16,801.53,Wayfair Affiliate Creators,2,1,2,0,0,0,2.0,False
+84,28290846,Molly Robinson,molly.the.mom,98,8054.41,18,948.56,Wayfair Affiliate Creators,5,2,0,0,3,2,2.5,False
+85,23752124,Donnetta Haynes,donnettahaynes,99,8022.35,18,1127.35,Wayfair Affiliate Creators,15,2,12,0,3,0,7.5,False
+86,23953670,AuNisti Rogers,obviaunii,100,7978.67,16,869.21,Wayfair Affiliate Creators,18,2,10,8,0,0,9.0,False
+87,29647738,Sarah LaMantia,sarah.lamantia,101,7750.23,21,723.89,Wayfair Affiliate Creators,21,4,10,3,6,2,5.25,True
+88,25359890,Terra Nelson,terranelsonhome,102,7717.91,24,667.72,Wayfair Affiliate Creators,24,2,0,3,0,21,12.0,True
+89,30211986,Logan Clopton,logan.renee12,103,7579.44,10,909.54,Wayfair Affiliate Creators,4,2,2,0,2,0,2.0,False
+90,24486603,Kelsey Boyd,_.kelseey,104,7387.56,16,886.18,Wayfair Affiliate Creators,2,1,0,0,2,0,2.0,False
+91,25499411,Haley Klei,haley.klei,105,7295.38,8,832.62,Wayfair Affiliate Creators,11,3,3,4,4,0,3.67,True
+92,26325991,Tannesia Speed,tannesiavs,106,7238.84,19,1006.57,Wayfair Affiliate Creators,72,4,36,8,14,14,18.0,True
+93,32512221,Geevie Wood,geeviesplace,107,7182.84,14,865.75,Wayfair Affiliate Creators,11,3,5,4,2,0,3.67,True
+94,27352724,Leigha Tingle,leighastepp,109,7040.68,18,844.91,Wayfair Affiliate Creators,11,2,5,0,6,0,5.5,True
+95,26239735,Kelli Testa,kellitesta,112,6819.9,12,818.4,Wayfair Affiliate Creators,98,3,36,35,27,0,32.67,True
+96,31697240,paleshnyk,unicorns_and_mommy,113,6801.69,3,816.22,Wayfair Affiliate Creators,12,3,4,4,4,0,4.0,True
+97,25997460,Pronab Roy,techegadget,114,6767.46,19,936.87,Wayfair Affiliate Creators,100,3,65,27,0,8,33.33,True
+98,28829110,emily cortez,3m.i.ly_c,115,6761.88,12,724.08,Wayfair Affiliate Creators,71,4,24,30,8,9,17.75,True
+99,25911907,Keona Crenshaw,keona.nicole_,116,6605.3,14,752.6,Wayfair Affiliate Creators,240,4,26,84,99,31,60.0,True
+100,30294482,triva Starks,nikkiinfluence,117,6527.88,6,783.35,Wayfair Affiliate Creators,13,1,13,0,0,0,13.0,False
+101,25990187,brittney_gage Gage,gagemadehome,118,6488.93,4,778.68,Wayfair Affiliate Creators,19,1,19,0,0,0,19.0,False
+102,25838480,Crystal Paine,MoneySavingMom,119,6426.26,34,693.16,Wayfair Affiliate Creators,3,1,0,3,0,0,3.0,False
+103,28349319,Sabrina Mullen,oakmerecollective,120,6369.07,11,727.22,Wayfair Affiliate Creators,93,4,5,64,19,5,23.25,True
+104,32816334,Elizabeth Huston,madeonmillhavenlane,121,6368.09,14,615.88,Wayfair Affiliate Creators,552,4,228,247,69,8,138.0,True
+105,32615397,Tré Hazelwood,trehazelwood,122,6303.24,12,746.5,Wayfair Affiliate Creators,3,1,3,0,0,0,3.0,False
+106,28037393,Leah Pagel,byleahclaire,123,6236.79,16,835.15,Wayfair Affiliate Creators,2,1,0,0,2,0,2.0,False
+107,16506745,Stuti Rastogi,onesqftatime,124,6189.2,8,866.49,Wayfair Affiliate Creators,31,2,22,9,0,0,15.5,True
+108,25525076,Isis Harris,glamwithisis,125,6127.58,12,614.79,Wayfair Affiliate Creators,3,2,0,2,0,1,1.5,False
+109,14816908,Marlene Cordero,ourcozycolonialct,126,6125.28,13,606.05,Wayfair Affiliate Creators,67,4,15,16,16,20,16.75,True
+110,23908623,Teresa Padilla,HomeandstylebyT,127,6125.03,9,685.31,Wayfair Affiliate Creators,14,3,4,0,6,4,4.67,True
+111,28427698,Liza Grier,lizaliz06,128,6052.94,8,711.24,Wayfair Affiliate Creators,24,2,12,0,12,0,12.0,True
+112,31918930,Jessica Manfredini,LivingWithJessDini,130,5920.88,19,525.14,Wayfair Affiliate Creators,196,4,2,17,99,78,49.0,True
+113,25014118,Jessica LaFevre,lafevreliving1,131,5911.54,13,809.21,Wayfair Affiliate Creators,42,4,18,3,18,3,10.5,True
+114,26536421,Saja Ben Abdallah,homewithsaja,133,5865.2,17,676.09,Wayfair Affiliate Creators,28,4,15,2,5,6,7.0,True
+115,26268013,Lauren Crawford,lauren_loves_gifting,134,5642.93,3,677.15,Wayfair Affiliate Creators,1,1,0,1,0,0,1.0,False
+116,26925412,Tina Teal,tinatealhome,137,5465.49,22,687.04,Wayfair Affiliate Creators,407,4,117,150,114,26,101.75,True
+117,10644318,Audrey Crisp,audreycrispinteriors,138,5428.35,3,162.85,Wayfair Affiliate Creators,42,3,9,3,0,30,14.0,True
+118,33959267,selina,selinahoit,139,5410.93,5,418.38,Wayfair Affiliate Creators,4,3,1,0,1,2,1.33,False
+119,28414184,Katrina Kennedy,homewithkatrina,140,5349.44,10,641.94,Wayfair Affiliate Creators,88,4,27,30,17,14,22.0,True
+120,26229578,Micha Butler,allaboutmicha,141,5306.62,19,656.5,Wayfair Affiliate Creators,21,4,10,2,2,7,5.25,True
+121,30940824,Libby Loving,libby.loving,142,5213.9,10,590.22,Wayfair Affiliate Creators,16,2,12,0,0,4,8.0,True
+122,25900942,Stephanie Boyer | Interior Decor | Interior Design | DIY,stephaniemichelle_athome,143,5196.69,5,337.19,Wayfair Affiliate Creators,11,1,11,0,0,0,11.0,False
+123,21431912,Stacie Stanley,cottageonwynn,144,5158.83,13,324.23,Wayfair Affiliate Creators,40,3,25,8,7,0,13.33,True
+124,17989978,Gracie Friedl,graciefriedl,145,5114.07,11,476.23,Wayfair Affiliate Creators,33,3,17,4,12,0,11.0,True
+125,27178635,Emily Harrah,emilyaharrah,146,5100.35,11,612.05,Wayfair Affiliate Creators,38,2,30,0,8,0,19.0,True
+126,31142253,Marissa Castello,marissacastellochs,147,5059.97,17,601.45,Wayfair Affiliate Creators,5,1,0,0,0,5,5.0,False
+127,13571400,Valeria Jacobs,rebeccaandgenevieve,148,5021.2,19,418.18,Wayfair Affiliate Creators,21,4,4,11,3,3,5.25,True
+128,34484589,Ella Riser,twinspo_,150,4981.63,8,489.2,Wayfair Affiliate Creators,92,2,0,0,51,41,46.0,True
+129,10705978,Tay Nakamoto,taybeepboop,151,4939.54,15,561.41,Wayfair Affiliate Creators,7,2,2,0,5,0,3.5,False
+130,27914809,Libby Kruger,libbygirlmama,153,4861.0,8,699.39,Wayfair Affiliate Creators,2,2,1,1,0,0,1.0,False
+131,29851726,Emily Lewandowski,emmylew_designs,154,4800.72,17,523.81,Wayfair Affiliate Creators,343,4,99,50,101,93,85.75,True
+132,32932138,Olha Sarabrin,sarabrinka,160,4428.19,6,418.46,Wayfair Affiliate Creators,2,1,2,0,0,0,2.0,False
+133,25056865,Nikolina Stadler,fmh_designs,161,4289.0,14,568.24,Wayfair Affiliate Creators,1,1,0,1,0,0,1.0,False
+134,34015811,Hannah  Stapleton,homeandherco,163,4147.07,5,133.96,Wayfair Affiliate Creators,30,3,23,5,2,0,10.0,True
+135,28603966,kgloveschrist,calllmekg,165,4074.88,7,488.99,Wayfair Affiliate Creators,2,1,0,0,0,2,2.0,False
+136,24812954,Ashley Tate,smashingdiy,167,3979.91,8,420.09,Wayfair Affiliate Creators,82,2,44,38,0,0,41.0,True
+137,26442212,Michael Motto,homewithmike_,168,3965.6,5,487.14,Wayfair Affiliate Creators,20,1,0,20,0,0,20.0,False
+138,29693954,Kristie Wong,kristiemwong,169,3964.88,5,475.79,Wayfair Affiliate Creators,6,2,3,0,3,0,3.0,False
+139,25783602,Bre Bertolini,brepurposed,170,3949.55,18,451.52,Wayfair Affiliate Creators,110,3,17,68,25,0,36.67,True
+140,26635882,Maria Wedding,mariawedding,173,3919.39,10,470.33,Wayfair Affiliate Creators,12,2,7,5,0,0,6.0,True
+141,28895158,Elle Menzel,ellemenzel,175,3907.93,10,423.61,Wayfair Affiliate Creators,25,4,8,9,6,2,6.25,True
+142,35290132,brandigardner,followmetocabanne,176,3866.83,3,116.01,Wayfair Affiliate Creators,11,2,0,0,5,6,5.5,True
+143,25134591,Clarity home,clarityhome,177,3846.76,7,461.61,Wayfair Affiliate Creators,10,4,3,3,3,1,2.5,True
+144,31882950,Emily Cohen,emscollectedhome,179,3795.96,11,385.07,Wayfair Affiliate Creators,200,4,38,67,38,57,50.0,True
+145,28127932,Malaun Rogers,malaunrogers_,180,3784.99,12,458.56,Wayfair Affiliate Creators,39,3,9,0,28,2,13.0,True
+146,24440867,Savannah Pratt Sharma,thesavannahpratt,183,3713.96,19,420.05,Wayfair Affiliate Creators,95,4,44,15,18,18,23.75,True
+147,27007252,Izabel Stewart,izabelvienna,184,3673.94,5,474.68,Wayfair Affiliate Creators,6,1,0,0,6,0,6.0,False
+148,27170742,Abigail Ack,abigailackfam,186,3652.06,8,438.25,Wayfair Affiliate Creators,1,1,0,1,0,0,1.0,False
+149,17420202,Sarisa Munoz,indigoleopardhome,188,3641.08,13,306.44,Wayfair Affiliate Creators,7,2,1,0,6,0,3.5,False
+150,26300771,Jennifer Vo,jenniferr.vo,190,3602.37,21,328.81,Wayfair Affiliate Creators,23,2,14,9,0,0,11.5,True
+151,33321039,Sade Living,houstonmomtales,191,3575.4,3,429.05,Wayfair Affiliate Creators,12,3,4,2,0,6,4.0,True
+152,24418835,Cindy Pichardo,inspirationbycp,192,3573.02,9,425.3,Wayfair Affiliate Creators,20,3,0,5,9,6,6.67,True
+153,23611288,Amanda Kelly,the.blondeabode,193,3566.35,10,433.75,Wayfair Affiliate Creators,4,1,0,4,0,0,4.0,False
+154,24790557,abraujewelry Enright,abraujewelry,196,3444.94,6,330.69,Wayfair Affiliate Creators,3,1,0,0,0,3,3.0,False
+155,31824366,Isabela Romao,isabelaridgway.home,197,3376.99,2,405.24,Wayfair Affiliate Creators,13,1,13,0,0,0,13.0,False
+156,24418836,Kerry Swain,casually.coastal,198,3368.04,11,199.89,Wayfair Affiliate Creators,33,4,2,6,4,21,8.25,True
+157,27458142,Madison Urban,maddieurbs,200,3334.44,5,311.04,Wayfair Affiliate Creators,23,2,11,12,0,0,11.5,True
+158,24790516,Forlisa Nauling,homebodywithforlisa,201,3308.21,12,260.79,Wayfair Affiliate Creators,84,4,10,38,18,18,21.0,True
+159,17330345,Jenna Shaughnessy,jennakateathome,202,3298.53,8,288.51,Wayfair Affiliate Creators,40,3,8,20,12,0,13.33,True
+160,29015356,calita Ferreira Lummertz,calita.fl,203,3287.96,4,385.65,Wayfair Affiliate Creators,26,2,6,20,0,0,13.0,True
+161,25763338,Sahanaz Matin-Rashid,homewithshanna,205,3242.17,9,369.7,Wayfair Affiliate Creators,34,2,32,0,0,2,17.0,True
+162,24302351,Brittany Spoerhase,brittanydesignspo,207,3067.26,14,344.71,Wayfair Affiliate Creators,26,4,8,4,10,4,6.5,True
+163,33450068,Lilas Hammoud,lila.s.home,209,3019.51,5,362.35,Wayfair Affiliate Creators,3,2,1,0,2,0,1.5,False
+164,30498814,Devin Wyatt Johnson,devinawyatt,210,3002.66,9,274.03,Wayfair Affiliate Creators,114,3,14,76,24,0,38.0,True
+165,22485419,shawnee  Krahulik,kshawnee,212,2925.88,3,351.11,Wayfair Affiliate Creators,12,4,4,4,2,2,3.0,True
+166,32256957,ogildafdez,styledbyisabelnyc,213,2917.31,9,182.07,Wayfair Affiliate Creators,214,3,0,73,66,75,71.33,True
+167,25082611,Rebecca Paradiso,_queenofeverythingg,214,2913.31,5,312.52,Wayfair Affiliate Creators,1,1,0,0,0,1,1.0,False
+168,25532402,Ashleigh Austin,ashleighaustin,216,2847.59,10,133.31,Wayfair Affiliate Creators,7,2,0,2,5,0,3.5,False
+169,23254896,Rachel Sayger,rachellorrainehome,218,2815.21,12,265.92,Wayfair Affiliate Creators,197,4,94,66,18,19,49.25,True
+170,28895132,_megan597,_megan597,221,2749.0,4,329.88,Wayfair Affiliate Creators,8,3,0,2,2,4,2.67,True
+171,32940824,Abigail Noriega,abigailn0riega,222,2724.87,9,279.61,Wayfair Affiliate Creators,30,4,14,11,3,2,7.5,True
+172,28997386,thetriplethreatmom,thetriplethreatmom,224,2699.0,1,323.88,Wayfair Affiliate Creators,2,1,0,2,0,0,2.0,False
+173,28846190,Annie F. Downs,anniefdowns,225,2684.59,10,407.7,Wayfair Affiliate Creators,13,4,2,5,2,4,3.25,True
+174,28482200,Gracie Smith,HaveToCookToEat,227,2652.89,2,318.35,Wayfair Affiliate Creators,1427,4,462,421,302,242,356.75,True
+175,28480725,Terence James,terencejames.designs,228,2643.39,5,317.21,Wayfair Affiliate Creators,3,1,0,3,0,0,3.0,False
+176,23961034,Dila Heiden,diatadesign,229,2637.36,4,316.47,Wayfair Affiliate Creators,33,4,3,9,7,14,8.25,True
+177,30497914,Alicia Hawes,aliciasfaves,230,2619.2,7,331.43,Wayfair Affiliate Creators,4,1,4,0,0,0,4.0,False
+178,24418577,Mallory Fletchall | Reserve Home,reserve_home,231,2592.91,5,311.16,Wayfair Affiliate Creators,21,2,0,0,12,9,10.5,True
+179,31536602,Francois-Yves Auger,francoisinthesuburbs,234,2573.57,11,251.51,Wayfair Affiliate Creators,28,4,8,3,15,2,7.0,True
+180,25058668,Jasmyne McIver,only1jasmyne,236,2535.98,3,304.32,Wayfair Affiliate Creators,1,1,0,0,1,0,1.0,False
+181,24780684,Becky George,styledbybeck,237,2526.15,8,256.62,Wayfair Affiliate Creators,42,3,22,18,0,2,14.0,True
+182,26868921,Lauren Odessa,laurenodessa,238,2512.55,6,284.51,Wayfair Affiliate Creators,39,3,0,27,5,7,13.0,True
+183,32720382,Elizabeth Rose Johnson,elizabethrosejohnson,239,2497.96,2,299.76,Wayfair Affiliate Creators,54,3,18,10,26,0,18.0,True
+184,23951509,Jami Bukhari,homewithjami,240,2463.96,1,295.67,Wayfair Affiliate Creators,64,3,53,2,0,9,21.33,True
+185,27991189,Alex Tran (Alex Goes Global),alex.goes.global,242,2438.93,4,232.3,Wayfair Affiliate Creators,2,2,1,0,1,0,1.0,False
+186,25478831,shafonn,shafonmonae0,243,2438.01,9,252.52,Wayfair Affiliate Creators,2,1,0,0,2,0,2.0,False
+187,24445756,Brandi Hines,palmhousestjoe,244,2427.94,3,72.84,Wayfair Affiliate Creators,3,1,0,3,0,0,3.0,False
+188,34037094,Kiara Harris,iamkiarac,246,2418.14,5,133.76,Wayfair Affiliate Creators,27,2,21,0,0,6,13.5,True
+189,35392373,miamoore198,miakaercher,247,2411.84,11,286.58,Wayfair Affiliate Creators,20,2,0,0,2,18,10.0,True
+190,26310639,Hannah | The DIY Records,the_diy_records,248,2408.43,6,289.02,Wayfair Affiliate Creators,12,3,7,0,3,2,4.0,True
+191,28940504,Laura Watson,virtu_interiors,249,2402.22,4,288.26,Wayfair Affiliate Creators,3,2,1,0,0,2,1.5,False
+192,29391519,marissamarsae,marissa.hercules,250,2391.37,10,286.97,Wayfair Affiliate Creators,1,1,0,0,1,0,1.0,False
+193,27603550,Kiana Williams,keysbykiana,251,2378.67,15,335.27,Wayfair Affiliate Creators,13,1,0,0,13,0,13.0,False
+194,24418790,Sara McDaniel,simplysoutherncottage,252,2373.89,8,249.06,Wayfair Affiliate Creators,18,3,0,10,7,1,6.0,True
+195,27342413,keelymcdannold,keely_dawn,254,2362.99,3,420.72,Wayfair Affiliate Creators,13,4,5,3,4,1,3.25,True
+196,30236407,Catherine Velasquez,catveladesign,255,2337.59,7,320.85,Wayfair Affiliate Creators,20,4,5,3,6,6,5.0,True
+197,35056165,kristin wilder,kozykasa_,257,2326.12,6,228.19,Wayfair Affiliate Creators,30,2,0,0,19,11,15.0,True
+198,26500665,Melissa  Oftedahl,everydaymandk,258,2276.95,5,273.94,Wayfair Affiliate Creators,23,3,9,8,6,0,7.67,True
+199,29559803,Guerlande Appolon,homedecor_byguerlande,259,2267.79,10,256.49,Wayfair Affiliate Creators,34,1,34,0,0,0,34.0,False
+200,29993842,Traya Young,roxannee0333,260,2258.45,3,238.69,Wayfair Affiliate Creators,3,1,0,3,0,0,3.0,False
+201,25057354,Hannah Quick (Perry),heyhannahnoelle,262,2236.91,7,268.44,Wayfair Affiliate Creators,13,2,4,9,0,0,6.5,True
+202,34220455,thecozychaos8,thecozychaos8,263,2233.91,10,281.84,Wayfair Affiliate Creators,17,3,4,7,6,0,5.67,True
+203,31972062,Jessica Altman,thriftydwellings,266,2195.96,8,263.52,Wayfair Affiliate Creators,16,3,2,8,6,0,5.33,True
+204,26295807,Ashley Hardcastle,PassionForSavings,269,2169.82,8,260.39,Wayfair Affiliate Creators,14,2,0,10,4,0,7.0,True
+205,25533630,Carmen,creatingyourcasa,270,2160.68,1,259.28,Wayfair Affiliate Creators,1,1,0,0,0,1,1.0,False
+206,33743184,Olivia Boblet,oliviaboblet,271,2155.89,4,293.22,Wayfair Affiliate Creators,53,3,15,36,0,2,17.67,True
+207,24472181,Whitney Farrar,farrarhome,272,2150.48,2,258.06,Wayfair Affiliate Creators,9,2,0,5,0,4,4.5,True
+208,26559456,lifewithmic2,motionwithmic,273,2123.96,4,222.84,Wayfair Affiliate Creators,1,1,0,1,0,0,1.0,False
+209,31971372,itsfeliciaj,itsfeliciaj,276,2103.24,2,109.56,Wayfair Affiliate Creators,12,2,0,9,3,0,6.0,True
+210,27270516,Aami | ATL Content Creator | DIY & Lifestyle,gujaranicreations,278,2093.04,3,251.16,Wayfair Affiliate Creators,2,1,0,0,2,0,2.0,False
+211,26921696,Grace Ryu,graceannryu,280,2067.9,9,241.14,Wayfair Affiliate Creators,8,3,0,3,2,3,2.67,True
+212,33446428,jessswellsss,jess.wells_,281,2060.32,1,61.81,Wayfair Affiliate Creators,14,3,8,2,4,0,4.67,True
+213,26586379,Brimley McGrath,brimleymcgrath,283,2042.24,2,245.07,Wayfair Affiliate Creators,8,1,0,8,0,0,8.0,False
+214,23953574,Robin Warzywak,RobinWarzInteriors,284,2028.17,5,171.48,Wayfair Affiliate Creators,12,3,4,2,6,0,4.0,True
+215,30635969,Ashley Hankins,outfitsbyashley,285,2022.13,1,242.66,Wayfair Affiliate Creators,20,3,0,10,6,4,6.67,True
+216,26376657,Jordan Turner,styledwithjordant,286,2013.01,5,130.05,Wayfair Affiliate Creators,17,3,14,2,1,0,5.67,True
+217,26550577,Myquillyn Smith,thenester,288,1976.62,10,244.18,Wayfair Affiliate Creators,9,1,0,0,9,0,9.0,False
+218,33565278,Tanisha,tanishajphilippe,290,1974.93,5,237.0,Wayfair Affiliate Creators,5,1,0,5,0,0,5.0,False
+219,30629827,Madeline Lloyd,made.by.madeline.design,291,1973.98,2,236.88,Wayfair Affiliate Creators,11,3,2,0,2,7,3.67,True
+220,28041644,Paulina Vickers,mycoastalabode_,293,1915.54,4,97.84,Wayfair Affiliate Creators,50,4,9,11,11,19,12.5,True
+221,21995108,paige Hietpas,design_paige,296,1899.94,6,258.08,Wayfair Affiliate Creators,24,4,4,12,7,1,6.0,True
+222,23883811,Candace Tucker,philomenaandco,298,1834.01,5,118.75,Wayfair Affiliate Creators,36,4,16,14,3,3,9.0,True
+223,25050104,Janae Chestnut,janaeshautehome,299,1821.8,6,218.62,Wayfair Affiliate Creators,2,2,0,1,1,0,1.0,False
+224,26775671,Nina Iorg,DesignBroker.co,300,1820.35,3,154.72,Wayfair Affiliate Creators,19,3,0,13,4,2,6.33,True
+225,24790339,My Jones,thisismyjones,301,1818.41,5,218.21,Wayfair Affiliate Creators,4,1,0,4,0,0,4.0,False
+226,27398627,Allie Hurley,currentmood_interiors,302,1816.84,5,176.98,Wayfair Affiliate Creators,6,3,0,2,2,2,2.0,False
+227,30104842,Audrey Lund,thelundshome,304,1802.75,9,216.34,Wayfair Affiliate Creators,63,4,7,23,28,5,15.75,True
+228,26598761,Michelle Baker,basictobeautifuldiy,305,1794.97,4,215.4,Wayfair Affiliate Creators,1,1,0,0,0,1,1.0,False
+229,34265771,jessycagala93,jessycacurly,306,1780.82,5,213.7,Wayfair Affiliate Creators,18,3,0,12,3,3,6.0,True
+230,26650823,Don Ntontolo,donntontolo,307,1779.91,3,213.59,Wayfair Affiliate Creators,13,3,0,1,11,1,4.33,True
+231,34479958,nholman2.pr,snikkii,308,1748.51,3,165.72,Wayfair Affiliate Creators,71,4,10,18,6,37,17.75,True
+232,30988914,Ashley Howard,ashleybenales2022,310,1739.98,2,208.8,Wayfair Affiliate Creators,6,2,3,0,3,0,3.0,False
+233,35128960,Kaitlyn Dedo,dedodreamhouse,312,1736.93,3,52.11,Wayfair Affiliate Creators,29,2,0,0,21,8,14.5,True
+234,26500948,Susan 💙 Amazon Home Decor,_thelittletownhome_,314,1732.88,4,185.09,Wayfair Affiliate Creators,1,1,0,0,0,1,1.0,False
+235,32462302,velvet.homemaker,velvet.homemaker,315,1726.44,6,115.57,Wayfair Affiliate Creators,9,1,9,0,0,0,9.0,False
+236,32517045,jasmine,aka_jada,317,1692.94,2,203.16,Wayfair Affiliate Creators,33,4,14,8,8,3,8.25,True
+237,27574228,Angie Agerter,AngiesAngle,319,1666.28,5,121.45,Wayfair Affiliate Creators,54,4,10,39,3,2,13.5,True
+238,27860470,Heather Walsh,heatherwalsh__,320,1664.88,2,199.79,Wayfair Affiliate Creators,13,2,0,5,0,8,6.5,True
+239,34860155,mayeline11,mayelineventura11,321,1658.94,4,199.08,Wayfair Affiliate Creators,24,3,0,13,5,6,8.0,True
+240,26869966,Turner Grace McCrea,turnergracee,322,1654.95,5,178.52,Wayfair Affiliate Creators,2,2,0,0,1,1,1.0,False
+241,26792197,Melissa Michaels,theinspiredroom,323,1629.0,1,293.22,Wayfair Affiliate Creators,16,3,2,6,0,8,5.33,True
+242,31668673,India Chism,msindiachism,324,1616.99,2,194.04,Wayfair Affiliate Creators,534,3,0,105,210,219,178.0,True
+243,26296441,Darelis | Home decor| Home styling inspo,cozy_homediaries,325,1605.4,3,192.65,Wayfair Affiliate Creators,1,1,0,1,0,0,1.0,False
+244,24392072,reyna capellan,moodboardsbyrelica,326,1577.99,3,174.96,Wayfair Affiliate Creators,1,1,0,0,1,0,1.0,False
+245,34410022,hello,softlifernnotes.home,330,1559.33,1,187.12,Wayfair Affiliate Creators,55,4,9,16,9,21,13.75,True
+246,27911901,Jessica Weintraub,chilldesignsbyjess,333,1541.56,5,127.31,Wayfair Affiliate Creators,202,4,52,65,45,40,50.5,True
+247,30687668,AnneMarie Greenberg,annemariesantiagoisamie,336,1534.0,9,213.19,Wayfair Affiliate Creators,17,2,0,0,8,9,8.5,True
+248,31209476,contact.yannalove,itsyannalove,337,1505.96,2,180.72,Wayfair Affiliate Creators,2,1,0,0,0,2,2.0,False
+249,24827084,Courtney Azurmendi,courtneytaylorhome,338,1501.06,9,185.76,Wayfair Affiliate Creators,125,4,29,30,21,45,31.25,True
+250,29465557,vanessaeaguirre,vanessa.e.aguirre,339,1495.96,1,44.88,Wayfair Affiliate Creators,16,1,0,0,0,16,16.0,False
+251,30555515,Dusti Trent,ourbarelybeigehome,341,1487.68,10,160.99,Wayfair Affiliate Creators,5,2,4,0,0,1,2.5,False
+252,25536514,Andrea Sanchez,ourmountainsidehome,344,1481.55,3,177.79,Wayfair Affiliate Creators,86,4,12,34,32,8,21.5,False
+253,25635721,lizzduffyfitness,lizzduffylifestyle,346,1464.97,1,175.8,Wayfair Affiliate Creators,2,1,0,0,0,2,2.0,False
+254,21488787,Natalie Libot,homesweetlibot,347,1457.9,6,181.35,Wayfair Affiliate Creators,21,3,6,5,10,0,7.0,False
+255,27581484,Sheri Fitzgerald,hold_my_eggnog,351,1432.53,13,138.8,Wayfair Affiliate Creators,14,2,0,0,4,10,7.0,False
+256,25708011,Lauren Worth,Houseof_Worth_,352,1422.09,6,168.12,Wayfair Affiliate Creators,40,3,0,15,2,23,13.33,False
+257,27398907,rachelsreno,rachelsreno_,354,1416.05,7,153.1,Wayfair Affiliate Creators,81,4,18,24,26,13,20.25,False
+258,30790821,samantha,samanthashewan,356,1406.87,4,168.83,Wayfair Affiliate Creators,23,3,8,6,9,0,7.67,False
+259,26855930,Anaya Mayhew,ayanaa.lm,357,1405.98,1,42.18,Wayfair Affiliate Creators,14,1,0,0,0,14,14.0,False
+260,26295099,savannah thomas,Savingswithsav,360,1386.42,5,168.9,Wayfair Affiliate Creators,1,1,0,1,0,0,1.0,False
+261,26950853,Pamela Randolph,thenuttybrunettehome,362,1380.97,5,165.72,Wayfair Affiliate Creators,106,4,54,13,9,30,26.5,False
+262,25990270,Synthia Hernandez,synthiasaves,364,1379.09,7,99.34,Wayfair Affiliate Creators,6,2,4,2,0,0,3.0,False
+263,29271201,Ketra Dixon,ipacksapunch,365,1373.11,4,98.63,Wayfair Affiliate Creators,8,2,2,0,6,0,4.0,False
+264,34219036,mavitabile,avimeg,366,1372.94,2,41.19,Wayfair Affiliate Creators,62,4,8,15,18,21,15.5,False
+265,24382413,Irene Serrano Bustamante,irene_lovetolive,368,1359.06,6,106.75,Wayfair Affiliate Creators,89,3,0,63,10,16,29.67,False
+266,33754626,Michelle Latsu,_thatssomimi,374,1315.96,4,157.92,Wayfair Affiliate Creators,2,1,2,0,0,0,2.0,False
+267,25284766,BonBon Bell,bonbonbellhome,376,1310.63,9,157.28,Wayfair Affiliate Creators,146,4,77,38,15,16,36.5,False
+268,25711841,Allyson Ray,allyeraydesigns,377,1305.29,1,156.63,Wayfair Affiliate Creators,3,2,0,1,0,2,1.5,False
+269,30140606,Quiana Cato  BSHS  Interior Designer|Real Estate Investment,quianajenee_,378,1294.94,1,38.85,Wayfair Affiliate Creators,1,1,0,0,0,1,1.0,False
+270,17339592,Rickina Godette,rickinaleshaye,382,1279.95,2,153.6,Wayfair Affiliate Creators,4,1,0,0,0,4,4.0,False
+271,25526159,Teri Green,cozyandcalmliving,383,1278.84,6,153.46,Wayfair Affiliate Creators,37,4,12,4,12,9,9.25,False
+272,34658659,Mia Bettino,miagraceb_,384,1278.82,8,158.79,Wayfair Affiliate Creators,17,2,0,13,0,4,8.5,False
+273,27045909,Ashley Rose Arcement 🌹 NYC + Travel Mom Life,ashleyarcement,387,1270.96,3,164.2,Wayfair Affiliate Creators,11,1,11,0,0,0,11.0,False
+274,29901354,jessica.rader,jessicarader14,388,1265.0,1,151.8,Wayfair Affiliate Creators,4,1,0,0,4,0,4.0,False
+275,12796072,Jelena H,jay_lina_decor,389,1256.18,1,37.69,Wayfair Affiliate Creators,89,4,14,28,29,18,22.25,False
+276,33829374,terriwake23,terrihomefinds,392,1239.58,7,141.19,Wayfair Affiliate Creators,23,4,9,6,6,2,5.75,False
+277,25360432,Melonie Graves,lifestylewithmg,397,1221.1,5,130.0,Wayfair Affiliate Creators,4,3,2,1,1,0,1.33,False
+278,29406006,Kelley ORourke,its_kelleymom,399,1212.8,3,145.54,Wayfair Affiliate Creators,2,1,0,0,2,0,2.0,False
+279,28853681,Mike Harrison,mikeharrisonart,400,1203.02,3,115.2,Wayfair Affiliate Creators,6,1,6,0,0,0,6.0,False
+280,33389122,hospitalitykim,hospitalitykim,401,1194.22,2,143.31,Wayfair Affiliate Creators,1,1,0,0,1,0,1.0,False
+281,28401873,Healthy Elizabeth,healthyelizabeth,405,1175.41,1,35.26,Wayfair Affiliate Creators,1,1,0,1,0,0,1.0,False
+282,25057875,Kathy Ibrahim,kasiaizabella,407,1163.86,5,139.66,Wayfair Affiliate Creators,19,3,11,6,2,0,6.33,False
+283,25524781,Tatum Culhane,redothezoo,408,1158.72,4,125.4,Wayfair Affiliate Creators,127,4,24,56,34,13,31.75,False
+284,16461174,Daysha O'Pry,slaymamaday,410,1125.96,1,135.12,Wayfair Affiliate Creators,10,1,0,10,0,0,10.0,False
+285,35289975,itssarahshome,itssarahshome,411,1117.94,4,134.16,Wayfair Affiliate Creators,5,2,1,0,4,0,2.5,False
+286,26267408,Davia Reddig,davia_at_home,413,1115.94,5,133.92,Wayfair Affiliate Creators,9,3,5,2,0,2,3.0,False
+287,34118543,Whitney Perry,thecdgedit,418,1091.06,7,65.88,Wayfair Affiliate Creators,4,1,4,0,0,0,4.0,False
+288,29948234,Kayla Sue Roberts,kaylasuestyled,419,1090.37,8,130.87,Wayfair Affiliate Creators,302,4,214,46,30,12,75.5,False
+289,31256115,Maggie Widener,theharlequinhome,424,1076.7,1,129.2,Wayfair Affiliate Creators,3,2,0,2,0,1,1.5,False
+290,27135196,Lauren Fabbri,lauren.fabbri,425,1074.99,2,129.0,Wayfair Affiliate Creators,25,2,16,9,0,0,12.5,False
+291,33118593,Raquel Duenas,homewithquel,426,1069.57,2,128.35,Wayfair Affiliate Creators,14,2,10,4,0,0,7.0,False
+292,25457510,Alma Tahirovic,houseoncalgarydowns,427,1067.14,5,119.02,Wayfair Affiliate Creators,25,3,4,5,16,0,8.33,False
+293,24790583,Cindy Nguyen | Home Design Lifestyle,transitionalmodernhome,428,1066.98,2,131.58,Wayfair Affiliate Creators,8,2,0,6,0,2,4.0,False
+294,30058386,michelleayala91,mayala91,429,1065.97,3,127.92,Wayfair Affiliate Creators,6,3,0,4,1,1,2.0,False
+295,25530038,Kristen Mckay,sweethomeology,431,1062.92,7,148.82,Wayfair Affiliate Creators,52,4,12,20,10,10,13.0,False
+296,29010322,Rayona Hall,whereissmoke,432,1062.33,3,138.33,Wayfair Affiliate Creators,10,3,3,4,3,0,3.33,False
+297,30506284,Jennifer Spearman,jennifer.spearman,440,1025.97,8,96.03,Wayfair Affiliate Creators,7,2,0,4,0,3,3.5,False
+298,27190399,Olivia Tennison,ojtennison,442,1014.95,3,134.48,Wayfair Affiliate Creators,13,3,1,2,10,0,4.33,False
+299,28847269,J O J O💕🇸🇻,jojotheceo,444,999.99,1,120.0,Wayfair Affiliate Creators,2,1,0,0,2,0,2.0,False
+300,26075330,LavishKei ❤️,lavishkei,446,993.63,3,119.24,Wayfair Affiliate Creators,2,1,0,0,0,2,2.0,False
+301,31605645,Stephanie Dattellas,calicottagecutie,447,982.96,1,117.96,Wayfair Affiliate Creators,6,2,3,3,0,0,3.0,False
+302,30894097,Grace Marchand,gmarch9,449,962.58,1,115.51,Wayfair Affiliate Creators,16,2,0,15,0,1,8.0,False
+303,28431932,Danielle Marie,love.ellemarie,450,958.95,4,52.62,Wayfair Affiliate Creators,17,3,0,6,3,8,5.67,False
+304,26870438,Zena Shennawi,storyofzena,452,951.33,4,114.17,Wayfair Affiliate Creators,38,4,16,4,2,16,9.5,False
+305,27576172,Daily Baez,dailycurlz,454,934.95,2,112.2,Wayfair Affiliate Creators,4,1,0,0,4,0,4.0,False
+306,30642476,Diala Jaghab,arabellasourglow,455,932.89,6,100.98,Wayfair Affiliate Creators,74,4,16,14,24,20,18.5,False
+307,31908154,Brandy Roberts,brandy.roberts6,456,931.43,1,111.77,Wayfair Affiliate Creators,38,3,10,18,0,10,12.67,False
+308,29095389,matchinwithmaddie,maddieraeesmith,457,931.28,2,111.76,Wayfair Affiliate Creators,11,2,0,9,2,0,5.5,False
+309,27175059,Charlie Bird,mrcharliebird,460,925.97,2,111.12,Wayfair Affiliate Creators,2,1,0,0,2,0,2.0,False
+310,22881619,Siham Salhi,stsweethome,461,920.0,1,110.4,Wayfair Affiliate Creators,10,1,10,0,0,0,10.0,False
+311,23754200,Aaron Bracetty,aaronreactivated,462,916.98,3,110.04,Wayfair Affiliate Creators,1,1,0,1,0,0,1.0,False
+312,24935042,𝐋𝐚𝐮𝐫𝐚 | 𝐇𝐨𝐦𝐞 𝐒𝐭𝐲𝐥𝐢𝐧𝐠 | 𝐃𝐞𝐜𝐨𝐫 𝐅𝐢𝐧𝐝𝐬,101410134601206,466,902.5,2,108.3,Wayfair Affiliate Creators,93,4,49,29,13,2,23.25,False
+313,26952770,June Cruz,enamourstyle,467,901.91,12,108.23,Wayfair Affiliate Creators,218,4,97,32,55,34,54.5,False
+314,35538222,cynthia571g,sinncynn,470,887.17,2,106.46,Wayfair Affiliate Creators,1,1,0,0,0,1,1.0,False
+315,17778292,Kylen Chen-Troester,nihaokylen,471,885.98,1,106.32,Wayfair Affiliate Creators,3,1,3,0,0,0,3.0,False
+316,34717761,Rachel Gold,rachelgold1,472,884.96,3,123.9,Wayfair Affiliate Creators,23,1,0,23,0,0,23.0,False
+317,30700094,thedestineechanel,thedchanel,473,884.94,3,106.19,Wayfair Affiliate Creators,4,1,0,0,0,4,4.0,False
+318,28414487,Gabriella Alonso,_gabbyalonso,474,880.0,1,105.6,Wayfair Affiliate Creators,2,1,0,2,0,0,2.0,False
+319,23799679,justinemaria.caro,giztine,476,871.96,1,104.64,Wayfair Affiliate Creators,1,1,0,0,1,0,1.0,False
+320,21656254,Elizabeth  Garoutte,notanothermodernfarmhouse,478,869.94,1,104.4,Wayfair Affiliate Creators,75,4,14,21,24,16,18.75,False
+321,32809918,Taylor Lemke,alittlebitoftaylor,480,845.41,4,102.39,Wayfair Affiliate Creators,2,1,2,0,0,0,2.0,False
+322,32109999,lovebuildsjoy,lovebuildsjoy,483,841.99,2,101.96,Wayfair Affiliate Creators,3,2,0,0,1,2,1.5,False
+323,28037472,Lindsay Flores,lindsayyfloresss,485,830.96,4,99.72,Wayfair Affiliate Creators,1,1,0,1,0,0,1.0,False
+324,19407397,Kristie,kristiezurm,490,815.98,2,97.92,Wayfair Affiliate Creators,1,1,0,0,1,0,1.0,False
+325,30564022,Antoinette Wright,ellabeablog,491,809.98,3,97.2,Wayfair Affiliate Creators,63,4,17,20,16,10,15.75,False
+326,32725634,Kristin Hanrahan,kristin.hanrahan,492,800.96,2,96.12,Wayfair Affiliate Creators,9,1,9,0,0,0,9.0,False
+327,27193097,Carolina Skipper,carolinafinnegan,493,797.6,4,95.71,Wayfair Affiliate Creators,18,3,6,6,6,0,6.0,False
+328,25495718,JAY NOELLE,thejaynoelle,495,794.97,2,95.4,Wayfair Affiliate Creators,2,1,0,0,0,2,2.0,False
+329,24472177,Katie Davis,katie.kurb,502,767.7,1,107.48,Wayfair Affiliate Creators,4,2,0,2,2,0,2.0,False
+330,26857082,Jill Jones- thetidytrendy,thetidytrendy,504,765.97,6,91.92,Wayfair Affiliate Creators,343,4,99,91,113,40,85.75,False
+331,29485856,melissafitfoodie,melissajwellness,507,755.62,3,90.68,Wayfair Affiliate Creators,40,3,25,4,0,11,13.33,False
+332,25410452,Brianeisha Thompson,athomewithnene,509,747.78,4,89.74,Wayfair Affiliate Creators,112,3,36,29,0,47,37.33,False
+333,21995135,Kayla Falconer,kaylaskitchandfix,512,737.95,1,88.55,Wayfair Affiliate Creators,8,3,3,3,2,0,2.67,False
+334,33959348,Maryam French,maryamcozyliving,514,732.13,1,87.86,Wayfair Affiliate Creators,11,3,0,5,3,3,3.67,False
+335,30635857,Tracey Ounanian,flipswithtraceyo,517,727.96,1,87.36,Wayfair Affiliate Creators,9,1,9,0,0,0,9.0,False
+336,33177264,Kia Scott,keeksinteriors,521,722.93,3,84.5,Wayfair Affiliate Creators,83,2,37,46,0,0,41.5,False
+337,29060598,Alfred Glover,alfredkglover,523,711.96,3,85.44,Wayfair Affiliate Creators,6,1,0,0,0,6,6.0,False
+338,30006595,Diamond Hunter,justdimee_,524,711.42,2,85.37,Wayfair Affiliate Creators,1,1,0,0,0,1,1.0,False
+339,35208637,media,jasontartick,526,710.97,4,80.46,Wayfair Affiliate Creators,6,1,0,0,6,0,6.0,False
+340,26068321,Taylor Cherie,thetaylorcherie,527,710.95,2,38.07,Wayfair Affiliate Creators,8,3,4,0,3,1,2.67,False
+341,23208944,Deone Watkins,thedeezignlab,530,699.98,4,86.0,Wayfair Affiliate Creators,62,3,43,0,6,13,20.67,False
+342,28053279,Sam Steiber,stayathomegays,532,694.93,2,83.39,Wayfair Affiliate Creators,28,3,7,11,10,0,9.33,False
+343,33400820,jenknake,shopJLKHOME,534,692.7,3,49.2,Wayfair Affiliate Creators,99,4,12,48,32,7,24.75,False
+344,27269232,Mads ⋒,madnatorr2,536,689.4,4,82.73,Wayfair Affiliate Creators,8,1,0,0,8,0,8.0,False
+345,24418810,Ashley Hornberger,modernly_you,537,689.03,1,20.67,Wayfair Affiliate Creators,14,3,4,1,9,0,4.67,False
+346,24418802,Candace  Anderson,candieandersonblog,539,680.95,3,81.72,Wayfair Affiliate Creators,14,3,2,10,2,0,4.67,False
+347,20968251,Holli Rodrigues,BeesNBurlap,540,680.94,1,81.71,Wayfair Affiliate Creators,121,4,16,34,53,18,30.25,False
+348,28146657,Mitsuka Noël,mitsuka.noel,542,679.0,1,81.48,Wayfair Affiliate Creators,2,1,0,0,0,2,2.0,False
+349,32180717,Kasca Shand,kasca.shand,543,677.04,5,72.9,Wayfair Affiliate Creators,55,4,7,17,3,28,13.75,False
+350,13232415,Sandra Herzog,tuxedofarmhouse,546,673.73,2,80.85,Wayfair Affiliate Creators,145,3,78,43,24,0,48.33,False
+351,29176259,Madison T.,ladyofashion,547,672.94,2,89.65,Wayfair Affiliate Creators,40,4,28,8,1,3,10.0,False
+352,23149887,Yanitza Guevara,yani_g_official,549,668.97,2,20.07,Wayfair Affiliate Creators,21,2,0,5,0,16,10.5,False
+353,26650784,saltystripes,meehan_the_sea,550,661.3,3,54.94,Wayfair Affiliate Creators,7,2,0,2,5,0,3.5,False
+354,28065337,Adriana Quaranto,mymotherhoodmethod,554,650.89,5,78.11,Wayfair Affiliate Creators,381,4,156,81,72,72,95.25,False
+355,34665363,jrleifer,life_with_leifer,556,649.99,2,78.0,Wayfair Affiliate Creators,8,3,2,2,4,0,2.67,False
+356,31267176,Elizabeth  Espinoza,liz_lovelydecor,558,644.88,1,77.39,Wayfair Affiliate Creators,38,2,22,16,0,0,19.0,False
+357,34416211,akamawmi@gmail.com,aka.mawmi,559,644.54,4,80.99,Wayfair Affiliate Creators,13,2,0,3,10,0,6.5,False
+358,30838080,thetimelessnest.ry,thetimelessnest.ry,560,644.26,3,77.31,Wayfair Affiliate Creators,42,3,0,16,11,15,14.0,False
+359,34017458,theericanthony,theericanthony,561,638.99,2,76.68,Wayfair Affiliate Creators,2,1,0,2,0,0,2.0,False
+360,33452654,Jordan  Arthur,triplebranch_farmhouse,562,635.35,2,76.24,Wayfair Affiliate Creators,13,2,6,0,7,0,6.5,False
+361,32349472,Taylor  Thornton,carriewoodx4,565,630.95,3,75.72,Wayfair Affiliate Creators,2,1,0,0,0,2,2.0,False
+362,32939379,Cornesha Robinson,nourishedbynesha,566,627.97,2,60.24,Wayfair Affiliate Creators,3,1,0,0,3,0,3.0,False
+363,26536472,Jenn Rogers-Kelley,paisleyathome,567,624.98,2,75.0,Wayfair Affiliate Creators,302,4,177,72,22,31,75.5,False
+364,25931516,ALLISON  | DIY  Interior Design & Antiques,allisonskiffdotcom,569,615.96,1,73.92,Wayfair Affiliate Creators,11,1,0,11,0,0,11.0,False
+365,26546942,Antoinette Faltz-McQueen,theantoinettefm,570,611.91,3,18.36,Wayfair Affiliate Creators,2,1,0,0,0,2,2.0,False
+366,25515891,Carlie Gracey,carliegracey,575,599.95,2,71.99,Wayfair Affiliate Creators,1,1,0,0,0,1,1.0,False
+367,33753541,tinalemac,tinalemac,577,595.13,1,71.42,Wayfair Affiliate Creators,3,1,0,3,0,0,3.0,False
+368,29941214,Marianna Torres,mariannaelisaaa,579,592.37,7,71.1,Wayfair Affiliate Creators,23,3,3,9,0,11,7.67,False
+369,25212200,Heather rose,heather.rose.blog,584,580.15,6,69.62,Wayfair Affiliate Creators,8,3,0,2,2,4,2.67,False
+370,29518694,Brindy Hamstra,bspokehomeinteriors,589,567.72,1,68.13,Wayfair Affiliate Creators,105,4,32,11,12,50,26.25,False
+371,31975602,erika  gonzalez,homewitherika_,595,553.78,2,72.46,Wayfair Affiliate Creators,2,1,0,2,0,0,2.0,False
+372,25060504,MARIANNA ABDULLADZE,marianna.abdulladze,596,553.07,2,16.59,Wayfair Affiliate Creators,2,1,0,2,0,0,2.0,False
+373,32512925,Steph Simon,steph.simon,602,544.64,4,65.36,Wayfair Affiliate Creators,6,1,0,0,6,0,6.0,False
+374,23938724,Cleve Braswell  III,cleve.interior,603,542.98,3,65.16,Wayfair Affiliate Creators,5,2,0,4,1,0,2.5,False
+375,34606302,alyssamarciano,17amarciano,605,541.46,3,64.97,Wayfair Affiliate Creators,16,3,3,6,7,0,5.33,False
+376,33098911,Kim Stead,kimmy_radio,609,534.97,2,68.1,Wayfair Affiliate Creators,8,2,0,3,5,0,4.0,False
+377,24790554,Ashley Gomez,ashley_homeinterior,612,532.97,3,63.96,Wayfair Affiliate Creators,68,4,4,34,21,9,17.0,False
+378,15818094,David & Edward,midwesthusbands,616,529.99,1,63.6,Wayfair Affiliate Creators,3,1,3,0,0,0,3.0,False
+379,31046157,Daisy Vaisburg,itsmedaisyv,618,529.96,2,29.31,Wayfair Affiliate Creators,3,1,0,3,0,0,3.0,False
+380,27190551,Taylor Meadows + River  Summit & Cave,mywildmeadows,620,519.45,5,70.09,Wayfair Affiliate Creators,1,1,0,1,0,0,1.0,False
+381,28875691,Blanche Ryder,blancheandcompany,621,516.99,2,65.9,Wayfair Affiliate Creators,1,1,0,0,0,1,1.0,False
+382,24418599,Stefanie Ann Eadie,stefanieanneadie,625,510.25,3,61.24,Wayfair Affiliate Creators,2,1,0,0,2,0,2.0,False
+383,27916284,Shelby Pettiford,shelbyxdanielle_,626,509.99,1,61.2,Wayfair Affiliate Creators,29,4,16,2,6,5,7.25,False
+384,25981985,Audrey Barton,organizedchaos4,630,502.94,4,60.36,Wayfair Affiliate Creators,8,3,1,4,3,0,2.67,False
+385,27137095,Gracie Gonzalez,labarbie2113,631,500.35,3,30.35,Wayfair Affiliate Creators,27,2,16,11,0,0,13.5,False
+386,25087495,Cassie | Amazon Finds + Casual Style & Decor,cassieinwonderland,632,499.98,2,34.8,Wayfair Affiliate Creators,3,3,0,1,1,1,1.0,False
+387,28796510,India Mendez,mypinkpalace93,638,484.9,2,58.19,Wayfair Affiliate Creators,35,3,0,20,7,8,11.67,False
+388,35801645,blushandbanisters,blushandbanisters,639,480.0,1,57.6,Wayfair Affiliate Creators,1,1,0,0,0,1,1.0,False
+389,17605614,Amelia Moreira,castcasita,642,474.36,3,57.51,Wayfair Affiliate Creators,7,2,4,3,0,0,3.5,False
+390,28153234,Joe & Rachel Stauffer,2krazyketos,644,473.2,1,56.78,Wayfair Affiliate Creators,1,1,0,0,0,1,1.0,False
+391,19670072,Gabriela Maria Candelieri,gabrielas_home,649,465.49,5,33.99,Wayfair Affiliate Creators,4,2,0,0,2,2,2.0,False
+392,31730235,Brandy Nelson,balancewithbrandy,650,463.97,2,64.96,Wayfair Affiliate Creators,9,3,3,4,2,0,3.0,False
+393,26068413,Natalie,FreelyNat,651,463.41,4,55.61,Wayfair Affiliate Creators,10,1,0,10,0,0,10.0,False
+394,32106171,Samantha Jones,missleighh,653,462.39,2,55.49,Wayfair Affiliate Creators,2,1,0,0,2,0,2.0,False
+395,27007434,K A Y L A H🌹,kaylahrochellee,654,459.99,1,55.2,Wayfair Affiliate Creators,1,1,0,1,0,0,1.0,False
+396,26091487,Laura Chubineh,thespilledsugar,655,456.98,2,35.04,Wayfair Affiliate Creators,11,3,8,2,0,1,3.67,False
+397,32902529,michescot7,themichelebelton,658,447.16,1,62.6,Wayfair Affiliate Creators,2,1,0,2,0,0,2.0,False
+398,30208798,Elizabeth Howell,elizhowell,659,440.11,3,52.81,Wayfair Affiliate Creators,1,1,0,0,0,1,1.0,False
+399,30207568,Jillian Fiorello,homeandstylescout,660,439.99,1,52.8,Wayfair Affiliate Creators,86,4,44,2,13,27,21.5,False
+400,30636479,Chardeney Mason,chardeneymason,666,421.66,2,25.52,Wayfair Affiliate Creators,113,4,73,10,8,22,28.25,False
+401,24242146,Shaquana Dawes,layeredbymonay,667,419.94,2,50.39,Wayfair Affiliate Creators,88,4,25,29,5,29,22.0,False
+402,27408690,Adeline Nkonkeng,adelle0123,668,417.94,2,50.15,Wayfair Affiliate Creators,15,1,0,0,15,0,15.0,False
+403,24302681,Christi Reeves | Home•Life•DIY,christireeveshome,672,409.99,2,49.2,Wayfair Affiliate Creators,10,2,5,5,0,0,5.0,False
+404,35380494,hello,ouithecreatives,674,402.58,2,42.91,Wayfair Affiliate Creators,8,3,0,2,1,5,2.67,False
+405,32009853,Well Loved Finds,thewelllovedfinds,675,400.0,1,48.0,Wayfair Affiliate Creators,12,1,0,0,0,12,12.0,False
+406,29805607,Noelle Bertram,girlwhotravel,681,394.97,3,47.4,Wayfair Affiliate Creators,1,1,0,0,1,0,1.0,False
+407,25537012,Abby Thome,abby_thome,682,392.82,2,18.88,Wayfair Affiliate Creators,8,2,4,0,0,4,4.0,False
+408,31959866,katie_donohue,katied3288,683,391.1,1,54.75,Wayfair Affiliate Creators,2,1,0,0,2,0,2.0,False
+409,24669814,Cris Zaragoza,Bycriszaragoza,684,389.99,2,46.8,Wayfair Affiliate Creators,104,4,32,4,31,37,26.0,False
+410,29082375,faithnicolesocial,barringtonhomestead,686,389.99,1,46.8,Wayfair Affiliate Creators,1,1,0,0,0,1,1.0,False
+411,28931632,malik.dent14,dentxdays,689,387.0,1,46.44,Wayfair Affiliate Creators,1,1,0,1,0,0,1.0,False
+412,28585067,chanel_shaw98,hervibeispretti,691,380.98,1,45.72,Wayfair Affiliate Creators,1,1,0,0,0,1,1.0,False
+413,29714945,Sydney Leifson,sydney_leifson,694,379.99,1,45.6,Wayfair Affiliate Creators,1,1,0,0,0,1,1.0,False
+414,28746310,Wanda Love,mswandaxo,695,379.99,1,45.6,Wayfair Affiliate Creators,1,1,0,1,0,0,1.0,False
+415,26947530,Hailee Catalano,haileecatalano,699,377.48,2,45.3,Wayfair Affiliate Creators,3,1,0,3,0,0,3.0,False
+416,26577027,kalenaann16,kalenawhite,701,375.99,1,45.12,Wayfair Affiliate Creators,4,1,0,0,4,0,4.0,False
+417,14793131,Sherita Woods,uniquedbysherita,704,374.99,6,45.0,Wayfair Affiliate Creators,35,3,27,7,1,0,11.67,False
+418,33171227,cozycanvashome,cozycanvashomee,707,372.08,22,44.65,Wayfair Affiliate Creators,1,1,1,0,0,0,1.0,False
+419,26045548,LaScotia Pinkney,EyeSeeYourBeautyHomeDecor,711,369.98,2,11.1,Wayfair Affiliate Creators,66,4,14,11,7,34,16.5,False
+420,29251832,elainemarieee,elainemarieee,716,361.94,1,43.43,Wayfair Affiliate Creators,15,1,0,0,15,0,15.0,False
+421,13109672,Jess Owens,jessowensdaily,717,359.99,1,43.2,Wayfair Affiliate Creators,3,2,2,1,0,0,1.5,False
+422,25709662,Jaymee Sire,jaymeesire,719,359.98,2,43.2,Wayfair Affiliate Creators,6,1,0,6,0,0,6.0,False
+423,30687671,Angie Gulati,mypoetichome,721,356.96,2,48.43,Wayfair Affiliate Creators,6,2,0,4,2,0,3.0,False
+424,24886555,Bianca  Henderson,biancaxhenderson,725,351.98,1,49.27,Wayfair Affiliate Creators,1,1,0,1,0,0,1.0,False
+425,24789152,Barb Craft,ourcozycraftedhome,730,345.38,3,41.45,Wayfair Affiliate Creators,23,3,5,0,3,15,7.67,False
+426,28412422,Brooke Ransom,brookeranz,731,342.91,3,41.16,Wayfair Affiliate Creators,45,4,15,10,8,12,11.25,False
+427,27429740,Mary Heffernan : Rancher  Beef & Tallow,fivemarys,732,341.11,2,44.7,Wayfair Affiliate Creators,4,1,0,4,0,0,4.0,False
+428,29997673,Torrie Brown,torrie____,733,340.46,1,40.85,Wayfair Affiliate Creators,14,2,0,10,4,0,7.0,False
+429,24288865,Judith Keriopoulos,makinghomewithjudith,736,339.99,2,40.8,Wayfair Affiliate Creators,35,3,14,15,0,6,11.67,False
+430,32466933,Eden Montgomery,essentialswitheden,738,339.96,2,40.8,Wayfair Affiliate Creators,5,1,5,0,0,0,5.0,False
+431,25312770,Frankie Valle,franklyrobbie,739,338.99,1,10.17,Wayfair Affiliate Creators,2,2,1,0,1,0,1.0,False
+432,29015009,Angela Charles,glowdevotion,741,335.82,3,40.3,Wayfair Affiliate Creators,10,3,5,3,2,0,3.33,False
+433,33712855,Octavia Phillips,thenursewithmotion,745,332.56,2,39.91,Wayfair Affiliate Creators,4,1,0,0,4,0,4.0,False
+434,33330259,butterpecaon,lifewithandread,750,325.99,1,39.12,Wayfair Affiliate Creators,33,4,2,15,9,7,8.25,False
+435,26482026,Yesenia M.,yessy_reviews,753,321.3,1,38.56,Wayfair Affiliate Creators,60,4,13,12,21,14,15.0,False
+436,33511459,brianna13010,prettybri444,754,319.99,1,38.4,Wayfair Affiliate Creators,6,1,0,0,6,0,6.0,False
+437,29212803,Sara Duval,duves_creative,757,319.73,3,38.37,Wayfair Affiliate Creators,10,2,0,6,0,4,5.0,False
+438,33116985,Aunjanee Evans,aunjaneeaesthetics,758,318.99,1,38.28,Wayfair Affiliate Creators,1,1,0,1,0,0,1.0,False
+439,27439508,homewithcressie,homewithcressie,760,309.99,1,37.2,Wayfair Affiliate Creators,6,1,0,0,0,6,6.0,False
+440,27347890,J E N N Y,jennygarcia100,764,305.0,1,36.6,Wayfair Affiliate Creators,4,1,4,0,0,0,4.0,False
+441,28425330,Aimee Elizabeth Bubblis,byaimee.elizabeth,766,303.98,1,36.48,Wayfair Affiliate Creators,1,1,0,0,1,0,1.0,False
+442,26586373,eliedelaney,eliedelaney,767,301.98,3,36.24,Wayfair Affiliate Creators,17,3,0,2,3,12,5.67,False
+443,25768574,Angela  Beechan,LuvSavingMoney,769,301.86,3,36.22,Wayfair Affiliate Creators,155,4,37,15,87,16,38.75,False
+444,24017751,Andrea Nelson | Home Decor Interior Styling Functional Finds,1stonebrookhome,770,300.79,1,36.09,Wayfair Affiliate Creators,56,4,5,13,36,2,14.0,False
+445,28948586,jrdz2009,jrdz2009,772,299.99,1,36.0,Wayfair Affiliate Creators,6,2,3,3,0,0,3.0,False
+446,28348426,Riley Moriarity,rileybmoriarity,771,299.99,1,36.0,Wayfair Affiliate Creators,4,1,4,0,0,0,4.0,False
+447,31955021,Jennifer Cosentino,jcsdealsandsteals,774,298.58,2,17.96,Wayfair Affiliate Creators,58,4,19,12,14,13,14.5,False
+448,28428453,sandiaguerrier,sandiasglamdecorlifestylemore,776,295.99,1,41.44,Wayfair Affiliate Creators,7,2,0,0,4,3,3.5,False
+449,25486429,Michelle James,mjames77,777,294.97,2,35.4,Wayfair Affiliate Creators,30,3,20,2,0,8,10.0,False
+450,27302511,arlindabalidemic,arlindabkurtishi,778,293.99,1,35.28,Wayfair Affiliate Creators,80,4,5,42,17,16,20.0,False
+451,28170637,Stevi  Werner,stevicaitlin,779,292.99,1,35.16,Wayfair Affiliate Creators,5,2,4,1,0,0,2.5,False
+452,26375885,alexamharvey,alexxa.harvey,780,291.98,1,8.76,Wayfair Affiliate Creators,3,2,0,1,0,2,1.5,False
+453,30985522,Michaelah  Ducharme,michhhslife,782,289.99,1,34.8,Wayfair Affiliate Creators,2,1,0,0,2,0,2.0,False
+454,28748093,iammicoledenise,iam_micoledenise,783,289.99,1,40.6,Wayfair Affiliate Creators,1,1,0,1,0,0,1.0,False
+455,12906283,marysa owings,cozyoncottoncreek,784,287.49,2,34.5,Wayfair Affiliate Creators,29,3,15,10,4,0,9.67,False
+456,13569628,Raftyn Rignell,rignellranch,786,284.78,3,39.87,Wayfair Affiliate Creators,4,1,4,0,0,0,4.0,False
+457,28104194,Ejovwoke Dosunmu,jkdos_home,788,282.31,2,33.88,Wayfair Affiliate Creators,4,1,4,0,0,0,4.0,False
+458,30855968,Nicole Evans,normanmarlowevans,791,279.99,1,33.6,Wayfair Affiliate Creators,7,2,5,0,2,0,3.5,False
+459,17740836,Anne Marie Irey | Affordable Home Decor & Holiday Magic,simplystagedandstyled,794,278.49,2,33.41,Wayfair Affiliate Creators,18,1,0,0,0,18,18.0,False
+460,28978549,Leslie Rioveros,CinematiclightboxPH,796,276.99,1,33.24,Wayfair Affiliate Creators,24,3,16,3,0,5,8.0,False
+461,30736004,Amber Blackburn,ambereveryday_,797,276.28,1,38.68,Wayfair Affiliate Creators,5,1,5,0,0,0,5.0,False
+462,27383780,tabitharobbins,seatosummitstays,799,275.98,1,8.28,Wayfair Affiliate Creators,6,1,0,0,6,0,6.0,False
+463,26870432,Marina Lancellotta,marinaakatherine,804,271.98,2,32.64,Wayfair Affiliate Creators,4,2,2,2,0,0,2.0,False
+464,24866084,bloomandflourishinteriors,bloomand.flourish,805,269.99,1,32.4,Wayfair Affiliate Creators,68,4,15,19,16,18,17.0,False
+465,27109020,Keara Douglas,k_dougde,806,264.96,1,37.1,Wayfair Affiliate Creators,31,3,24,0,2,5,10.33,False
+466,25381824,carolina Lopez,caro_blesshome,807,260.81,2,31.3,Wayfair Affiliate Creators,2,1,0,0,0,2,2.0,False
+467,18292777,C H E L S E A | 𝖜𝖊𝖑𝖈𝖔𝖒𝖊 𝖙𝖔 𝐇 𝐎 𝐔 𝐒 𝐄 𝐋 𝐀 𝐍 𝐃 𝐄 𝐑,kevrosehome,810,259.27,2,31.12,Wayfair Affiliate Creators,4,2,0,0,2,2,2.0,False
+468,31266421,Nicole Ward,never.pay.full.price1,812,256.1,1,30.73,Wayfair Affiliate Creators,1,1,0,0,0,1,1.0,False
+469,25838828,Lexi Tobin,lexitobin,813,254.99,1,30.6,Wayfair Affiliate Creators,4,2,0,0,3,1,2.0,False
+470,34874484,domim.creator,domi_macri,815,252.0,1,7.56,Wayfair Affiliate Creators,6,1,0,0,6,0,6.0,False
+471,27927396,Courtney Thibodeaux,lachiccouture,819,249.99,1,30.0,Wayfair Affiliate Creators,101,4,18,36,1,46,25.25,False
+472,30678399,herladygigs,makeudoubletake,821,249.99,1,30.0,Wayfair Affiliate Creators,8,2,6,0,2,0,4.0,False
+473,27431625,Patty Gill• Empty Nest RVers • Travel Couple,gillsonwheels,820,249.99,1,30.0,Wayfair Affiliate Creators,1,1,1,0,0,0,1.0,False
+474,34720108,Moriah Johnson,moriahlucille,827,249.0,1,29.88,Wayfair Affiliate Creators,18,2,0,6,0,12,9.0,False
+475,28996523,DONTCH Charles,faroloop5,830,248.76,2,12.43,Wayfair Affiliate Creators,962,4,263,147,391,161,240.5,False
+476,26161071,Molly Saint,houseofsaintdesign,831,245.98,4,29.52,Wayfair Affiliate Creators,29,4,8,12,7,2,7.25,False
+477,24799423,Allison Mathis,blessings_and_blossoms,832,245.97,2,29.52,Wayfair Affiliate Creators,8,2,0,4,0,4,4.0,False
+478,27903885,brooke.l.mcreynolds,brookelmcreynolds,835,243.87,1,43.9,Wayfair Affiliate Creators,28,3,0,5,17,6,9.33,False
+479,32634427,beatrizc619,Homedecordealsblog,836,243.18,2,29.18,Wayfair Affiliate Creators,17,3,2,6,9,0,5.67,False
+480,30635554,Melina Santos,melveggienp,838,239.99,1,33.6,Wayfair Affiliate Creators,27,4,4,8,9,6,6.75,False
+481,24812950,Adrian Elia,adrianeliab,844,234.99,1,28.2,Wayfair Affiliate Creators,7,3,0,1,5,1,2.33,False
+482,29539402,Antonia Curtis,Dealswithnia,845,233.99,1,28.08,Wayfair Affiliate Creators,6,1,0,0,0,6,6.0,False
+483,25524844,Krista Duce,sassy_pickins,848,231.98,1,6.96,Wayfair Affiliate Creators,17,3,0,1,11,5,5.67,False
+484,16534267,Debra J Cappuccio,interiorsbydebbi,855,228.98,2,27.48,Wayfair Affiliate Creators,9,3,1,0,4,4,3.0,False
+485,29168566,Erica Chan Stenvall,ericaychan,857,227.99,1,31.92,Wayfair Affiliate Creators,11,2,5,6,0,0,5.5,False
+486,28348259,Mayra Dalisaღ,mdalisa,858,227.99,1,27.36,Wayfair Affiliate Creators,9,2,0,0,2,7,4.5,False
+487,33176557,Vasulunashyshka,sh_vasuliska,861,222.99,1,26.76,Wayfair Affiliate Creators,82,4,27,20,28,7,20.5,False
+488,26908094,rebeccakellye,rebeccakellye,862,221.39,1,26.57,Wayfair Affiliate Creators,1,1,1,0,0,0,1.0,False
+489,23198472,Dzanina Tahirovic,dzaninatahirovic_,864,220.98,5,26.52,Wayfair Affiliate Creators,55,3,26,21,0,8,18.33,False
+490,29083830,Hollie Choules,sevensixtyhomeco,869,219.98,1,6.6,Wayfair Affiliate Creators,1198,4,711,349,80,58,299.5,False
+491,13735959,Camille Lai,houseof.lais,868,219.98,1,26.4,Wayfair Affiliate Creators,56,2,29,27,0,0,28.0,False
+492,33871476,Trinity  Bryant,trinityt.b,872,216.99,1,6.51,Wayfair Affiliate Creators,3,1,3,0,0,0,3.0,False
+493,27178115,Erin Harper,erinharperr,874,216.98,3,26.04,Wayfair Affiliate Creators,9,3,2,0,3,4,3.0,False
+494,26134051,Liane Burger,collectedco_,877,213.94,2,25.68,Wayfair Affiliate Creators,4,2,0,3,1,0,2.0,False
+495,26659341,Maria Roberts,mariaroberts,878,212.98,2,6.39,Wayfair Affiliate Creators,19,3,8,5,6,0,6.33,False
+496,28438761,Miranda Ferrante,mirandassanctuary,880,209.99,1,25.2,Wayfair Affiliate Creators,4,2,0,0,2,2,2.0,False
+497,22936254,samanthaberkugc,samantha.berk,882,209.97,1,25.2,Wayfair Affiliate Creators,5,1,0,0,5,0,5.0,False
+498,27468647,Summer—Therapy Cat  Model  Celebrity & Blogger,summerstravels,886,205.98,2,24.72,Wayfair Affiliate Creators,1,1,0,0,0,1,1.0,False
+499,25135838,Emily Barlow | Home & Food Blogger,handmade.farmhouse,888,203.97,2,24.48,Wayfair Affiliate Creators,4,1,0,0,0,4,4.0,False
+500,17503700,Marissa Fidler | Home + Holiday,fidlinaroundhome,893,199.95,1,23.99,Wayfair Affiliate Creators,17,1,0,0,0,17,17.0,False
+501,31909790,Lone Ko,mylonepov,894,198.86,1,23.86,Wayfair Affiliate Creators,8,1,8,0,0,0,8.0,False
+502,27007160,Kendall Spell,kendallrspell,899,193.98,2,23.28,Wayfair Affiliate Creators,1,1,0,1,0,0,1.0,False
+503,33983037,thehomebodybabe,thehomebodybabe,901,191.24,1,22.95,Wayfair Affiliate Creators,101,4,77,3,8,13,25.25,False
+504,27142361,Alexis Luna,letushavecake,902,190.96,1,22.92,Wayfair Affiliate Creators,17,2,0,10,7,0,8.5,False
+505,30284317,I’m Just A Girl. 💕👸🏽,thatgirlkey02,908,189.99,1,5.7,Wayfair Affiliate Creators,3,1,0,0,0,3,3.0,False
+506,28631011,Mykel Pay,dont.chase.your.d,906,189.99,1,22.8,Wayfair Affiliate Creators,1,1,0,0,0,1,1.0,False
+507,25496084,Sushana Cole,itsshanacole,912,188.96,3,22.68,Wayfair Affiliate Creators,10,2,0,3,7,0,5.0,False
+508,28466443,ds_review,DeesReView,915,185.99,1,22.32,Wayfair Affiliate Creators,1,1,1,0,0,0,1.0,False
+509,29390150,hungryindallas,hungryindallas,917,185.0,1,22.2,Wayfair Affiliate Creators,3,1,0,0,3,0,3.0,False
+510,27772132,Abby Williams Bowman,abbsbow,919,179.99,1,5.4,Wayfair Affiliate Creators,3,1,0,3,0,0,3.0,False
+511,25980002,Lindsey Weaver,abovethelawstyle,920,178.76,3,12.45,Wayfair Affiliate Creators,26,4,9,6,3,8,6.5,False
+512,24241209,Dana Vento,dana.vento,921,176.98,3,23.84,Wayfair Affiliate Creators,108,4,79,7,17,5,27.0,False
+513,25527063,Emily Giangreco,emilygiangreco,922,175.97,3,22.26,Wayfair Affiliate Creators,9,2,3,6,0,0,4.5,False
+514,28037282,Laura Benson,style.with.laura,925,174.59,1,20.95,Wayfair Affiliate Creators,29,1,29,0,0,0,29.0,False
+515,31261983,Dayna Godsey,daynacharie,935,165.96,1,19.92,Wayfair Affiliate Creators,20,4,6,6,4,4,5.0,False
+516,33599361,Ana Rodriguez,anamrodriguez,938,163.99,1,19.68,Wayfair Affiliate Creators,11,2,0,3,0,8,5.5,False
+517,28343387,Molly Heise,callofthestyled,943,159.99,1,19.2,Wayfair Affiliate Creators,35,3,14,9,0,12,11.67,False
+518,32719781,simplysaimaa1,simplysaimaa,939,159.99,1,19.2,Wayfair Affiliate Creators,1,1,0,0,0,1,1.0,False
+519,25087501,JAMIE THORPE | FASHION | LIFESTYLE | HOME DECOR | HEALTHY LIVING,homeofuandme,944,159.0,1,19.08,Wayfair Affiliate Creators,33,2,28,5,0,0,16.5,False
+520,26190857,Aron Cohen,aroncohen,945,158.99,1,4.77,Wayfair Affiliate Creators,3,1,3,0,0,0,3.0,False
+521,30751849,diana,its_dianahathaway,946,157.97,3,18.96,Wayfair Affiliate Creators,42,4,21,15,2,4,10.5,False
+522,25516875,AUDREY ATIENZA,audreyatienza,948,157.2,1,18.86,Wayfair Affiliate Creators,1,1,0,1,0,0,1.0,False
+523,32725649,simplyneutralblog,simplyneutralblog,949,157.0,1,18.84,Wayfair Affiliate Creators,3,2,0,0,2,1,1.5,False
+524,34911058,taylorcota24,taylor_cota,953,156.79,1,18.82,Wayfair Affiliate Creators,8,3,0,4,2,2,2.67,False
+525,28700949,Julie & David Bulitt| Relationship and Marriage Coaches,thebulitts,955,154.99,1,18.6,Wayfair Affiliate Creators,2,1,2,0,0,0,2.0,False
+526,31905303,lovedbyalijoy,lovedbyalijoy_,958,153.99,2,18.48,Wayfair Affiliate Creators,11,2,8,0,3,0,5.5,False
+527,25518417,Alynne | home decor + interior styling,peridotandpeonies.interiors,959,151.99,1,18.24,Wayfair Affiliate Creators,6,2,2,0,0,4,3.0,False
+528,19913924,Danielle Cabral,daniellecabralofficial,960,150.13,1,18.02,Wayfair Affiliate Creators,1,1,0,1,0,0,1.0,False
+529,29756474,Katina Qualls,mrs_katinaqualls,962,149.99,1,21.0,Wayfair Affiliate Creators,3,1,0,3,0,0,3.0,False
+530,25091590,Tiffany Clark,tiffanyclarkinteriors,967,147.99,1,17.76,Wayfair Affiliate Creators,9,2,0,5,4,0,4.5,False
+531,28595536,atourtable_,atourtable_,966,147.99,1,17.76,Wayfair Affiliate Creators,1,1,0,0,0,1,1.0,False
+532,33565975,MIRANDA Bristol,miranda_rosalie_home,968,147.97,2,17.76,Wayfair Affiliate Creators,4,1,4,0,0,0,4.0,False
+533,24418821,Lindsay Carter,lindsaymariehome,969,146.42,1,17.57,Wayfair Affiliate Creators,3,1,0,0,0,3,3.0,False
+534,31233349,reynosoyajaira21,yajairareynoso0,972,145.5,1,17.46,Wayfair Affiliate Creators,4,1,0,0,0,4,4.0,False
+535,26497849,Nicole | Content Creator,nic.m,978,139.99,1,16.8,Wayfair Affiliate Creators,1,1,1,0,0,0,1.0,False
+536,24691140,Angie Ivie,howwedo208,980,139.37,1,16.72,Wayfair Affiliate Creators,31,3,22,0,3,6,10.33,False
+537,29072280,texasbeautyxoxo1,JoyceMichelleOfficial,988,135.63,2,7.55,Wayfair Affiliate Creators,255,4,147,50,24,34,63.75,False
+538,27603625,Taylor-Alexis Gillard,tayloralxs,989,135.63,3,16.28,Wayfair Affiliate Creators,54,4,14,10,26,4,13.5,False
+539,12757347,Prerna Satija,world_of_erish,992,133.23,1,15.99,Wayfair Affiliate Creators,3,1,0,0,0,3,3.0,False
+540,26743234,Jessica Hamm,bedknobsandbaubles,993,133.07,1,15.97,Wayfair Affiliate Creators,6,1,0,0,0,6,6.0,False
+541,28807497,S A N D R A  • FITNESS & MOMMAHOOD,sandrapressnell,996,129.99,1,18.2,Wayfair Affiliate Creators,1,1,0,1,0,0,1.0,False
+542,33344305,Rabia Sadaqa,LittleMoutainDesigns,998,128.79,1,15.46,Wayfair Affiliate Creators,3,1,3,0,0,0,3.0,False
+543,26251884,bailey,baileywynnee,999,127.98,2,15.36,Wayfair Affiliate Creators,13,4,2,2,4,5,3.25,False
+544,26253147,Jenn /CREATIVE VISIONARY,diydesignswithjenn,1000,126.98,1,15.23,Wayfair Affiliate Creators,2,2,1,0,0,1,1.0,False
+545,26981982,kyleebutnotjenner_,kindalikekylee,1001,126.57,1,15.19,Wayfair Affiliate Creators,1,1,0,0,0,1,1.0,False
+546,28987722,Brianna Pecora,morefunwithoutit,1002,125.99,1,15.12,Wayfair Affiliate Creators,7,2,0,5,0,2,3.5,False
+547,24790345,Lindsey Ressler,lindseyressler,1003,125.99,1,15.12,Wayfair Affiliate Creators,1,1,1,0,0,0,1.0,False
+548,34710529,cozymollyhome,cozymollyhome,1004,124.99,1,15.0,Wayfair Affiliate Creators,20,2,1,19,0,0,10.0,False
+549,28864948,jess,cozyonclayton,1006,122.99,1,14.76,Wayfair Affiliate Creators,42,3,0,4,15,23,14.0,False
+550,23914612,GRACE | Home Decor & Interior Design,athomewith_grace,1007,122.34,3,14.68,Wayfair Affiliate Creators,31,4,13,1,2,15,7.75,False
+551,31962632,Kelsi Rus,kelsirus,1011,119.99,1,14.4,Wayfair Affiliate Creators,23,2,4,19,0,0,11.5,False
+552,25588453,Ashley McLaughlin,ashleym.mclaughlin,1019,115.99,1,13.92,Wayfair Affiliate Creators,1,1,1,0,0,0,1.0,False
+553,25006130,Tαɾα |Blogger  Home Decor formerly Live.Love.Shiplap,myelevatedhome_,1020,113.99,1,13.68,Wayfair Affiliate Creators,21,4,8,6,1,6,5.25,False
+554,34332450,simplethingsmadebeautiful,simplethingsmb,1022,109.99,1,3.3,Wayfair Affiliate Creators,18,1,0,18,0,0,18.0,False
+555,25635707,Erin Szoch,erinszoch,1027,105.99,1,12.72,Wayfair Affiliate Creators,38,3,28,7,3,0,12.67,False
+556,27581046,Rasha Nicole Jackson,styled_by_rudy_,1028,105.78,1,12.69,Wayfair Affiliate Creators,12,3,4,4,0,4,4.0,False
+557,27007598,Ava Jett,avanevajett,1029,105.49,2,12.66,Wayfair Affiliate Creators,6,2,4,2,0,0,3.0,False
+558,29100965,Brittany Beckworth,rayne_and_ry_home,1030,103.97,1,12.48,Wayfair Affiliate Creators,2,1,2,0,0,0,2.0,False
+559,29756651,Annica Baker,heyannica,1031,102.99,1,12.36,Wayfair Affiliate Creators,8,1,0,0,8,0,8.0,False
+560,26265454,Kelly Reci,KellyReci,1037,96.77,1,11.61,Wayfair Affiliate Creators,6,1,0,0,6,0,6.0,False
+561,19562140,Megan Ruffles,thechicishchick,1039,95.23,2,11.43,Wayfair Affiliate Creators,2,1,0,0,0,2,2.0,False
+562,34466955,belleandmortar,belleandmortar,1045,89.99,1,10.8,Wayfair Affiliate Creators,32,3,4,8,0,20,10.67,False
+563,25091588,Elaine Citro,elainecitrohome,1046,89.98,2,10.8,Wayfair Affiliate Creators,7,2,0,5,2,0,3.5,False
+564,30766890,plouffes,simplysaleswithalyssaandsarah,1047,88.97,2,10.68,Wayfair Affiliate Creators,4,1,0,0,0,4,4.0,False
+565,13653764,Prity Biswas,decorcrushdaily,1054,83.97,1,2.52,Wayfair Affiliate Creators,52,3,8,0,32,12,17.33,False
+566,20663274,Christina Hushen,christinahushen,1053,83.97,2,2.52,Wayfair Affiliate Creators,2,1,0,2,0,0,2.0,False
+567,25783610,Lindy G,the_real_lin_shady,1055,79.99,1,9.6,Wayfair Affiliate Creators,8,1,0,0,0,8,8.0,False
+568,28872637,Dana Cole,designdetailsbydana,1058,78.75,1,9.45,Wayfair Affiliate Creators,237,4,122,55,48,12,59.25,False
+569,25679442,Sakshi Gupta,thefreebiegirls,1059,78.38,1,9.41,Wayfair Affiliate Creators,1,1,0,0,0,1,1.0,False
+570,31252135,renauandco,renauandco,1062,73.99,2,8.88,Wayfair Affiliate Creators,40,4,21,3,3,13,10.0,False
+571,35092227,Sarah Murphy,mixedmomentsclub,1064,73.7,1,8.85,Wayfair Affiliate Creators,2,1,0,0,2,0,2.0,False
+572,29950115,Susana  Lopez,justsusylo,1065,73.0,3,8.76,Wayfair Affiliate Creators,391,4,115,109,75,92,97.75,False
+573,26314966,Jacqueline Combs,the.cobbled.nest,1067,72.99,2,8.76,Wayfair Affiliate Creators,16,1,0,0,16,0,16.0,False
+574,26297653,Rebecca Nicola | THKH,thehalfkepthome,1069,72.9,1,8.75,Wayfair Affiliate Creators,12,1,0,0,0,12,12.0,False
+575,32075255,collabwith.ashleysnider,ashleyn.snider,1071,69.99,1,8.4,Wayfair Affiliate Creators,16,4,10,2,2,2,4.0,False
+576,26293869,Jennifer Scott,thedailyconnoisseur,1070,69.99,1,8.4,Wayfair Affiliate Creators,1,1,0,0,1,0,1.0,False
+577,29510986,Vicky Kim,tachitheblackcat,1075,64.99,1,7.8,Wayfair Affiliate Creators,7,1,0,0,0,7,7.0,False
+578,13131325,greenssweethome,greenssweethome,1079,62.98,1,7.56,Wayfair Affiliate Creators,10,1,0,0,0,10,10.0,False
+579,31221528,Deirdre Duddy-Kennedy,deirdredk,1083,59.99,1,7.2,Wayfair Affiliate Creators,41,2,0,0,24,17,20.5,False
+580,22043180,Zane Platt-Faulkner,historically_zane,1084,59.99,1,7.2,Wayfair Affiliate Creators,8,2,0,0,4,4,4.0,False
+581,29406555,Jacqueline Gonzalez,gowithgonzalez,1087,58.99,1,7.08,Wayfair Affiliate Creators,53,2,0,51,2,0,26.5,False
+582,12538386,Sarah DuBois,ellis_cottage,1092,54.99,1,1.65,Wayfair Affiliate Creators,9,3,3,0,2,4,3.0,False
+583,30509671,Hannah Lee,hann.madehome,1094,53.86,1,6.46,Wayfair Affiliate Creators,40,4,6,14,5,15,10.0,False
+584,25108677,amy pugh,amelialawrencehome,1095,52.98,1,1.59,Wayfair Affiliate Creators,1,1,1,0,0,0,1.0,False
+585,29095536,brendaa.chan,brendaa.chan,1096,51.99,1,6.24,Wayfair Affiliate Creators,4,3,1,1,0,2,1.33,False
+586,35198849,alisonmperry,alimarieblum,1098,49.98,1,6.0,Wayfair Affiliate Creators,6,1,0,0,0,6,6.0,False
+587,27604281,Marta Montalvo,805ummadam,1100,48.4,1,5.81,Wayfair Affiliate Creators,7,1,0,0,0,7,7.0,False
+588,26297430,Shannon Hale,thedailydiyer,1102,47.98,1,5.76,Wayfair Affiliate Creators,1,1,1,0,0,0,1.0,False
+589,33057491,andreagonher,andreagonher,1103,46.99,1,1.41,Wayfair Affiliate Creators,2,1,0,2,0,0,2.0,False
+590,32034419,K James,kris.james81,1104,43.99,1,5.28,Wayfair Affiliate Creators,7,2,0,6,0,1,3.5,False
+591,23400092,Meg Leonard • Design & Renovations • Style,megleonardco,1105,42.12,1,5.06,Wayfair Affiliate Creators,103,4,9,7,59,28,25.75,False
+592,26267107,Dani Shearer,shearerinstyle,1108,37.59,1,4.51,Wayfair Affiliate Creators,6,2,0,0,3,3,3.0,False
+593,29473184,Laura Tancredi,EverydayPeoplewithLaura,1109,36.99,2,4.44,Wayfair Affiliate Creators,330,3,24,101,0,205,110.0,False
+594,26954966,Quintiara ford,iamquinti,1110,35.99,2,4.32,Wayfair Affiliate Creators,191,4,29,100,54,8,47.75,False
+595,26648954,corcoran.designs,chelsey_designs,1112,32.98,1,3.96,Wayfair Affiliate Creators,109,4,13,24,38,34,27.25,False
+596,28792133,Sierra Edwards,sequinedbysierra,1114,29.99,1,0.9,Wayfair Affiliate Creators,115,3,37,24,0,54,38.33,False
+597,34815050,a.tayloredhomeco,a.tayloredhome,1117,29.0,1,3.48,Wayfair Affiliate Creators,22,4,6,9,5,2,5.5,False
+598,29447910,yumlabels,yumlabels,1118,27.82,1,3.34,Wayfair Affiliate Creators,8,1,0,0,0,8,8.0,False
+599,25534963,Cass | home&motherhood,c.noellee,1119,24.99,1,3.0,Wayfair Affiliate Creators,18,2,12,0,6,0,9.0,False
+600,30770303,Maggie Stacey,styledwithpaws,1120,24.09,1,2.89,Wayfair Affiliate Creators,184,4,132,27,13,12,46.0,False
+601,34326958,tarundacw,tarundaconleywill,1123,22.49,1,2.7,Wayfair Affiliate Creators,18,2,0,0,12,6,9.0,False
+602,34668626,Ivy Arbolado,byivyann,1127,4.22,1,0.51,Wayfair Affiliate Creators,45,1,0,0,0,45,45.0,False
+603,23199493,Karen Rosenick,jebusedge,1157,0.0,3,0.0,Wayfair Affiliate Creators,296,4,175,88,21,12,74.0,False
+604,26794287,Christa Carter-Williams,christaandthecity,1182,0.0,1,0.0,Wayfair Affiliate Creators,180,4,109,27,30,14,45.0,False
+605,20309276,Tatyana Avramenko,yourdesignerbff,1140,0.0,1,0.0,Wayfair Affiliate Creators,110,3,45,0,41,24,36.67,False
+606,26293507,Desiree Fairchild,destn8tion,1152,0.0,2,0.0,Wayfair Affiliate Creators,108,4,3,54,40,11,27.0,False
+607,28070837,Laura Reyna,laurareyvi2,1151,0.0,1,0.0,Wayfair Affiliate Creators,100,3,22,0,30,48,33.33,False
+608,25936352,Rosa Yungen,samples4rosa,1173,0.0,2,0.0,Wayfair Affiliate Creators,83,4,37,15,18,13,20.75,False
+609,26253481,Chelsea Greer,chelsealizgreer,1147,0.0,2,0.0,Wayfair Affiliate Creators,81,4,26,20,17,18,20.25,False
+610,27177438,Delaney Zollman,basicallycontent,1133,0.0,4,0.0,Wayfair Affiliate Creators,73,3,18,0,20,35,24.33,False
+611,28539493,Linda Wolfe,linda_wolfee,1137,0.0,1,0.0,Wayfair Affiliate Creators,69,2,62,0,0,7,34.5,False
+612,13010409,Medina Colaku,healingyourhomewmedina,1143,0.0,2,0.0,Wayfair Affiliate Creators,67,3,55,6,0,6,22.33,False
+613,27604142,Julie,triedandtruemomlife,1139,0.0,4,0.0,Wayfair Affiliate Creators,50,2,45,0,0,5,25.0,False
+614,33982917,kelly busia,kellybusia,1167,0.0,1,0.0,Wayfair Affiliate Creators,36,4,17,8,10,1,9.0,False
+615,27578071,Jennifer Castille 🥳🪩💖,jennifer.castille.1031,1172,0.0,1,0.0,Wayfair Affiliate Creators,35,3,13,14,8,0,11.67,False
+616,26419401,Anner Turner,allthingsanner__,1149,0.0,2,0.0,Wayfair Affiliate Creators,32,3,17,3,0,12,10.67,False
+617,24790545,Brittany Shepard,vintage.brittany.shepard,1153,0.0,1,0.0,Wayfair Affiliate Creators,28,4,3,10,6,9,7.0,False
+618,27175139,Catherine Grassel,catherinesreviews,1158,0.0,1,0.0,Wayfair Affiliate Creators,28,4,13,13,1,1,7.0,False
+619,24518531,Alexia Reina Mubayiwa,curatedbyreina,1178,0.0,1,0.0,Wayfair Affiliate Creators,24,4,8,2,6,8,6.0,False
+620,32600083,maddiecooksaunders,maddiecooksaunders,1134,0.0,1,0.0,Wayfair Affiliate Creators,23,1,0,0,0,23,23.0,False
+621,28987696,elliekairys,elliekairys,1162,0.0,1,0.0,Wayfair Affiliate Creators,20,2,9,11,0,0,10.0,False
+622,26267444,Elaine Casella,style_by_lain,1159,0.0,2,0.0,Wayfair Affiliate Creators,16,3,2,6,0,8,5.33,False
+623,28413399,kamrynnnrose,kamrynnnrose,1145,0.0,2,0.0,Wayfair Affiliate Creators,8,1,0,8,0,0,8.0,False
+624,27914890,Milaneya Karcha,milaneyakarcha,1175,0.0,1,0.0,Wayfair Affiliate Creators,4,3,0,1,1,2,1.33,False
+625,28342322,Joe Miragliotta,joesdaily,1154,0.0,1,0.0,Wayfair Affiliate Creators,3,1,0,3,0,0,3.0,False
+626,27581353,Ruby Gomez,holarubygomez,1170,0.0,1,0.0,Wayfair Affiliate Creators,3,1,0,3,0,0,3.0,False
+627,34023522,sanjtoribio,sanj_baby2.0,1176,0.0,1,0.0,Wayfair Affiliate Creators,3,1,3,0,0,0,3.0,False
+628,22898470,lisamillerinreallife,lisamillerinreallife,1179,0.0,1,0.0,Wayfair Affiliate Creators,3,3,0,1,1,1,1.0,False
+629,23754041,heatherlynnfl,heatherlynnfl,1132,0.0,2,0.0,Wayfair Affiliate Creators,2,2,0,0,1,1,1.0,False
+630,28556527,tia.mariexo,tiamariexo,1146,0.0,1,0.0,Wayfair Affiliate Creators,2,1,0,2,0,0,2.0,False
+631,26701477,Diana Suarez,micasa_mipaz_official,1155,0.0,1,0.0,Wayfair Affiliate Creators,2,1,0,0,0,2,2.0,False
+632,23178283,Trilby Papineau,trilbystyle,1156,0.0,1,0.0,Wayfair Affiliate Creators,2,1,0,2,0,0,2.0,False
+633,23216087,Alesia Patnode,realmom.finds,1177,0.0,1,0.0,Wayfair Affiliate Creators,2,1,2,0,0,0,2.0,False
+634,25315564,Ulyana Pshyk,lanapshyk,1128,0.0,1,0.0,Wayfair Affiliate Creators,1,1,0,0,0,1,1.0,False
+635,29496281,alexa jo palmer,alexa_xo,1144,0.0,1,0.0,Wayfair Affiliate Creators,1,1,1,0,0,0,1.0,False
+636,25711557,Ashley Bernal,theashbernal,1160,0.0,1,0.0,Wayfair Affiliate Creators,1,1,0,0,1,0,1.0,False
+637,32612831,Claudia Araujo,claudiasofiaar,1165,0.0,2,0.0,Wayfair Affiliate Creators,1,1,0,0,0,1,1.0,False
+638,29285206,Anokhi Parikh,anokhiparikhmodi,1168,0.0,1,0.0,Wayfair Affiliate Creators,1,1,0,0,0,1,1.0,False
+639,25007460,Alexandria Andrews,alexandriaaarlene,1171,0.0,1,0.0,Wayfair Affiliate Creators,1,1,0,0,0,1,1.0,False
