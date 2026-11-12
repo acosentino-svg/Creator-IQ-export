@@ -25,27 +25,17 @@ DISPLAY_COLUMNS = {
 }
 
 
-def render_filter_bar() -> dict:
-    """Primary filters shown above the table (same labels as creator-activity-dash)."""
-    c1, c2, c3, c4 = st.columns([1, 1, 1, 2])
-    with c1:
-        must_posts = st.checkbox("Must have posts", key="report_must_have_posts")
-    with c2:
-        must_links = st.checkbox("Must have links", key="report_must_have_links")
-    with c3:
-        must_txn = st.checkbox("Must have transactions", key="report_must_have_transactions")
-    with c4:
-        search = st.text_input("Search creator", key="report_search_creator", placeholder="Name, handle, email, ID")
+def _filters_from_session() -> dict:
     return {
-        "must_have_posts": must_posts,
-        "must_have_links": must_links,
-        "must_have_transactions": must_txn,
-        "search": search.strip().lower(),
+        "must_have_posts": st.session_state.get("report_must_have_posts", False),
+        "must_have_links": st.session_state.get("report_must_have_links", False),
+        "must_have_transactions": st.session_state.get("report_must_have_transactions", False),
+        "search": str(st.session_state.get("report_search_creator", "")).strip().lower(),
     }
 
 
 def render_active_creator_table(summary: pd.DataFrame, classified: pd.DataFrame) -> None:
-    filters = render_filter_bar()
+    filters = _filters_from_session()
     enrich_cols = [
         c
         for c in (

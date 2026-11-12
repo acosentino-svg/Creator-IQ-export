@@ -32,10 +32,17 @@ logger = logging.getLogger(__name__)
 _CAMPAIGN_NAME = "Wayfair Creators Boosting Partnership"
 
 _LAST_HYBRID_DIAGNOSTICS: HybridDiagnostics | None = None
+_LAST_TRANSACTIONS_VIEW: pd.DataFrame | None = None
 
 
 def get_boosting_hybrid_diagnostics() -> HybridDiagnostics | None:
     return _LAST_HYBRID_DIAGNOSTICS
+
+
+def get_boosting_transactions_view() -> pd.DataFrame:
+    if _LAST_TRANSACTIONS_VIEW is None or _LAST_TRANSACTIONS_VIEW.empty:
+        return pd.DataFrame()
+    return _LAST_TRANSACTIONS_VIEW
 
 
 def _activity_window() -> tuple[pd.Timestamp, pd.Timestamp]:
@@ -242,7 +249,7 @@ def _filter_tables_to_program(
 
 
 def load_boosting_activity_inputs(config: AppConfig) -> tuple[RawData, dict[str, str | None]]:
-    global _LAST_HYBRID_DIAGNOSTICS  # noqa: PLW0603
+    global _LAST_HYBRID_DIAGNOSTICS, _LAST_TRANSACTIONS_VIEW  # noqa: PLW0603
 
     activity_start, activity_end = _activity_window()
     backlog = load_csv_backlog(config)
@@ -250,6 +257,7 @@ def load_boosting_activity_inputs(config: AppConfig) -> tuple[RawData, dict[str,
 
     if config.is_demo:
         raw = prepare_demo_boosting_raw()
+        _LAST_TRANSACTIONS_VIEW = pd.DataFrame()
         _LAST_HYBRID_DIAGNOSTICS = build_hybrid_diagnostics(
             activity_start=activity_start,
             activity_end=activity_end,
@@ -347,6 +355,8 @@ def load_boosting_activity_inputs(config: AppConfig) -> tuple[RawData, dict[str,
             pass
 
     publisher_names = _union_creators(creators, name_backlog.rename(columns={"name": "name"}) if "name" in name_backlog.columns else name_backlog)
+
+    _LAST_TRANSACTIONS_VIEW = transactions_view.copy() if not transactions_view.empty else pd.DataFrame()
 
     _LAST_HYBRID_DIAGNOSTICS = build_hybrid_diagnostics(
         activity_start=activity_start,

@@ -8,7 +8,7 @@ from creatoriq_dashboard.boosting_activity_data import get_boosting_hybrid_diagn
 
 def render_data_diagnostics() -> None:
     diag = get_boosting_hybrid_diagnostics()
-    with st.expander("Data diagnostics", expanded=diag is not None):
+    with st.expander("Data diagnostics", expanded=False):
         if diag is None:
             st.caption("Load data to see CSV + API hybrid diagnostics.")
             return
